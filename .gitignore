@@ -1,0 +1,15 @@
+# Personal album state (SQLite DB, exports, derived matrices — keep local only)
+data/*.sqlite
+data/*.db
+data/panini_snapshot.json
+data/matrix.csv
+data/frozen/*.json
+
+# Raw spreadsheet dumps before import (repo root)
+panini_raw*.csv
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
