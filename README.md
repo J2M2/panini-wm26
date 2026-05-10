@@ -91,6 +91,27 @@ uvicorn api.main:app --reload --host 127.0.0.1 --port 8080
 
 On Windows, binding to `0.0.0.0:8000` can hit permission or reserved-port issues; **`127.0.0.1`** plus another port (e.g. **8080**) usually avoids `WinError 10013`.
 
+#### Web UI ([`web/`](web/))
+
+Minimal browser UI that calls the same HTTP API.
+
+**Development** — run the API on port **8080**, then start Vite (it proxies `/api` → `127.0.0.1:8080`):
+
+```bash
+cd web && npm install && npm run dev
+```
+
+Open **http://127.0.0.1:5173**.
+
+**Single server** — build the UI, then open the app from uvicorn (serves `/` and `/assets/*` when [`web/dist`](web/dist) exists):
+
+```bash
+cd web && npm install && npm run build
+uvicorn api.main:app --host 127.0.0.1 --port 8080
+```
+
+Browse **http://127.0.0.1:8080/**.
+
 ### 6. Tests
 
 ```bash
@@ -142,7 +163,7 @@ Full request/response shapes are in **`/docs`**.
 | [`panini_service/snapshot.py`](panini_service/snapshot.py) | Shared export/import logic for CLI + API |
 | [`api/main.py`](api/main.py) | FastAPI app |
 | [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) | Main database (generated) |
-| [`web/types.ts`](web/types.ts) | TypeScript types aligned with JSON export |
+| [`web/src`](web/src) | Browser UI (Vite + TypeScript; [`web/src/types.ts`](web/src/types.ts) mirrors JSON export shape) |
 
 ## Troubleshooting
 

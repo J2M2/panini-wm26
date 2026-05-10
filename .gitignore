@@ -13,3 +13,7 @@ panini_raw*.csv
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Web UI (Vite)
+web/node_modules/
+web/dist/

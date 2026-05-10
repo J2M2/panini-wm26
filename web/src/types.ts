@@ -44,3 +44,51 @@ export interface PaniniSnapshot {
   /** Present from schema v3 export; optional on import. */
   session?: SessionSnapshot;
 }
+
+/** GET /metrics */
+export interface InventoryMetrics {
+  album_unique_slots: number;
+  total_physical_stickers: number;
+  unique_slots_filled: number;
+  unique_slots_missing: number;
+  pct_complete_unique: number;
+  spare_copies: number;
+  slots_with_duplicates: number;
+  session: SessionSnapshot;
+}
+
+/** GET /stickers/... */
+export interface StickerDetail {
+  id: number;
+  category_code: string;
+  slot_code: string;
+  role: StickerRole;
+  qty: number;
+  spare_copies: number;
+  ref: string;
+  status: string;
+  album_code?: string;
+}
+
+export interface ListStickerRow {
+  category_code: string;
+  slot_code: string;
+  role: StickerRole;
+  qty: number;
+  ref: string;
+  album_code?: string;
+  spare_copies?: number;
+}
+
+export interface TradeResponse {
+  warnings: string[];
+  gave: { ref: string; qty_before: number; qty_after: number }[];
+  received: { ref: string; qty_before: number; qty_after: number }[];
+}
+
+export interface PackOpenResponse {
+  per_pack: number;
+  added_as_new: Record<string, unknown>[];
+  added_as_duplicate: Record<string, unknown>[];
+  warnings: string[];
+}

@@ -10,7 +10,9 @@ from typing import Any
 from dataclasses import asdict
 
 from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
@@ -75,6 +77,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Panini WM26", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+_WEB_DIST = _ROOT / "web" / "dist"
+_WEB_ASSETS = _WEB_DIST / "assets"
+_FAVICON_SVG = _ROOT / "web" / "public" / "favicon.svg"
 
 
 @app.exception_handler(StrictTradeError)
@@ -272,3 +289,27 @@ def post_snapshot_import(
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/favicon.svg", include_in_schema=False)
+def favicon():
+    """Avoid 404 noise when browsers request a favicon."""
+    if _FAVICON_SVG.is_file():
+        return FileResponse(_FAVICON_SVG, media_type="image/svg+xml")
+    return Response(status_code=204)
+
+
+@app.get("/")
+def spa_root():
+    """Serve built Vite UI when `web/dist` exists (optional)."""
+    index = _WEB_DIST / "index.html"
+    if index.is_file():
+        return FileResponse(index)
+    return {
+        "detail": "Web UI not built. From repo root: cd web && npm install && npm run build",
+    }
+
+
+if _WEB_ASSETS.is_dir():
+    app.mount("/assets", StaticFiles(directory=_WEB_ASSETS), name="ui_assets")
