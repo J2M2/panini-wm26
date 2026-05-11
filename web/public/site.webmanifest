@@ -1,0 +1,18 @@
+{
+  "name": "Panini WM26",
+  "short_name": "Panini",
+  "description": "FIFA World Cup sticker album tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a2332",
+  "theme_color": "#1a2332",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

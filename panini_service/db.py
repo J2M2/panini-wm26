@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DB_PATH = ROOT / "data" / "panini_wm26.sqlite"
+
+
+def _default_db_path() -> Path:
+    """Use ``PANINI_DB_PATH`` when set (e.g. Docker volume); else ``data/panini_wm26.sqlite``."""
+    env = os.environ.get("PANINI_DB_PATH", "").strip()
+    if env:
+        return Path(env)
+    return ROOT / "data" / "panini_wm26.sqlite"
+
+
+DEFAULT_DB_PATH = _default_db_path()
 
 
 def connect(db_path: Path | None = None) -> sqlite3.Connection:

@@ -12,6 +12,7 @@ from panini_service.inventory_ops import (
     execute_trade,
     open_pack,
     remove_stickers,
+    reverse_trade,
 )
 from panini_service.session_store import get_session_stats
 
@@ -90,3 +91,31 @@ def test_trade_uneven_allowed(db_conn):
     )
     assert len(r.gave) == 2
     assert len(r.received) == 1
+
+
+def test_reverse_trade_restores_inventory_and_session(db_conn):
+    s0 = get_session_stats(db_conn)
+    add_stickers(db_conn, "MEX:1", 1)
+    db_conn.commit()
+    execute_trade(db_conn, ["MEX:1"], ["MEX:2"], strict_duplicates_only=False)
+    db_conn.commit()
+    s1 = get_session_stats(db_conn)
+    assert s1.traded_out_count == s0.traded_out_count + 1
+    assert s1.traded_in_count == s0.traded_in_count + 1
+
+    reverse_trade(db_conn, ["MEX:1"], ["MEX:2"])
+    db_conn.commit()
+    s2 = get_session_stats(db_conn)
+    assert s2.traded_out_count == s0.traded_out_count
+    assert s2.traded_in_count == s0.traded_in_count
+
+
+def test_reverse_trade_fails_if_take_already_removed(db_conn):
+    add_stickers(db_conn, "MEX:1", 1)
+    db_conn.commit()
+    execute_trade(db_conn, ["MEX:1"], ["MEX:2"], strict_duplicates_only=False)
+    db_conn.commit()
+    remove_stickers(db_conn, "MEX:2", 2)
+    db_conn.commit()
+    with pytest.raises(TradeImpossibleError):
+        reverse_trade(db_conn, ["MEX:1"], ["MEX:2"])

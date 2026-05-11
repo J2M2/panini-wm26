@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -28,6 +29,7 @@ from panini_service.inventory_ops import (  # noqa: E402
     execute_trade,
     open_pack,
     remove_stickers,
+    reverse_trade,
 )
 from panini_service.migrate import ensure_schema  # noqa: E402
 from panini_service.queries import (  # noqa: E402
@@ -40,8 +42,10 @@ from panini_service.queries import (  # noqa: E402
     inventory_metrics,
     list_duplicates,
     list_missing,
+    list_sticker_canonical_refs,
     get_category,
     get_sticker,
+    team_analytics_pages,
 )
 from panini_service.refs import (  # noqa: E402
     FWC_CODE,
@@ -51,7 +55,25 @@ from panini_service.refs import (  # noqa: E402
 from panini_service.session_store import set_session_stats  # noqa: E402
 from panini_service.snapshot import build_full_snapshot, import_album_snapshot  # noqa: E402
 
-from .schemas import PackOpen, SessionPatch, StickerAdd, StickerRemove, TradeRequest  # noqa: E402
+from .schemas import PackOpen, SessionPatch, StickerAdd, StickerRemove, TradeRequest, TradeUndoBody  # noqa: E402
+
+
+def _cors_allow_origins() -> list[str]:
+    """Local Vite dev origins plus optional ``PANINI_CORS_ORIGINS`` (comma-separated, e.g. GitHub Pages)."""
+    defaults = [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ]
+    extra = os.environ.get("PANINI_CORS_ORIGINS", "").strip()
+    if not extra:
+        return defaults
+    out: list[str] = []
+    seen: set[str] = set()
+    for o in defaults + [x.strip() for x in extra.split(",") if x.strip()]:
+        if o not in seen:
+            seen.add(o)
+            out.append(o)
+    return out
 
 
 def get_db():
@@ -80,10 +102,7 @@ app = FastAPI(title="Panini WM26", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-    ],
+    allow_origins=_cors_allow_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -129,16 +148,28 @@ def patch_session(body: SessionPatch, conn=Depends(get_db)):
 def get_analytics(
     include: str | None = Query(
         None,
-        description="Comma-separated: most_repeated,most_completed_team,most_missing_team,fwc_summary,most_difficult_sticker",
+        description="Comma-separated: most_repeated,most_completed_team,most_missing_team,most_duplicated_team,fwc_summary,most_difficult_sticker,team_shield_photo",
     ),
     conn=Depends(get_db),
 ):
     keys = (
         {x.strip() for x in include.split(",") if x.strip()}
         if include
-        else {"most_repeated", "most_completed_team", "most_missing_team"}
+        else {"most_repeated", "most_completed_team", "most_missing_team", "most_duplicated_team"}
     )
     return analytics(conn, include=keys)
+
+
+@app.get("/analytics/teams")
+def get_analytics_teams(conn=Depends(get_db)):
+    """Per team (48 pages): completion %, shield (slot 1) and team photo (slot 13) flags."""
+    return {"teams": team_analytics_pages(conn)}
+
+
+@app.get("/catalog/sticker-refs")
+def get_sticker_refs_catalog(conn=Depends(get_db)):
+    """Canonical refs for all stickers (autocomplete / quick search in the UI)."""
+    return {"refs": list_sticker_canonical_refs(conn)}
 
 
 @app.get("/lists/missing")
@@ -225,6 +256,18 @@ def post_trade(body: TradeRequest, conn=Depends(get_db)):
     return {"warnings": r.warnings, "gave": r.gave, "received": r.received}
 
 
+@app.post("/trades/undo")
+def post_trade_undo(body: TradeUndoBody, conn=Depends(get_db)):
+    """Reverse inventory + session counters for one forward trade (same give/take lists)."""
+    try:
+        r: TradeResult = reverse_trade(conn, body.give, body.take)
+    except TradeImpossibleError:
+        raise
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"warnings": r.warnings, "gave": r.gave, "received": r.received}
+
+
 @app.get("/stickers/{category}/{slot}")
 def get_one_sticker(category: str, slot: str, conn=Depends(get_db)):
     try:
@@ -298,6 +341,15 @@ def favicon():
     if _FAVICON_SVG.is_file():
         return FileResponse(_FAVICON_SVG, media_type="image/svg+xml")
     return Response(status_code=204)
+
+
+@app.get("/site.webmanifest", include_in_schema=False)
+def site_webmanifest():
+    """PWA manifest from Vite ``public/`` (copied to ``web/dist``)."""
+    path = _WEB_DIST / "site.webmanifest"
+    if path.is_file():
+        return FileResponse(path, media_type="application/manifest+json")
+    return Response(status_code=404)
 
 
 @app.get("/")

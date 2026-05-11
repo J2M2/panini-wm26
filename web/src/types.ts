@@ -68,6 +68,16 @@ export interface StickerDetail {
   ref: string;
   status: string;
   album_code?: string;
+  /** Space-separated form for notes / spreadsheets (e.g. `MEX 5`, `FWC 14`). */
+  album_paste_line?: string;
+  /** Where this sticker sits in the physical album (approximate for teams). */
+  album_location?: string;
+  /** Printed album page number from the WM26 contents index (manual). */
+  album_printed_page?: number;
+  /** Contents index group A-L; null/omitted for FWC. */
+  album_index_group?: string | null;
+  /** 1-based team index in album order (same as TEAM_CODES); null for FWC. */
+  album_team_ordinal?: number | null;
 }
 
 export interface ListStickerRow {
@@ -78,6 +88,12 @@ export interface ListStickerRow {
   ref: string;
   album_code?: string;
   spare_copies?: number;
+  /** Printed album page from WM26 index. */
+  album_printed_page?: number;
+  /** Contents index group A-L; omitted for FWC. */
+  album_index_group?: string | null;
+  /** Single-line tooltip for list rows. */
+  album_hover_hint?: string;
 }
 
 export interface TradeResponse {
@@ -91,4 +107,15 @@ export interface PackOpenResponse {
   added_as_new: Record<string, unknown>[];
   added_as_duplicate: Record<string, unknown>[];
   warnings: string[];
+}
+
+/** GET /analytics/teams — one row per national team page. */
+export interface TeamAnalyticsRow {
+  code: string;
+  slots_with_copy: number;
+  slots_missing: number;
+  slots_total: number;
+  pct_complete: number;
+  shield_ok: boolean;
+  team_photo_ok: boolean;
 }

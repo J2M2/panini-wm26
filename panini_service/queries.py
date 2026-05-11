@@ -21,6 +21,12 @@ from panini_catalog import (  # noqa: E402
     fwc_album_code_for_internal_slot,
 )
 
+from panini_service.album_pages import (  # noqa: E402
+    album_index_group,
+    album_list_hover_hint,
+    fwc_index_blurb,
+    printed_album_page,
+)
 from panini_service.refs import format_sticker_ref  # noqa: E402
 from panini_service.session_store import get_session_stats  # noqa: E402
 
@@ -29,6 +35,147 @@ def _album_field(category_code: str, slot_code: str) -> dict[str, str]:
     if category_code == FWC_CODE:
         return {"album_code": fwc_album_code_for_internal_slot(slot_code)}
     return {}
+
+
+def _album_paste_and_location(category_code: str, slot_code: str) -> dict[str, Any]:
+    """Human + paste-friendly album hints (WM26: manual printed page index)."""
+    cat = category_code.upper()
+    sc = str(slot_code).strip()
+    page = printed_album_page(cat, sc)
+
+    if cat == FWC_CODE:
+        ac = fwc_album_code_for_internal_slot(sc)
+        paste = f"FWC {ac} | p.{page}"
+        loc = (
+            f"Printed album page {page}, FWC sticker {ac}. "
+            f"{fwc_index_blurb(int(sc))}"
+        )
+        return {
+            "album_paste_line": paste,
+            "album_location": loc,
+            "album_team_ordinal": None,
+            "album_printed_page": page,
+            "album_index_group": None,
+        }
+    try:
+        idx = TEAM_CODES.index(cat)
+    except ValueError:
+        idx = -1
+    n = idx + 1 if idx >= 0 else None
+    sn = int(sc) if sc.isdigit() else sc
+    paste = f"{cat} {sc} | p.{page}"
+    g = album_index_group(cat)
+    if n is not None and g is not None:
+        loc = (
+            f"Printed album page {page}. Group {g}. "
+            f"Team {cat}, slot {sn}/20. "
+            f"Contents index order: team #{n} of {len(TEAM_CODES)}. "
+            "Two pages per team: stickers 1-10 then 11-20."
+        )
+    else:
+        loc = f"Printed album page {page}. Team {cat}, slot {sn}/20."
+    return {
+        "album_paste_line": paste,
+        "album_location": loc,
+        "album_team_ordinal": n,
+        "album_printed_page": page,
+        "album_index_group": g,
+    }
+
+
+def _team_shield_photo_completion(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Across all team pages: slot 1 (shield) and slot 13 (team photo), 48 each."""
+    out: dict[str, dict[str, Any]] = {}
+    for role, key in (("shield", "shield"), ("team_photo", "team_photo")):
+        row = conn.execute(
+            """
+            SELECT
+              SUM(CASE WHEN i.qty >= 1 THEN 1 ELSE 0 END) AS have,
+              COUNT(*) AS total
+            FROM stickers s
+            JOIN inventory i ON i.sticker_id = s.id
+            JOIN categories c ON c.code = s.category_code
+            WHERE c.kind = 'team' AND s.role = ?
+            """,
+            (role,),
+        ).fetchone()
+        total = int(row["total"] or 0)
+        have = int(row["have"] or 0)
+        miss = max(0, total - have)
+        pct = round(100.0 * have / total, 2) if total else 0.0
+        out[key] = {
+            "with_copy": have,
+            "missing": miss,
+            "total": total,
+            "pct_complete": pct,
+        }
+    return out
+
+
+def team_analytics_pages(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Per team page (20 slots): completion %, shield (slot 1) and team photo (slot 13) present flags."""
+    rows = conn.execute(
+        """
+        SELECT
+          s.category_code AS code,
+          SUM(CASE WHEN i.qty >= 1 THEN 1 ELSE 0 END) AS slots_with_copy,
+          COUNT(*) AS slots_total,
+          MAX(CASE WHEN s.role = 'shield' AND i.qty >= 1 THEN 1 ELSE 0 END) AS shield_ok,
+          MAX(CASE WHEN s.role = 'team_photo' AND i.qty >= 1 THEN 1 ELSE 0 END) AS photo_ok
+        FROM stickers s
+        JOIN inventory i ON i.sticker_id = s.id
+        JOIN categories c ON c.code = s.category_code
+        WHERE c.kind = 'team'
+        GROUP BY s.category_code
+        """
+    ).fetchall()
+    by_code = {str(r["code"]): r for r in rows}
+    out: list[dict[str, Any]] = []
+    for code in TEAM_CODES:
+        r = by_code.get(code)
+        if r is None:
+            continue
+        have = int(r["slots_with_copy"] or 0)
+        total = int(r["slots_total"] or 0)
+        miss = max(0, total - have)
+        pct = round(100.0 * have / total, 2) if total else 0.0
+        out.append(
+            {
+                "code": code,
+                "slots_with_copy": have,
+                "slots_missing": miss,
+                "slots_total": total,
+                "pct_complete": pct,
+                "shield_ok": bool(int(r["shield_ok"] or 0)),
+                "team_photo_ok": bool(int(r["photo_ok"] or 0)),
+            }
+        )
+    return out
+
+
+def _teams_fully_complete_summary(conn: sqlite3.Connection) -> dict[str, Any]:
+    """How many national team pages (20/20 slots) have at least one copy everywhere."""
+    row = conn.execute(
+        """
+        SELECT COUNT(*) AS n_complete FROM (
+            SELECT s.category_code
+            FROM stickers s
+            JOIN inventory i ON i.sticker_id = s.id
+            JOIN categories c ON c.code = s.category_code
+            WHERE c.kind = 'team'
+            GROUP BY s.category_code
+            HAVING SUM(CASE WHEN i.qty >= 1 THEN 1 ELSE 0 END) = COUNT(*)
+        )
+        """
+    ).fetchone()
+    n = int(row["n_complete"] or 0)
+    total = len(TEAM_CODES)
+    pct = round(100.0 * n / total, 2) if total else 0.0
+    return {
+        "teams_fully_complete": n,
+        "teams_total": total,
+        "pct_teams_fully_complete": pct,
+    }
 
 
 def inventory_metrics(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -63,6 +210,21 @@ def inventory_metrics(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
+def _attach_list_album_hints(item: dict[str, Any], category_code: str, slot_code: str, role: Any) -> None:
+    """Printed page + group + tooltip text for missing/duplicate list rows."""
+    try:
+        cat = str(category_code).upper()
+        sc = str(slot_code).strip()
+        item["album_printed_page"] = printed_album_page(cat, sc)
+        g = album_index_group(cat)
+        if g is not None:
+            item["album_index_group"] = g
+        r = role if isinstance(role, str) or role is None else str(role)
+        item["album_hover_hint"] = album_list_hover_hint(cat, sc, r)
+    except (ValueError, TypeError):
+        pass
+
+
 def list_missing(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = conn.execute(
         """
@@ -83,6 +245,7 @@ def list_missing(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             "ref": format_sticker_ref(r["category_code"], r["slot_code"]),
         }
         item.update(_album_field(r["category_code"], r["slot_code"]))
+        _attach_list_album_hints(item, r["category_code"], r["slot_code"], r["role"])
         out.append(item)
     return out
 
@@ -110,8 +273,20 @@ def list_duplicates(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             "ref": format_sticker_ref(r["category_code"], r["slot_code"]),
         }
         item.update(_album_field(r["category_code"], r["slot_code"]))
+        _attach_list_album_hints(item, r["category_code"], r["slot_code"], r["role"])
         out.append(item)
     return out
+
+
+def list_sticker_canonical_refs(conn: sqlite3.Connection) -> list[str]:
+    """All sticker refs in stable order (for client autocomplete)."""
+    rows = conn.execute(
+        """
+        SELECT category_code, slot_code FROM stickers
+        ORDER BY category_code, CAST(slot_code AS INTEGER)
+        """
+    ).fetchall()
+    return [format_sticker_ref(r["category_code"], r["slot_code"]) for r in rows]
 
 
 def get_sticker(conn: sqlite3.Connection, category_code: str, slot_code: str) -> dict[str, Any] | None:
@@ -141,6 +316,7 @@ def get_sticker(conn: sqlite3.Connection, category_code: str, slot_code: str) ->
         else ("duplicate" if qty > 1 else "single"),
     }
     item.update(_album_field(row["category_code"], row["slot_code"]))
+    item.update(_album_paste_and_location(row["category_code"], row["slot_code"]))
     return item
 
 
@@ -188,9 +364,14 @@ def get_category(conn: sqlite3.Connection, category_code: str) -> dict[str, Any]
 
 
 def analytics(conn: sqlite3.Connection, include: set[str] | None = None) -> dict[str, Any]:
-    """Optional keys per plan; team-level proxies when rarity unknown."""
+    """Optional keys: team progress, hunt zone, duplicate pile per national page (with tie notes)."""
     if include is None:
-        include = {"most_repeated", "most_completed_team", "most_missing_team"}
+        include = {
+            "most_repeated",
+            "most_completed_team",
+            "most_missing_team",
+            "most_duplicated_team",
+        }
     out: dict[str, Any] = {}
 
     if "most_repeated" in include:
@@ -215,17 +396,20 @@ def analytics(conn: sqlite3.Connection, include: set[str] | None = None) -> dict
         else:
             out["most_repeated"] = None
 
-    if "most_completed_team" in include or "most_missing_team" in include:
-        best_team = None
-        worst_team = None
-        best_have = -1
-        worst_missing_ct = -1
+    if (
+        "most_completed_team" in include
+        or "most_missing_team" in include
+        or "most_duplicated_team" in include
+    ):
+        pair_list: list[tuple[str, int, int, int, int]] = []
         for team in TEAM_CODES:
             r = conn.execute(
                 """
                 SELECT
                   SUM(CASE WHEN i.qty >= 1 THEN 1 ELSE 0 END) AS h,
-                  SUM(CASE WHEN i.qty = 0 THEN 1 ELSE 0 END) AS m
+                  SUM(CASE WHEN i.qty = 0 THEN 1 ELSE 0 END) AS m,
+                  SUM(CASE WHEN i.qty > 1 THEN i.qty - 1 ELSE 0 END) AS spare,
+                  SUM(CASE WHEN i.qty > 1 THEN 1 ELSE 0 END) AS dup_slots
                 FROM stickers s
                 JOIN inventory i ON i.sticker_id = s.id
                 WHERE s.category_code = ?
@@ -234,24 +418,89 @@ def analytics(conn: sqlite3.Connection, include: set[str] | None = None) -> dict
             ).fetchone()
             h = int(r["h"] or 0)
             m = int(r["m"] or 0)
-            pct_have = 100.0 * h / 20.0
-            if h > best_have:
-                best_have = h
-                best_team = {"code": team, "slots_with_copy": h, "pct_complete": round(pct_have, 2)}
-            if m > worst_missing_ct:
-                worst_missing_ct = m
-                worst_team = {
-                    "code": team,
-                    "slots_missing": m,
-                    "pct_complete": round(100.0 * (20 - m) / 20.0, 2),
-                }
+            spare = int(r["spare"] or 0)
+            dup_slots = int(r["dup_slots"] or 0)
+            pair_list.append((team, h, m, spare, dup_slots))
+
         if "most_completed_team" in include:
-            out["most_completed_team"] = best_team
+            incomplete = [(t, h, m) for t, h, m, _, _ in pair_list if h < 20]
+            if not incomplete:
+                out["most_completed_team"] = {
+                    "all_teams_complete": True,
+                    "code": None,
+                    "codes": [],
+                    "slots_with_copy": 20,
+                    "slots_missing": 0,
+                    "pct_complete": 100.0,
+                    "tied": False,
+                    "tie_note": None,
+                }
+            else:
+                max_h = max(h for _, h, _ in incomplete)
+                leaders = [(t, h, m) for t, h, m in incomplete if h == max_h]
+                leaders.sort(key=lambda x: x[0])
+                codes = [t for t, _, _ in leaders]
+                t0, h0, m0 = leaders[0]
+                tied = len(leaders) > 1
+                tie_note = f"Tied for closest: {', '.join(codes)}" if tied else None
+                out["most_completed_team"] = {
+                    "all_teams_complete": False,
+                    "code": t0,
+                    "codes": codes,
+                    "slots_with_copy": h0,
+                    "slots_missing": m0,
+                    "pct_complete": round(100.0 * h0 / 20.0, 2),
+                    "tied": tied,
+                    "tie_note": tie_note,
+                }
+
         if "most_missing_team" in include:
-            out["most_missing_team"] = worst_team
+            max_m = max(m for _, _, m, _, _ in pair_list)
+            if max_m <= 0:
+                out["most_missing_team"] = None
+            else:
+                worst = [(t, h, m) for t, h, m, _, _ in pair_list if m == max_m]
+                worst.sort(key=lambda x: x[0])
+                codes = [t for t, _, _ in worst]
+                t0, h0, m0 = worst[0]
+                tied = len(worst) > 1
+                tie_note = f"Tied for most missing: {', '.join(codes)}" if tied else None
+                out["most_missing_team"] = {
+                    "code": t0,
+                    "codes": codes,
+                    "slots_missing": m0,
+                    "pct_complete": round(100.0 * (20 - m0) / 20.0, 2),
+                    "tied": tied,
+                    "tie_note": tie_note,
+                }
+
+        if "most_duplicated_team" in include:
+            max_spare = max(s for _, _, _, s, _ in pair_list)
+            if max_spare <= 0:
+                out["most_duplicated_team"] = None
+            else:
+                hoard = [(t, h, m, s, d) for t, h, m, s, d in pair_list if s == max_spare]
+                hoard.sort(key=lambda x: x[0])
+                codes = [t for t, _, _, _, _ in hoard]
+                t0, _h0, _m0, s0, d0 = hoard[0]
+                tied = len(hoard) > 1
+                tie_note = f"Tied for most duplicate copies: {', '.join(codes)}" if tied else None
+                out["most_duplicated_team"] = {
+                    "code": t0,
+                    "codes": codes,
+                    "spare_copies": s0,
+                    "slots_with_duplicates": d0,
+                    "pct_slots_with_dup": round(100.0 * d0 / 20.0, 2),
+                    "tied": tied,
+                    "tie_note": tie_note,
+                }
 
     if "fwc_summary" in include:
         out["fwc_summary"] = get_category(conn, FWC_CODE)
+
+    if "team_shield_photo" in include:
+        out["team_shield_photo"] = _team_shield_photo_completion(conn)
+        out["teams_fully_complete"] = _teams_fully_complete_summary(conn)
 
     if "most_difficult_sticker" in include:
         out["most_difficult_sticker"] = {

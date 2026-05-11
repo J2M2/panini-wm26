@@ -121,6 +121,58 @@ pytest
 
 Track inventory changes through the API (`POST /packs/open`, `/stickers/add`, `/trades`, etc.) or by editing the DB—no separate raw spreadsheet step is required.
 
+## Deployment (HTTPS, phone, JSON import)
+
+The UI talks to the API over **`fetch`**. For a **phone on cellular** or any non-localhost client you need a **public HTTPS URL** (most hosts terminate TLS for you).
+
+### Single service (recommended)
+
+Build the web app **without** `VITE_API_BASE` so the SPA calls `/metrics`, `/snapshot/import`, etc. on the **same origin** as uvicorn (same as local “single server” mode).
+
+- **`PANINI_DB_PATH`** — absolute path to the SQLite file. Defaults to `data/panini_wm26.sqlite`. In Docker use a **mounted volume** (e.g. `/data/panini_wm26.sqlite`) so the DB survives container restarts.
+- **`PANINI_CORS_ORIGINS`** — optional comma-separated extra origins (see GitHub Pages below). Local Vite (`localhost:5173`) stays allowed by default.
+
+**Docker Compose** (API + UI + persistent DB volume):
+
+```bash
+docker compose up --build
+```
+
+Open **http://127.0.0.1:8080/**. Import snapshot JSON from Overview works from mobile browsers (file picker).
+
+**Docker image only:**
+
+```bash
+docker build -t panini .
+docker run --rm -p 8080:8080 -v panini-data:/data -e PANINI_DB_PATH=/data/panini_wm26.sqlite panini
+```
+
+**Fly.io:** edit [`fly.toml`](fly.toml) (`app` name), create a volume in the same region, then `fly deploy`. Set `PANINI_DB_PATH=/data/panini_wm26.sqlite` and mount `panini_data` → `/data` (see comments in `fly.toml`). HTTPS is automatic.
+
+### GitHub Pages UI + API elsewhere
+
+If you host only the **static** UI on `https://<user>.github.io/<repo>/`:
+
+1. Build with the API URL baked in (must match your deployed API, **HTTPS**):
+
+   ```bash
+   cd web && VITE_API_BASE=https://your-api.example.com npm run build
+   ```
+
+2. Publish `web/dist` to Pages (Actions artifact, branch, etc.).
+
+3. Allow that origin on the API, e.g.:
+
+   ```bash
+   export PANINI_CORS_ORIGINS=https://youruser.github.io
+   ```
+
+   (Trailing paths like `/repo` are not part of the origin—use the scheme + host only.)
+
+### PWA (“Add to Home Screen”)
+
+[`web/public/site.webmanifest`](web/public/site.webmanifest) is linked from the HTML and exposed at **`/site.webmanifest`** when `web/dist` is built. After deployment, use the browser’s install / Add to Home Screen option; JSON import still requires the API.
+
 ## Sticker references
 
 Use **`CATEGORY:SLOT`** everywhere (CLI mentally; API as JSON strings):
@@ -144,11 +196,13 @@ Team slots are **1–20** (1 = shield, 13 = team photo). FWC uses the same inter
 | Open one pack | `POST` | `/packs/open` | Body: `stickers` (array of refs), `per_pack` (default 7) |
 | Add / remove copies | `POST` | `/stickers/add`, `/stickers/remove` | `ref` + `count` |
 | Trade | `POST` | `/trades` | `give` / `take` ref lists; `strict_duplicates_only`, `allow_uneven` |
+| Undo last trade | `POST` | **`/trades/undo`** | Body: same `give` / `take` as the forward trade; restores qty and rolls back session trade counters |
 | Look up one sticker (qty + spares) | `GET` | `/stickers/{category}/{slot}` | e.g. `/stickers/MEX/5`, `/stickers/FWC/00`, or **`/stickers/00`** for the album-only **00** sticker |
 | Full team or FWC page | `GET` | `/categories/{code}` | e.g. `/categories/MEX`, `/categories/FWC` |
 | Export full album (backup) | `GET` | **`/snapshot`** | Same JSON as `export_json.py` (`schema_version` 3, includes **`session`**) |
 | Import snapshot | `POST` | **`/snapshot/import`** | Body = exported JSON. Query **`apply_session`** (default `true`): restore packs/trade counters only if the JSON has **`session`**; use `false` to restore **`qty`** only |
-| Fun aggregates | `GET` | `/analytics?include=...` | Comma-separated keys (see OpenAPI) |
+| Fun aggregates | `GET` | `/analytics?include=...` | Comma-separated keys (see OpenAPI); includes `team_shield_photo` |
+| Per-team pages | `GET` | **`/analytics/teams`** | All 48 teams: `%` complete, `shield_ok`, `team_photo_ok` (slot 1 / 13) |
 
 Full request/response shapes are in **`/docs`**.
 
@@ -164,6 +218,8 @@ Full request/response shapes are in **`/docs`**.
 | [`api/main.py`](api/main.py) | FastAPI app |
 | [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) | Main database (generated) |
 | [`web/src`](web/src) | Browser UI (Vite + TypeScript; [`web/src/types.ts`](web/src/types.ts) mirrors JSON export shape) |
+| [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`deploy/docker-entrypoint.sh`](deploy/docker-entrypoint.sh) | Production image: API + `web/dist`, optional volume for SQLite |
+| [`fly.toml`](fly.toml) | Example Fly.io app + volume mount for `/data` |
 
 ## Troubleshooting
 

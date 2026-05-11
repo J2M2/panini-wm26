@@ -5,6 +5,7 @@ import type {
   PaniniSnapshot,
   SessionSnapshot,
   StickerDetail,
+  TeamAnalyticsRow,
   TradeResponse,
 } from "./types";
 import { stickerPathFromRef } from "./parseRefs";
@@ -86,9 +87,17 @@ export function getMetrics(): Promise<InventoryMetrics> {
 }
 
 export function getAnalytics(
-  include = "most_repeated,most_completed_team,most_missing_team,fwc_summary",
+  include = "most_repeated,most_completed_team,most_missing_team,most_duplicated_team,fwc_summary,team_shield_photo",
 ): Promise<Record<string, unknown>> {
   return apiGetJson(`/analytics?include=${encodeURIComponent(include)}`);
+}
+
+export function getAnalyticsTeams(): Promise<{ teams: TeamAnalyticsRow[] }> {
+  return apiGetJson("/analytics/teams");
+}
+
+export function getStickerRefsCatalog(): Promise<{ refs: string[] }> {
+  return apiGetJson("/catalog/sticker-refs");
 }
 
 export function getMissingList(): Promise<ListStickerRow[]> {
@@ -135,6 +144,10 @@ export function executeTrade(
     strict_duplicates_only,
     allow_uneven,
   });
+}
+
+export function undoTrade(give: string[], take: string[]): Promise<TradeResponse> {
+  return apiSendJson("POST", "/trades/undo", { give, take });
 }
 
 export function getSnapshot(): Promise<PaniniSnapshot> {

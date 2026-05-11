@@ -37,6 +37,13 @@ class TradeRequest(BaseModel):
     allow_uneven: bool = False
 
 
+class TradeUndoBody(BaseModel):
+    """Same ``give`` / ``take`` lists as the completed forward trade (POST /trades)."""
+
+    give: list[str] = Field(..., min_length=1)
+    take: list[str] = Field(..., min_length=1)
+
+
 class Message(BaseModel):
     detail: str
 

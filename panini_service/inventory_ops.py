@@ -170,3 +170,55 @@ def execute_trade(
         conn.execute("ROLLBACK TO SAVEPOINT sp_trade")
         raise
     return result
+
+
+def reverse_trade(
+    conn: sqlite3.Connection,
+    forward_give: list[str],
+    forward_take: list[str],
+) -> TradeResult:
+    """
+    Undo a prior ``execute_trade(forward_give, forward_take, ...)``:
+    restore each forward_give slot (+1) and remove each forward_take slot (-1),
+    and roll back session trade counters for that forward trade.
+    """
+    ensure_schema(conn)
+    result = TradeResult()
+    if not forward_give or not forward_take:
+        raise ValueError("undo requires non-empty give and take lists from the forward trade")
+
+    take_pairs: list[tuple[str, str, str]] = []
+    for ref in forward_take:
+        cat, slot = parse_sticker_ref(ref)
+        q = _get_qty(conn, cat, slot)
+        if q < 1:
+            raise TradeImpossibleError(
+                f"cannot undo: {ref} qty is 0 (already removed or trade did not add it)",
+            )
+        take_pairs.append((ref, cat, slot))
+
+    give_pairs: list[tuple[str, str, str]] = []
+    for ref in forward_give:
+        cat, slot = parse_sticker_ref(ref)
+        give_pairs.append((ref, cat, slot))
+
+    conn.execute("SAVEPOINT sp_trade_undo")
+    try:
+        for ref, cat, slot in take_pairs:
+            before = _get_qty(conn, cat, slot)
+            _set_qty_delta(conn, cat, slot, -1)
+            result.gave.append({"ref": ref, "qty_before": before, "qty_after": before - 1})
+        for ref, cat, slot in give_pairs:
+            before = _get_qty(conn, cat, slot)
+            _set_qty_delta(conn, cat, slot, +1)
+            result.received.append({"ref": ref, "qty_before": before, "qty_after": before + 1})
+        update_session_stats(
+            conn,
+            traded_out_delta=-len(forward_give),
+            traded_in_delta=-len(forward_take),
+        )
+        conn.execute("RELEASE SAVEPOINT sp_trade_undo")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT sp_trade_undo")
+        raise
+    return result
