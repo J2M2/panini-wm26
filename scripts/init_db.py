@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Create schema, seed catalog (980 stickers), set baseline inventory qty=1."""
+"""Create schema, seed catalog (980 stickers), empty album (qty=0 per slot).
+
+New installs (e.g. Fly.io) should start with no stickers owned. For Panini
+semicolon CSV import (missing + duplicates), ``import_raw_csv`` lifts an
+all-zero album to qty=1 before applying cells — same as the old baseline.
+"""
 
 from __future__ import annotations
 
@@ -55,7 +60,12 @@ CREATE TABLE session_stats (
 """
 
 
-def seed(conn: sqlite3.Connection) -> None:
+def seed(conn: sqlite3.Connection, *, album_owned: bool = False) -> None:
+    """Insert categories, stickers, inventory rows, session_stats.
+
+    ``album_owned=False`` (default): empty album, every ``qty=0`` — for new installs.
+    ``album_owned=True``: classic dev baseline ``qty=1`` everywhere (used by tests).
+    """
     conn.executescript(SCHEMA)
 
     conn.execute(
@@ -88,11 +98,13 @@ def seed(conn: sqlite3.Connection) -> None:
     if count != expected:
         raise RuntimeError(f"Sticker count {count} != expected {expected}")
 
+    qty = 1 if album_owned else 0
     conn.execute(
         """
         INSERT INTO inventory (sticker_id, qty)
-        SELECT id, 1 FROM stickers
-        """
+        SELECT id, ? FROM stickers
+        """,
+        (qty,),
     )
 
     conn.execute(
@@ -131,7 +143,7 @@ def main() -> None:
     finally:
         conn.close()
 
-    print(f"Initialized {args.db} with {expected_sticker_count()} stickers (baseline qty=1).")
+    print(f"Initialized {args.db} with {expected_sticker_count()} stickers (empty album, qty=0 per slot).")
 
 
 if __name__ == "__main__":

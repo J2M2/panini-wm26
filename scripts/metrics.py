@@ -11,7 +11,7 @@ each sticker independently uniform over all album slots (980). Real Panini packs
 are not uniform (rarities, sheet layout) --- treat outputs as order-of-magnitude
 guesses, not guarantees.
 
-Import accounting (missing/dup CSVs on baseline qty=1):
+Import accounting (missing/dup CSVs on classic baseline qty=1 after optional empty lift):
 
   sum(qty) = 980 - (missing CSV cells) + (duplicate CSV cells)
 """

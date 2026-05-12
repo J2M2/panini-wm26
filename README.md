@@ -13,7 +13,7 @@ pip install -r requirements-api.txt
 
 ## Quick start
 
-### 1. Create the database (catalog + baseline inventory)
+### 1. Create the database (catalog + empty album)
 
 From the repo root:
 
@@ -21,7 +21,9 @@ From the repo root:
 python scripts/init_db.py --force
 ```
 
-This creates [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) with **980** sticker slots (FWC + 48 teams × 20) and baseline `qty = 1` per slot.
+This creates [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) with **980** sticker slots (FWC + 48 teams × 20) and **`qty = 0` everywhere** (no stickers owned yet). Deployments (e.g. Fly.io) use the same default on first boot.
+
+To import Panini’s semicolon **missing** / **duplicates** CSVs, use [`scripts/import_raw_csv.py`](scripts/import_raw_csv.py): if the album is still completely empty, the script temporarily sets every slot to `qty = 1`, then applies the CSV rules (same behavior as before).
 
 ### 2. Session table (existing databases)
 
@@ -213,7 +215,7 @@ Full request/response shapes are in **`/docs`**.
 | Path | Role |
 |------|------|
 | [`scripts/panini_catalog.py`](scripts/panini_catalog.py) | Team codes, FWC slots, roles |
-| [`scripts/init_db.py`](scripts/init_db.py) | Schema + seed |
+| [`scripts/init_db.py`](scripts/init_db.py) | Schema + catalog; empty album (`qty=0`) |
 | [`scripts/metrics.py`](scripts/metrics.py) | CLI metrics + validation + MC estimates |
 | [`scripts/freeze_album.py`](scripts/freeze_album.py) | Write `data/frozen/album_*.json` + `album_latest.json` for local backup / restore after tests |
 | [`panini_service/snapshot.py`](panini_service/snapshot.py) | Shared export/import logic for CLI + API |

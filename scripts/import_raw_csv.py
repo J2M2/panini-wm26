@@ -3,7 +3,9 @@
 Import raw Panini export CSVs into inventory.
 
 Baseline rules (reproducible):
-  1. Expect database initialized by init_db.py: every sticker has qty=1.
+  1. Expect database initialized by init_db.py (empty album, all qty=0). If every
+     slot is still qty=0 when you run this script, all quantities are set to 1
+     first (classic “full singles” baseline), then steps 2–3 apply.
   2. Missing CSV: each non-empty cell is a slot number you do NOT have → set qty=0
      for that sticker.
   3. Duplicates CSV: each non-empty cell is one EXTRA copy you own → increment qty
@@ -125,6 +127,16 @@ def collect_cells(header: list[str], data_rows: list[list[str | None]], categori
             yield cat, slot
 
 
+def ensure_csv_baseline_if_empty_album(conn: sqlite3.Connection) -> bool:
+    """Panini CSV semantics assume qty=1 then missing zeros holes. Fresh init_db is all 0."""
+    row = conn.execute("SELECT COALESCE(SUM(qty), 0) AS t FROM inventory").fetchone()
+    total = int(row["t"] if row is not None else 0)
+    if total != 0:
+        return False
+    conn.execute("UPDATE inventory SET qty = 1")
+    return True
+
+
 def apply_missing(conn: sqlite3.Connection, path: Path) -> int:
     header, data_rows = read_raw_grid(path)
     categories = validate_header(header)
@@ -166,6 +178,7 @@ def main() -> None:
 
     conn = connect(args.db)
     try:
+        lifted = ensure_csv_baseline_if_empty_album(conn)
         missing_ops = 0
         dup_ops = 0
         if args.missing:
@@ -176,7 +189,8 @@ def main() -> None:
     finally:
         conn.close()
 
-    print(f"Applied missing cells: {missing_ops}; duplicate increments: {dup_ops}")
+    note = " (lifted from empty album to qty=1 before import)" if lifted else ""
+    print(f"Applied missing cells: {missing_ops}; duplicate increments: {dup_ops}{note}")
 
 
 if __name__ == "__main__":
