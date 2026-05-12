@@ -1,9 +1,14 @@
 # Personal album state (SQLite DB, exports, derived matrices — keep local only)
 data/*.sqlite
+data/*.sqlite-wal
+data/*.sqlite-shm
 data/*.db
 data/panini_snapshot.json
 data/matrix.csv
 data/frozen/*.json
+
+# Snapshot exports at repo root (never commit)
+panini_snapshot*.json
 
 # Raw spreadsheet dumps before import (repo root)
 panini_raw*.csv
@@ -17,3 +22,4 @@ __pycache__/
 # Web UI (Vite)
 web/node_modules/
 web/dist/
+web/tsconfig.tsbuildinfo
