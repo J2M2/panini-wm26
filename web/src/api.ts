@@ -6,6 +6,7 @@ import type {
   PackOutlookResponse,
   PackUndoResponse,
   PaniniSnapshot,
+  AuthMe,
   SessionSnapshot,
   StickerDetail,
   TeamAnalyticsRow,
@@ -32,6 +33,9 @@ export function apiBase(): string {
   return "";
 }
 
+/** Credentials: each browser / login gets its own album DB via cookie. */
+const API_CRED: RequestInit = { credentials: "include" };
+
 async function parseError(res: Response): Promise<string> {
   const t = await res.text();
   try {
@@ -46,7 +50,7 @@ async function parseError(res: Response): Promise<string> {
 
 export async function apiGetJson<T>(path: string): Promise<T> {
   const url = `${apiBase()}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { ...API_CRED });
   if (!res.ok) {
     const detail = await parseError(res);
     throw new ApiError(detail, res.status, detail);
@@ -56,7 +60,7 @@ export async function apiGetJson<T>(path: string): Promise<T> {
 
 export async function apiGetText(path: string): Promise<string> {
   const url = `${apiBase()}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { ...API_CRED });
   if (!res.ok) {
     const detail = await parseError(res);
     throw new ApiError(detail, res.status, detail);
@@ -71,6 +75,7 @@ export async function apiSendJson<T>(
 ): Promise<T> {
   const url = `${apiBase()}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
+    ...API_CRED,
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -83,6 +88,32 @@ export async function apiSendJson<T>(
   const ct = res.headers.get("content-type") ?? "";
   if (ct.includes("application/json")) return res.json() as Promise<T>;
   return (await res.text()) as T;
+}
+
+export function getAuthMe(): Promise<AuthMe> {
+  return apiGetJson("/auth/me");
+}
+
+export function registerUser(
+  username: string,
+  password: string,
+): Promise<{ ok: boolean; username: string; id: number }> {
+  return apiSendJson("POST", "/auth/register", { username, password });
+}
+
+export function loginUser(
+  username: string,
+  password: string,
+): Promise<{ ok: boolean; username: string; id: number }> {
+  return apiSendJson("POST", "/auth/login", { username, password });
+}
+
+export function logoutUser(): Promise<{ ok: boolean }> {
+  return apiSendJson("POST", "/auth/logout");
+}
+
+export function resetAlbum(): Promise<{ ok: boolean }> {
+  return apiSendJson("POST", "/album/reset");
 }
 
 export function getMetrics(): Promise<InventoryMetrics> {

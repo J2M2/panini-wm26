@@ -10,7 +10,7 @@ from typing import Any
 
 from dataclasses import asdict
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +19,15 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from panini_service.album_reset import reset_album_collection  # noqa: E402
+from panini_service.auth_context import (  # noqa: E402
+    AlbumContext,
+    apply_cookie_to_response,
+    delete_guest_album_for_cookie,
+    make_user_cookie_value,
+    resolve_album_context,
+)
+from panini_service.data_layout import ensure_data_directories, legacy_db_path, use_legacy_single_db  # noqa: E402
 from panini_service.db import connect  # noqa: E402
 from panini_service.inventory_ops import (  # noqa: E402
     PackOpenResult,
@@ -57,9 +66,21 @@ from panini_service.refs import (  # noqa: E402
     parse_category_slot_path,
 )
 from panini_service.session_store import set_session_stats  # noqa: E402
+from panini_service.bootstrap_db import create_fresh_album_file  # noqa: E402
+from panini_service.registry import create_user, ensure_registry_schema, get_user_by_id, verify_login  # noqa: E402
 from panini_service.snapshot import build_full_snapshot, import_album_snapshot  # noqa: E402
 
-from .schemas import PackOpen, PackUndo, SessionPatch, StickerAdd, StickerRemove, TradeRequest, TradeUndoBody  # noqa: E402
+from .schemas import (  # noqa: E402
+    LoginBody,
+    PackOpen,
+    PackUndo,
+    RegisterBody,
+    SessionPatch,
+    StickerAdd,
+    StickerRemove,
+    TradeRequest,
+    TradeUndoBody,
+)
 
 
 def _cors_allow_origins() -> list[str]:
@@ -80,8 +101,19 @@ def _cors_allow_origins() -> list[str]:
     return out
 
 
-def get_db():
-    conn = connect()
+def get_album_context(request: Request, response: Response) -> AlbumContext:
+    ctx = resolve_album_context(dict(request.cookies))
+    if ctx.set_cookie_token:
+        apply_cookie_to_response(response, ctx.set_cookie_token)
+    if ctx.kind == "user" and ctx.user_id is not None:
+        row = get_user_by_id(ctx.user_id)
+        if row:
+            ctx.username = row.username
+    return ctx
+
+
+def get_db(ctx: AlbumContext = Depends(get_album_context)):
+    conn = connect(ctx.db_path)
     ensure_schema(conn)
     try:
         yield conn
@@ -95,10 +127,14 @@ def get_db():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    conn = connect()
-    ensure_schema(conn)
-    conn.commit()
-    conn.close()
+    ensure_data_directories()
+    if use_legacy_single_db():
+        p = legacy_db_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if not p.is_file():
+            create_fresh_album_file(p)
+    else:
+        ensure_registry_schema()
     yield
 
 
@@ -129,6 +165,52 @@ async def trade_impossible_handler(_, exc: TradeImpossibleError):
     from fastapi.responses import JSONResponse
 
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.get("/auth/me")
+def get_auth_me(ctx: AlbumContext = Depends(get_album_context)):
+    return {
+        "mode": ctx.kind,
+        "username": ctx.username,
+        "user_id": ctx.user_id if ctx.kind == "user" else None,
+    }
+
+
+@app.post("/auth/register")
+def post_auth_register(body: RegisterBody, response: Response):
+    try:
+        row = create_user(body.username, body.password)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    from panini_service.registry import user_album_path
+
+    create_fresh_album_file(user_album_path(row.id))
+    apply_cookie_to_response(response, make_user_cookie_value(row.id))
+    return {"ok": True, "username": row.username, "id": row.id}
+
+
+@app.post("/auth/login")
+def post_auth_login(body: LoginBody, response: Response):
+    row = verify_login(body.username, body.password)
+    if row is None:
+        raise HTTPException(401, "Invalid username or password.")
+    apply_cookie_to_response(response, make_user_cookie_value(row.id))
+    return {"ok": True, "username": row.username, "id": row.id}
+
+
+@app.post("/auth/logout")
+def post_auth_logout(request: Request, response: Response):
+    delete_guest_album_for_cookie(dict(request.cookies))
+    ctx = resolve_album_context({}, force_new_guest=True)
+    if ctx.set_cookie_token:
+        apply_cookie_to_response(response, ctx.set_cookie_token)
+    return {"ok": True}
+
+
+@app.post("/album/reset")
+def post_album_reset(conn=Depends(get_db)):
+    reset_album_collection(conn)
+    return {"ok": True}
 
 
 @app.get("/metrics")

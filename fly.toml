@@ -2,7 +2,8 @@
 #   1. fly auth signup   (or: fly auth login)
 #   2. fly apps create panini-wm26          (must match app = below, globally unique)
 #   3. fly volumes create panini_data --region ams --size 1
-#   4. fly deploy
+#   4. fly secrets set PANINI_AUTH_SECRET="$(openssl rand -hex 32)"   # required for signed session cookies
+#   5. fly deploy
 # After deploy your app is at https://panini-wm26.fly.dev
 
 app = "panini-wm26"
@@ -11,7 +12,8 @@ primary_region = "ams"
 [build]
 
 [env]
-  PANINI_DB_PATH = "/data/panini_wm26.sqlite"
+  PANINI_DATA_DIR = "/data"
+  PANINI_COOKIE_SECURE = "1"
 
 [http_service]
   internal_port = 8080

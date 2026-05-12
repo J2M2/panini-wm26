@@ -58,3 +58,13 @@ class Message(BaseModel):
 class ErrorBody(BaseModel):
     detail: str
     warnings: list[str] | None = None
+
+
+class RegisterBody(BaseModel):
+    username: str = Field(..., min_length=1, max_length=32)
+    password: str = Field(..., min_length=1)
+
+
+class LoginBody(BaseModel):
+    username: str
+    password: str

@@ -2,6 +2,10 @@
 data/*.sqlite
 data/*.sqlite-wal
 data/*.sqlite-shm
+data/registry.sqlite
+data/albums/*.sqlite
+data/albums/*.sqlite-wal
+data/albums/*.sqlite-shm
 data/*.db
 data/panini_snapshot.json
 data/matrix.csv

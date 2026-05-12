@@ -6,6 +6,7 @@ import {
   getAlbumTable,
   getAnalytics,
   getAnalyticsTeams,
+  getAuthMe,
   getDuplicatesCompact,
   getDuplicatesList,
   getMetrics,
@@ -16,9 +17,13 @@ import {
   getSnapshot,
   importSnapshot,
   listsPrintUrl,
+  loginUser,
+  logoutUser,
   openPack,
   patchSession,
+  registerUser,
   removeSticker,
+  resetAlbum,
   undoPackOpen,
   undoTrade,
 } from "./api";
@@ -32,6 +37,7 @@ import {
   stickerPathFromRef,
   totalBatchCount,
 } from "./parseRefs";
+import { attachStickerRefAutocomplete } from "./refAutocomplete";
 import type {
   ListStickerRow,
   PackOutlookResponse,
@@ -137,6 +143,11 @@ const packOutlookPage = {
   reload: async (): Promise<void> => {},
 };
 
+/** Overview metrics + analytics cards; refetch after auth / reset / import. */
+const overviewPage = {
+  reload: async (): Promise<void> => {},
+};
+
 async function loadTradePreviewData(): Promise<void> {
   tradePreviewLoadError = null;
   try {
@@ -198,6 +209,141 @@ function renderTradeDupPicker(): void {
   }
 }
 
+function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
+  const wrap = el("div", { class: "card account-panel" });
+  wrap.appendChild(el("h3", { style: "margin-top:0" }, "Your collection"));
+  const status = el("p", {
+    class: "muted",
+    style: "margin:0 0 0.75rem;font-size:0.85rem;line-height:1.45",
+    id: "account-status",
+  });
+  wrap.appendChild(status);
+
+  async function refreshStatus(): Promise<void> {
+    try {
+      const me = await getAuthMe();
+      if (me.mode === "user" && me.username) {
+        status.textContent = `Signed in as ${me.username} (saved on server).`;
+      } else if (me.mode === "legacy") {
+        status.textContent = "Shared database (legacy).";
+      } else {
+        status.textContent = "Guest — this browser only. Register or use JSON backup.";
+      }
+    } catch (e) {
+      status.textContent = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  const regUser = el("input", {
+    type: "text",
+    placeholder: "username (a-z, 0-9, _)",
+    autocomplete: "username",
+  }) as HTMLInputElement;
+  const regPw = el("input", {
+    type: "password",
+    placeholder: "password (8+ chars)",
+    autocomplete: "new-password",
+  }) as HTMLInputElement;
+  const logUser = el("input", {
+    type: "text",
+    placeholder: "username",
+    autocomplete: "username",
+  }) as HTMLInputElement;
+  const logPw = el("input", {
+    type: "password",
+    placeholder: "password",
+    autocomplete: "current-password",
+  }) as HTMLInputElement;
+
+  const err = el("div", { class: "msg-error", id: "account-err", style: "display:none;margin-top:0.5rem" });
+  const ok = el("div", { class: "msg-ok", id: "account-ok", style: "display:none;margin-top:0.5rem" });
+
+  wrap.appendChild(
+    el("p", { class: "muted", style: "margin:0 0 0.35rem;font-size:0.78rem" }, "New account (max 50)"),
+  );
+  wrap.appendChild(regUser);
+  wrap.appendChild(regPw);
+  const btnReg = el("button", { class: "btn btn-primary", type: "button", style: "margin:0.35rem 0 0.75rem" }, "Register");
+  btnReg.addEventListener("click", async () => {
+    err.style.display = "none";
+    ok.style.display = "none";
+    try {
+      await registerUser(regUser.value.trim(), regPw.value);
+      ok.textContent = "Registered and signed in.";
+      ok.style.display = "block";
+      regPw.value = "";
+      await refreshStatus();
+      await onAlbumChanged();
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
+  wrap.appendChild(btnReg);
+
+  wrap.appendChild(el("p", { class: "muted", style: "margin:0 0 0.35rem;font-size:0.78rem" }, "Sign in"));
+  wrap.appendChild(logUser);
+  wrap.appendChild(logPw);
+  const btnLog = el("button", { class: "btn", type: "button", style: "margin:0.35rem 0.35rem 0 0" }, "Log in");
+  btnLog.addEventListener("click", async () => {
+    err.style.display = "none";
+    ok.style.display = "none";
+    try {
+      await loginUser(logUser.value.trim(), logPw.value);
+      ok.textContent = "Signed in.";
+      ok.style.display = "block";
+      logPw.value = "";
+      await refreshStatus();
+      await onAlbumChanged();
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
+  wrap.appendChild(btnLog);
+
+  const btnOut = el("button", { class: "btn", type: "button", style: "margin-right:0.35rem" }, "Log out");
+  btnOut.addEventListener("click", async () => {
+    err.style.display = "none";
+    ok.style.display = "none";
+    try {
+      await logoutUser();
+      await refreshStatus();
+      await onAlbumChanged();
+      ok.textContent = "Logged out — new empty guest album.";
+      ok.style.display = "block";
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
+  wrap.appendChild(btnOut);
+
+  const btnReset = el("button", { class: "btn", type: "button" }, "Reset album");
+  btnReset.title = "Clear all stickers and session counters for this profile.";
+  btnReset.addEventListener("click", async () => {
+    if (!window.confirm("Reset this album to empty (all slots qty 0, session counters 0)? This cannot be undone."))
+      return;
+    err.style.display = "none";
+    ok.style.display = "none";
+    try {
+      await resetAlbum();
+      await onAlbumChanged();
+      ok.textContent = "Album reset.";
+      ok.style.display = "block";
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
+  wrap.appendChild(btnReset);
+
+  wrap.appendChild(err);
+  wrap.appendChild(ok);
+  void refreshStatus();
+  return wrap;
+}
+
 export function initApp(root: HTMLElement): void {
   root.innerHTML = "";
   const sidebar = el("nav", { class: "sidebar" });
@@ -221,6 +367,12 @@ export function initApp(root: HTMLElement): void {
 
   const main = el("main", {});
   main.appendChild(buildOverview());
+  sidebar.appendChild(
+    buildAccountPanel(async () => {
+      await overviewPage.reload();
+      void loadTradePreviewData();
+    }),
+  );
   main.appendChild(buildAnalytics());
   main.appendChild(buildPackOutlook());
   main.appendChild(buildDesk());
@@ -303,6 +455,29 @@ function analyticsPctRing(pct: number, innerLabel?: string): HTMLElement {
   if (innerLabel) inner.appendChild(el("span", { class: "pct-ring-sub" }, innerLabel));
   outer.appendChild(inner);
   return outer;
+}
+
+/** Large % + progress bar for unique-slot completion (Overview). */
+function collectionProgressBlock(pct: number, filled: number, total: number): HTMLElement {
+  const p = Math.min(100, Math.max(0, pct));
+  const wrap = el("div", { class: "collection-progress" });
+  const head = el("div", { class: "collection-progress-head" });
+  head.appendChild(el("span", { class: "collection-progress-pct" }, `${Math.round(p)}%`));
+  head.appendChild(el("span", { class: "collection-progress-meta" }, `${filled} / ${total} unique`));
+  wrap.appendChild(head);
+  const track = el("div", {
+    class: "collection-progress-track",
+    role: "progressbar",
+    "aria-valuenow": String(Math.round(p)),
+    "aria-valuemin": "0",
+    "aria-valuemax": "100",
+    "aria-label": `Album ${Math.round(p)} percent complete`,
+  });
+  const fill = el("div", { class: "collection-progress-fill" });
+  fill.style.width = `${p}%`;
+  track.appendChild(fill);
+  wrap.appendChild(track);
+  return wrap;
 }
 
 function _bool(x: unknown): boolean {
@@ -785,7 +960,7 @@ function buildOverview(): HTMLElement {
   sessionEditHost.appendChild(editActions);
 
   const sessionHead = el("div", { class: "session-head" });
-  sessionHead.appendChild(el("h3", {}, "Session counters"));
+  sessionHead.appendChild(el("h3", {}, "Session"));
   const editSessionBtn = el("button", { class: "btn", type: "button" }, "Edit");
   sessionHead.appendChild(editSessionBtn);
 
@@ -848,13 +1023,15 @@ function buildOverview(): HTMLElement {
       const m = await getMetrics();
       metricsHost.innerHTML = "";
       metricsHost.appendChild(el("h3", {}, "Collection"));
+      metricsHost.appendChild(
+        collectionProgressBlock(m.pct_complete_unique, m.unique_slots_filled, m.album_unique_slots),
+      );
       const g = el("div", { class: "grid-metrics" });
       const cells: [string, string][] = [
-        ["Complete (unique)", `${m.pct_complete_unique}%`],
-        ["Filled slots", String(m.unique_slots_filled)],
         ["Missing", String(m.unique_slots_missing)],
+        ["Filled", String(m.unique_slots_filled)],
         ["Spares", String(m.spare_copies)],
-        ["Physical total", String(m.total_physical_stickers)],
+        ["Total stickers", String(m.total_physical_stickers)],
       ];
       for (const [label, val] of cells) {
         g.appendChild(
@@ -881,7 +1058,7 @@ function buildOverview(): HTMLElement {
       analyticsHost.appendChild(el("h3", {}, "Analytics"));
       analyticsHost.appendChild(renderAnalyticsWidgets(an));
       const foot = el("p", { class: "analytics-card-foot" });
-      const link = el("a", { href: "#", class: "analytics-full-link" }, "Full team analytics →");
+      const link = el("a", { href: "#", class: "analytics-full-link" }, "Open team analytics");
       link.addEventListener("click", (ev) => {
         ev.preventDefault();
         showView("analytics");
@@ -897,14 +1074,14 @@ function buildOverview(): HTMLElement {
 
   sessionHost.appendChild(sessionHead);
   sessionHost.appendChild(
-    el("p", { class: "muted", style: "margin:0 0 0.75rem;font-size:0.9rem" }, "Pack opens and trades update these automatically. Use Edit to correct them if your notes drift."),
+    el("p", { class: "muted", style: "margin:0 0 0.75rem;font-size:0.85rem" }, "From packs and trades. Edit if you need to fix counts."),
   );
   sessionHost.appendChild(sessionReadHost);
   sessionHost.appendChild(sessionEditHost);
   sessionHost.appendChild(sessionMsg);
   sessionHost.appendChild(sessionErr);
 
-  ioHost.appendChild(el("h3", {}, "Import / export"));
+  ioHost.appendChild(el("h3", {}, "Backup"));
   const ioRow = el("div", { class: "row" });
   const exportBtn = el("button", { class: "btn btn-primary", type: "button" }, "Download snapshot JSON");
   exportBtn.addEventListener("click", async () => {
@@ -946,7 +1123,7 @@ function buildOverview(): HTMLElement {
     fileInput.value = "";
   });
   ioHost.appendChild(
-    el("div", { class: "checkbox-row" }, applySess, el("label", {}, "Restore session from file (if present)")),
+    el("div", { class: "checkbox-row" }, applySess, el("label", {}, "Include session counters")),
   );
   ioHost.appendChild(el("label", { class: "field" }, "Import snapshot JSON"));
   ioHost.appendChild(fileInput);
@@ -957,6 +1134,7 @@ function buildOverview(): HTMLElement {
   refresh.addEventListener("click", () => loadMetrics());
   section.insertBefore(refresh, metricsHost);
 
+  overviewPage.reload = loadMetrics;
   loadMetrics();
   return section;
 }
@@ -1077,36 +1255,41 @@ function buildLists(): HTMLElement {
   views.lists = section;
   section.appendChild(el("h2", {}, "Lists"));
 
-  const LISTS_INTRO =
-    "Full album table (left): filter by type, status, or search text; a single valid ref (e.g. MEX:1) filters that slot only, not MEX:10. Click a row for details. Look up (Enter) opens the same card on the right as Desk. Copy / printable still use compact missing & duplicate lists.";
-
   const lead = el("p", { class: "lists-lead" });
-  lead.textContent = `${LISTS_INTRO}Use Reload to refresh counts.`;
+  lead.textContent = "Loading…";
   section.appendChild(lead);
 
   const toolbar = el("div", { class: "lists-toolbar" });
   const loadBtn = el("button", { class: "btn btn-primary", type: "button" }, "Reload");
-  const copyMiss = el("button", { class: "btn", type: "button" }, "Copy missing (compact)");
+  const copyMiss = el("button", {
+    class: "btn",
+    type: "button",
+    title: "Copy compact missing list",
+  }, "Copy missing");
   copyMiss.addEventListener("click", async () => {
     try {
       const t = await getMissingCompact();
       await navigator.clipboard.writeText(t);
       copyMiss.textContent = "Copied!";
       setTimeout(() => {
-        copyMiss.textContent = "Copy missing (compact)";
+        copyMiss.textContent = "Copy missing";
       }, 1500);
     } catch (e) {
       alert(String(e));
     }
   });
-  const copyDup = el("button", { class: "btn", type: "button" }, "Copy duplicates (compact)");
+  const copyDup = el("button", {
+    class: "btn",
+    type: "button",
+    title: "Copy compact duplicates list",
+  }, "Copy dups");
   copyDup.addEventListener("click", async () => {
     try {
       const t = await getDuplicatesCompact();
       await navigator.clipboard.writeText(t);
       copyDup.textContent = "Copied!";
       setTimeout(() => {
-        copyDup.textContent = "Copy duplicates (compact)";
+        copyDup.textContent = "Copy dups";
       }, 1500);
     } catch (e) {
       alert(String(e));
@@ -1114,8 +1297,8 @@ function buildLists(): HTMLElement {
   });
   const printLink = el(
     "a",
-    { href: listsPrintUrl(), target: "_blank", rel: "noopener", class: "lists-print-link" },
-    "Printable sheet",
+    { href: listsPrintUrl(), target: "_blank", rel: "noopener", class: "lists-print-link", title: "Opens printable page" },
+    "Print",
   );
   toolbar.append(loadBtn, copyMiss, copyDup, printLink);
   section.appendChild(toolbar);
@@ -1125,7 +1308,7 @@ function buildLists(): HTMLElement {
   const searchInput = el("input", {
     type: "text",
     class: "lists-search-input",
-    placeholder: "Text filter, or one ref (MEX:1) for exact slot. Enter → Look up.",
+    placeholder: "Filter or ref (e.g. MEX:1) · Enter = look up",
     autocomplete: "off",
     spellcheck: false,
   }) as HTMLInputElement;
@@ -1133,6 +1316,7 @@ function buildLists(): HTMLElement {
   const searchGo = el("button", { class: "btn btn-primary", type: "button" }, "Look up");
   searchWrap.append(searchField, searchGo);
   section.appendChild(searchWrap);
+  attachStickerRefAutocomplete(searchInput);
 
   const listsMain = el("div", { class: "lists-main" });
 
@@ -1165,7 +1349,7 @@ function buildLists(): HTMLElement {
   albumToolbar.append(typeFilter, statusFilter);
 
   const legend = el("div", { class: "lists-legend", "aria-label": "Sticker type colors" });
-  legend.appendChild(el("span", { class: "lists-legend-title" }, "Ref colors"));
+  legend.appendChild(el("span", { class: "lists-legend-title" }, "Types"));
   const legendPairs: [string, string][] = [
     ["lists-line-ref--shield", "Shield"],
     ["lists-line-ref--photo", "Team picture"],
@@ -1193,7 +1377,6 @@ function buildLists(): HTMLElement {
       el("th", { scope: "col" }, "Status"),
       el("th", { scope: "col" }, "Qty"),
       el("th", { scope: "col" }, "Spare"),
-      el("th", { scope: "col" }, "Album"),
     ),
   );
   const albumTbody = el("tbody");
@@ -1202,15 +1385,11 @@ function buildLists(): HTMLElement {
   listsMain.append(albumToolbar, legend, albumScroll);
 
   const inspector = el("aside", { class: "lists-inspector card" });
-  inspector.appendChild(el("h3", { class: "lists-inspector-title" }, "Sticker check"));
+  inspector.appendChild(el("h3", { class: "lists-inspector-title" }, "Details"));
   const inspectStatus = el("div", { class: "lists-inspector-status", hidden: true });
   const inspectBody = el("div", { class: "lists-inspector-body" });
   inspectBody.appendChild(
-    el(
-      "p",
-      { class: "lists-empty lists-inspector-hint" },
-      "Click a table row or use Look up (Enter). Same card as Desk lookup.",
-    ),
+    el("p", { class: "lists-empty lists-inspector-hint" }, "Tap a row or look up a ref."),
   );
   const inspectFoot = el("div", { class: "lists-inspector-foot" });
   const deskBtn = el("button", { class: "btn", type: "button", disabled: true }, "Open in Desk");
@@ -1287,8 +1466,6 @@ function buildLists(): HTMLElement {
     tr.appendChild(tdSt);
     tr.appendChild(el("td", { class: "ref" }, String(d.qty)));
     tr.appendChild(el("td", { class: "ref" }, String(d.spare_copies)));
-    const paste = albumPasteLineForDetail(d);
-    tr.appendChild(el("td", { class: "lists-album-td-album ref", title: paste }, paste));
     return tr;
   }
 
@@ -1302,7 +1479,7 @@ function buildLists(): HTMLElement {
           {},
           el(
             "td",
-            { colspan: "8", class: "lists-album-empty" },
+            { colspan: "7", class: "lists-album-empty" },
             albumRows.length === 0 ? "Loading or no data." : "No rows match filters or search.",
           ),
         ),
@@ -1338,7 +1515,7 @@ function buildLists(): HTMLElement {
       if (expanded.length > 1) {
         inspectStatus.hidden = false;
         inspectStatus.appendChild(
-          el("div", { class: "msg-error" }, "Enter one sticker at a time (no comma lists here)."),
+          el("div", { class: "msg-error" }, "One ref at a time."),
         );
         return;
       }
@@ -1370,7 +1547,7 @@ function buildLists(): HTMLElement {
       el(
         "tr",
         {},
-        el("td", { colspan: "8", class: "lists-album-empty" }, "Loading album…"),
+        el("td", { colspan: "7", class: "lists-album-empty" }, "Loading album…"),
       ),
     );
     try {
@@ -1378,15 +1555,12 @@ function buildLists(): HTMLElement {
       const n = albumRows.filter((r) => r.status === "missing").length;
       const d = albumRows.filter((r) => r.status === "duplicate").length;
       lead.textContent =
-        LISTS_INTRO +
-        (n === 0 && d === 0
-          ? "Nothing missing and no duplicate stacks."
-          : `${n} missing · ${d} slot${d === 1 ? "" : "s"} with extras.`);
+        n === 0 && d === 0 ? "All slots filled once · no spare stacks." : `${n} missing · ${d} with spares.`;
       renderAlbumTable();
     } catch (e) {
       albumRows = [];
-      albumTbody.replaceChildren(el("tr", {}, el("td", { colspan: "8" }, errBox(e))));
-      lead.textContent = `${LISTS_INTRO}Could not load album table.`;
+      albumTbody.replaceChildren(el("tr", {}, el("td", { colspan: "7" }, errBox(e))));
+      lead.textContent = "Could not load table.";
     }
   }
 
@@ -1410,6 +1584,7 @@ function buildDesk(): HTMLElement {
   lookupCard.appendChild(el("h3", {}, "Lookup"));
   lookupCard.appendChild(el("label", { class: "field" }, "Sticker ref"));
   lookupCard.appendChild(refInput);
+  attachStickerRefAutocomplete(refInput);
   const lookupBtn = el("button", { class: "btn btn-primary", type: "button" }, "Look up");
   async function runLookup(): Promise<void> {
     lookupResultHost.replaceChildren();
@@ -1502,6 +1677,7 @@ function buildDesk(): HTMLElement {
 
   addCard.appendChild(el("label", { class: "field" }, "Batch (optional: REF x3)"));
   addCard.appendChild(batchAdd);
+  attachStickerRefAutocomplete(batchAdd);
   addCard.appendChild(addPreview);
   addCard.appendChild(el("div", { class: "row" }, applyAdd, suggestPacksBtn));
   addCard.appendChild(addMsg);
@@ -1526,6 +1702,7 @@ function buildDesk(): HTMLElement {
   });
   remCard.appendChild(el("label", { class: "field" }, "Batch"));
   remCard.appendChild(batchRem);
+  attachStickerRefAutocomplete(batchRem);
   remCard.appendChild(applyRem);
   remCard.appendChild(remMsg);
 
@@ -1537,6 +1714,7 @@ function buildDesk(): HTMLElement {
   singleCard.appendChild(el("div", { class: "row" }));
   singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, "Ref"), sRef));
   singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, "Count"), sCount));
+  attachStickerRefAutocomplete(sRef);
   const bAdd = el("button", { class: "btn", type: "button" }, "Add");
   const bRem = el("button", { class: "btn", type: "button" }, "Remove");
   bAdd.addEventListener("click", async () => {
@@ -1826,6 +2004,7 @@ function buildPack(): HTMLElement {
 
   card.appendChild(el("label", { class: "field" }, "Stickers in this pack (one ref per line)"));
   card.appendChild(ta);
+  attachStickerRefAutocomplete(ta);
   card.appendChild(nominalRow);
   card.appendChild(btnRow);
   card.appendChild(staleHint);
@@ -2224,6 +2403,7 @@ function buildCrosscheck(): HTMLElement {
   });
   cardNeed.appendChild(el("label", { class: "field" }, "Their list"));
   cardNeed.appendChild(taNeed);
+  attachStickerRefAutocomplete(taNeed);
   cardNeed.appendChild(btnNeed);
   cardNeed.appendChild(el("label", { class: "field" }, "You need from them (compact)"));
   cardNeed.appendChild(outNeedPre);
@@ -2276,6 +2456,7 @@ function buildCrosscheck(): HTMLElement {
   });
   cardGive.appendChild(el("label", { class: "field" }, "Their missing"));
   cardGive.appendChild(taGive);
+  attachStickerRefAutocomplete(taGive);
   cardGive.appendChild(btnGive);
   cardGive.appendChild(el("label", { class: "field" }, "You can give (compact)"));
   cardGive.appendChild(outGivePre);
@@ -2371,6 +2552,8 @@ function buildTrade(): HTMLElement {
 
   const giveTa = el("textarea", { id: "trade-give", placeholder: "Stickers you give (one per line)" }) as HTMLTextAreaElement;
   const takeTa = el("textarea", { id: "trade-take", placeholder: "Stickers you receive" }) as HTMLTextAreaElement;
+  attachStickerRefAutocomplete(giveTa);
+  attachStickerRefAutocomplete(takeTa);
   const strictCb = el("input", { type: "checkbox", id: "trade-strict" }) as HTMLInputElement;
   const unevenCb = el("input", { type: "checkbox", id: "trade-uneven" }) as HTMLInputElement;
   const countBadge = el("span", { class: "badge" }, "0 ↔ 0");

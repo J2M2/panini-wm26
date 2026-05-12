@@ -4,7 +4,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      PANINI_DB_PATH: /data/panini_wm26.sqlite
+      PANINI_DATA_DIR: /data
+      PANINI_COOKIE_SECURE: "1"
       # Optional: GitHub Pages UI calling this API — comma-separated origins
       # PANINI_CORS_ORIGINS: "https://youruser.github.io"
     volumes:

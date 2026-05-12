@@ -45,6 +45,13 @@ export interface PaniniSnapshot {
   session?: SessionSnapshot;
 }
 
+/** GET /auth/me */
+export interface AuthMe {
+  mode: string;
+  username: string | null;
+  user_id: number | null;
+}
+
 /** GET /metrics */
 export interface InventoryMetrics {
   album_unique_slots: number;

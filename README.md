@@ -11,6 +11,13 @@ Local toolkit for the FIFA World Cup™ sticker album: SQLite inventory, optiona
 pip install -r requirements-api.txt
 ```
 
+### Hosted web (multi-user)
+
+- **Guest**: first visit sets a signed **`panini_album`** cookie and an empty album file under `{PANINI_DATA_DIR}/albums/guest_*.sqlite`.
+- **Register / log in**: up to **50** users in `registry.sqlite`; each user has `user_<id>.sqlite` (isolated from other accounts). Passwords are stored with **bcrypt**.
+- **Production**: set **`PANINI_AUTH_SECRET`** to a long random string (e.g. `fly secrets set PANINI_AUTH_SECRET=...`). With HTTPS, set **`PANINI_COOKIE_SECURE=1`** (included in [`fly.toml`](fly.toml) `[env]`).
+- **Legacy single DB**: `PANINI_USE_LEGACY_DB=1` and `PANINI_DB_PATH` → one shared SQLite (old behavior).
+
 ## Quick start
 
 ### 1. Create the database (catalog + empty album)
@@ -21,7 +28,9 @@ From the repo root:
 python scripts/init_db.py --force
 ```
 
-This creates [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) with **980** sticker slots (FWC + 48 teams × 20) and **`qty = 0` everywhere** (no stickers owned yet). Deployments (e.g. Fly.io) use the same default on first boot.
+This creates [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite) with **980** sticker slots (FWC + 48 teams × 20) and **`qty = 0` everywhere** (no stickers owned yet).
+
+The **HTTP app** (Docker / Fly) uses **`PANINI_DATA_DIR`** (default `./data` locally, `/data` on Fly): a **registry** database plus one SQLite file per **guest session** or **registered user** under `albums/` — see **Hosted web (multi-user)** above. For a single shared DB instead, set `PANINI_USE_LEGACY_DB=1` and `PANINI_DB_PATH`.
 
 To import Panini’s semicolon **missing** / **duplicates** CSVs, use [`scripts/import_raw_csv.py`](scripts/import_raw_csv.py): if the album is still completely empty, the script temporarily sets every slot to `qty = 1`, then applies the CSV rules (same behavior as before).
 

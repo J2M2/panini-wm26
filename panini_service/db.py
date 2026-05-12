@@ -20,8 +20,8 @@ def _default_db_path() -> Path:
 DEFAULT_DB_PATH = _default_db_path()
 
 
-def connect(db_path: Path | None = None) -> sqlite3.Connection:
-    path = db_path or DEFAULT_DB_PATH
+def connect(db_path: Path | str | None = None) -> sqlite3.Connection:
+    path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     # check_same_thread=False: FastAPI runs sync deps in a thread pool; enter/exit may differ.
     # timeout: retry when another request holds the DB (web UI parallel fetches).
