@@ -6,6 +6,7 @@ import re
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import bcrypt
 
@@ -127,6 +128,31 @@ def get_user_by_id(user_id: int) -> UserRow | None:
         if row is None:
             return None
         return UserRow(id=int(row["id"]), username=str(row["username"]))
+    finally:
+        conn.close()
+
+
+def list_users_summary() -> list[dict[str, Any]]:
+    """Public fields only: id, username, created_at, album file size (bytes)."""
+    conn = _connect_registry()
+    try:
+        rows = conn.execute(
+            "SELECT id, username, created_at FROM users ORDER BY id",
+        ).fetchall()
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            uid = int(row["id"])
+            p = user_album_path(uid)
+            size = int(p.stat().st_size) if p.is_file() else 0
+            out.append(
+                {
+                    "id": uid,
+                    "username": str(row["username"]),
+                    "created_at": str(row["created_at"]),
+                    "album_file_bytes": size,
+                },
+            )
+        return out
     finally:
         conn.close()
 

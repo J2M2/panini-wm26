@@ -11,7 +11,8 @@ FROM python:3.12-slim
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
+# panini_catalog / panini_db live under scripts/ (see COPY below)
+ENV PYTHONPATH=/app:/app/scripts
 ENV PANINI_DB_PATH=/data/panini_wm26.sqlite
 
 COPY requirements-api.txt .

@@ -16,6 +16,7 @@ pip install -r requirements-api.txt
 - **Guest**: first visit sets a signed **`panini_album`** cookie and an empty album file under `{PANINI_DATA_DIR}/albums/guest_*.sqlite`.
 - **Register / log in**: up to **50** users in `registry.sqlite`; each user has `user_<id>.sqlite` (isolated from other accounts). Passwords are stored with **bcrypt**.
 - **Production**: set **`PANINI_AUTH_SECRET`** to a long random string (e.g. `fly secrets set PANINI_AUTH_SECRET=...`). With HTTPS, set **`PANINI_COOKIE_SECURE=1`** (included in [`fly.toml`](fly.toml) `[env]`).
+- **Who registered?** (optional): set **`PANINI_ADMIN_TOKEN`** to a long random value. Then call **`GET /admin/registry-users`** with header **`X-Panini-Admin: <same token>`** — JSON with `count`, `max_users`, and `users` (`id`, `username`, `created_at`, `album_file_bytes`). No passwords. If `PANINI_ADMIN_TOKEN` is not set, that URL returns **404** (hidden).
 - **Legacy single DB**: `PANINI_USE_LEGACY_DB=1` and `PANINI_DB_PATH` → one shared SQLite (old behavior).
 
 ## Quick start

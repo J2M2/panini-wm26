@@ -10,7 +10,7 @@ from typing import Any
 
 from dataclasses import asdict
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -66,8 +66,8 @@ from panini_service.refs import (  # noqa: E402
     parse_category_slot_path,
 )
 from panini_service.session_store import set_session_stats  # noqa: E402
-from panini_service.bootstrap_db import create_fresh_album_file  # noqa: E402
-from panini_service.registry import create_user, ensure_registry_schema, get_user_by_id, verify_login  # noqa: E402
+from panini_service.bootstrap_db import copy_album_database_file, create_fresh_album_file  # noqa: E402
+from panini_service.registry import create_user, ensure_registry_schema, get_user_by_id, list_users_summary, verify_login  # noqa: E402
 from panini_service.snapshot import build_full_snapshot, import_album_snapshot  # noqa: E402
 
 from .schemas import (  # noqa: E402
@@ -176,15 +176,52 @@ def get_auth_me(ctx: AlbumContext = Depends(get_album_context)):
     }
 
 
+def _require_panini_admin(x_panini_admin: str | None = Header(default=None, alias="X-Panini-Admin")) -> None:
+    """Optional operator control plane: set ``PANINI_ADMIN_TOKEN`` on the server."""
+    expected = os.environ.get("PANINI_ADMIN_TOKEN", "").strip()
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not x_panini_admin or x_panini_admin != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.get("/admin/registry-users")
+def get_admin_registry_users(_: None = Depends(_require_panini_admin)):
+    users = list_users_summary()
+    return {
+        "max_users": 50,
+        "count": len(users),
+        "users": users,
+    }
+
+
 @app.post("/auth/register")
-def post_auth_register(body: RegisterBody, response: Response):
+def post_auth_register(
+    body: RegisterBody,
+    request: Request,
+    response: Response,
+    ctx: AlbumContext = Depends(get_album_context),
+):
+    if ctx.kind == "user":
+        raise HTTPException(
+            400,
+            "Already signed in. Log out first if you need to create another account.",
+        )
     try:
         row = create_user(body.username, body.password)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     from panini_service.registry import user_album_path
 
-    create_fresh_album_file(user_album_path(row.id))
+    dest = user_album_path(row.id)
+    if ctx.kind == "guest" and ctx.db_path.is_file():
+        try:
+            copy_album_database_file(ctx.db_path, dest)
+        except (OSError, FileNotFoundError):
+            create_fresh_album_file(dest)
+        delete_guest_album_for_cookie(dict(request.cookies))
+    else:
+        create_fresh_album_file(dest)
     apply_cookie_to_response(response, make_user_cookie_value(row.id))
     return {"ok": True, "username": row.username, "id": row.id}
 

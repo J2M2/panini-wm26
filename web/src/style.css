@@ -108,6 +108,23 @@ a:hover {
   line-height: 1.35;
 }
 
+.account-panel__signed-in-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  word-break: break-all;
+  line-height: 1.25;
+}
+
+.account-panel__signed-in-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
 .account-panel__tools {
   display: flex;
   gap: 0.2rem;

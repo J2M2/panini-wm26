@@ -60,6 +60,27 @@ def test_login_bad_password(client):
     assert r.status_code == 401
 
 
+def test_register_migrates_guest_album(client):
+    """Registering while guest should copy guest SQLite into the new user album."""
+    assert client.get("/auth/me").json()["mode"] == "guest"
+    client.post("/stickers/add", json={"ref": "MEX:1", "count": 1})
+    m = client.get("/metrics").json()
+    assert m["unique_slots_filled"] >= 1
+
+    r = client.post("/auth/register", json={"username": "migrate_guest_u1", "password": "password88"})
+    assert r.status_code == 200
+    assert client.get("/auth/me").json()["username"] == "migrate_guest_u1"
+    m2 = client.get("/metrics").json()
+    assert m2["unique_slots_filled"] >= 1
+
+
+def test_register_while_logged_in_returns_400(client):
+    client.post("/auth/register", json={"username": "already_in_u1", "password": "password88"})
+    r = client.post("/auth/register", json={"username": "nope_new_u1", "password": "password88"})
+    assert r.status_code == 400
+    assert "log out" in r.json()["detail"].lower()
+
+
 def test_login_invalid_username_format_returns_400(client):
     """Invalid username must not become a 500 (validate_username raises ValueError)."""
     r = client.post("/auth/login", json={"username": "ab", "password": "whatever12"})
@@ -75,3 +96,22 @@ def test_user_cap(monkeypatch):
         r = c.post("/auth/register", json={"username": "newuser_cap", "password": "password88"})
         assert r.status_code == 400
         assert "50" in str(r.json())
+
+
+def test_admin_registry_users_disabled_without_env(client, monkeypatch):
+    monkeypatch.delenv("PANINI_ADMIN_TOKEN", raising=False)
+    r = client.get("/admin/registry-users", headers={"X-Panini-Admin": "nope"})
+    assert r.status_code == 404
+
+
+def test_admin_registry_users_with_token(client, monkeypatch):
+    monkeypatch.setenv("PANINI_ADMIN_TOKEN", "test-admin-secret-xyz")
+    r = client.get("/admin/registry-users", headers={"X-Panini-Admin": "wrong"})
+    assert r.status_code == 401
+    r2 = client.get("/admin/registry-users", headers={"X-Panini-Admin": "test-admin-secret-xyz"})
+    assert r2.status_code == 200
+    data = r2.json()
+    assert "users" in data
+    assert "count" in data
+    assert data["max_users"] == 50
+    assert isinstance(data["users"], list)

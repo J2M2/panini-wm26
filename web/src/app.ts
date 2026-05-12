@@ -39,6 +39,7 @@ import {
 } from "./parseRefs";
 import { attachStickerRefAutocomplete } from "./refAutocomplete";
 import type {
+  InventoryMetrics,
   ListStickerRow,
   PackOutlookResponse,
   PackCheckResponse,
@@ -243,6 +244,17 @@ function validateAccountPassword(pw: string): string | null {
   return null;
 }
 
+/** True if this guest album has anything worth warning before signing in to another account. */
+function guestAlbumHasRecoverableData(m: InventoryMetrics): boolean {
+  return (
+    m.unique_slots_filled > 0 ||
+    m.total_physical_stickers > 0 ||
+    m.session.packs_opened > 0 ||
+    m.session.traded_out_count > 0 ||
+    m.session.traded_in_count > 0
+  );
+}
+
 function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   const wrap = el("div", { class: "card account-panel" });
   wrap.appendChild(el("h3", { class: "account-panel__title" }, "Account"));
@@ -252,20 +264,13 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   });
   wrap.appendChild(status);
 
-  async function refreshStatus(): Promise<void> {
-    try {
-      const me = await getAuthMe();
-      if (me.mode === "user" && me.username) {
-        status.textContent = `Signed in as ${me.username}.`;
-      } else if (me.mode === "legacy") {
-        status.textContent = "Shared database (legacy).";
-      } else {
-        status.textContent = "Guest — this browser only.";
-      }
-    } catch (e) {
-      status.textContent = e instanceof Error ? e.message : String(e);
-    }
-  }
+  const signedOut = el("div", { class: "account-panel__signed-out" });
+  const signedIn = el("div", { class: "account-panel__signed-in", style: "display:none" });
+  const signedInName = el("div", {
+    class: "account-panel__signed-in-name ref",
+    title: "Signed in",
+  });
+  const signedInActions = el("div", { class: "account-panel__signed-in-actions" });
 
   const user = el("input", {
     type: "text",
@@ -292,10 +297,10 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   const btnReg = el("button", { class: "btn btn-primary btn-compact", type: "button" }, "Register");
   authRow.append(btnLog, btnReg);
 
-  wrap.appendChild(user);
-  wrap.appendChild(password);
-  wrap.appendChild(authRow);
-  wrap.appendChild(
+  signedOut.appendChild(user);
+  signedOut.appendChild(password);
+  signedOut.appendChild(authRow);
+  signedOut.appendChild(
     el(
       "p",
       { class: "muted account-panel__hint" },
@@ -303,64 +308,6 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
     ),
   );
 
-  btnReg.addEventListener("click", async () => {
-    err.style.display = "none";
-    ok.style.display = "none";
-    const username = accountUsernameForApi(user.value);
-    const uErr = validateAccountUsername(username);
-    if (uErr) {
-      err.textContent = uErr;
-      err.style.display = "block";
-      return;
-    }
-    const pErr = validateAccountPassword(password.value);
-    if (pErr) {
-      err.textContent = pErr;
-      err.style.display = "block";
-      return;
-    }
-    try {
-      await registerUser(username, password.value);
-      ok.textContent = "Registered and signed in.";
-      ok.style.display = "block";
-      password.value = "";
-      await refreshStatus();
-      await onAlbumChanged();
-    } catch (e) {
-      err.textContent = e instanceof ApiError ? e.message : String(e);
-      err.style.display = "block";
-    }
-  });
-  btnLog.addEventListener("click", async () => {
-    err.style.display = "none";
-    ok.style.display = "none";
-    const username = accountUsernameForApi(user.value);
-    const uErr = validateAccountUsername(username);
-    if (uErr) {
-      err.textContent = uErr;
-      err.style.display = "block";
-      return;
-    }
-    const pErr = validateAccountPassword(password.value);
-    if (pErr) {
-      err.textContent = pErr;
-      err.style.display = "block";
-      return;
-    }
-    try {
-      await loginUser(username, password.value);
-      ok.textContent = "Signed in.";
-      ok.style.display = "block";
-      password.value = "";
-      await refreshStatus();
-      await onAlbumChanged();
-    } catch (e) {
-      err.textContent = e instanceof ApiError ? e.message : String(e);
-      err.style.display = "block";
-    }
-  });
-
-  const tools = el("div", { class: "account-panel__tools" });
   const btnOut = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "Log out");
   btnOut.addEventListener("click", async () => {
     err.style.display = "none";
@@ -394,8 +341,104 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
     }
   });
-  tools.append(btnOut, btnReset);
-  wrap.appendChild(tools);
+
+  signedInActions.append(btnOut, btnReset);
+  signedIn.appendChild(signedInName);
+  signedIn.appendChild(signedInActions);
+
+  wrap.appendChild(signedOut);
+  wrap.appendChild(signedIn);
+
+  async function refreshStatus(): Promise<void> {
+    try {
+      const me = await getAuthMe();
+      if (me.mode === "user" && me.username) {
+        signedInName.textContent = me.username;
+        signedOut.style.display = "none";
+        signedIn.style.display = "block";
+        status.style.display = "none";
+      } else {
+        signedOut.style.display = "block";
+        signedIn.style.display = "none";
+        status.style.display = "";
+        if (me.mode === "legacy") {
+          status.textContent = "Shared database (legacy).";
+        } else {
+          status.textContent = "Guest — this browser only.";
+        }
+      }
+    } catch (e) {
+      status.style.display = "";
+      status.textContent = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  btnReg.addEventListener("click", async () => {
+    err.style.display = "none";
+    ok.style.display = "none";
+    const username = accountUsernameForApi(user.value);
+    const uErr = validateAccountUsername(username);
+    if (uErr) {
+      err.textContent = uErr;
+      err.style.display = "block";
+      return;
+    }
+    const pErr = validateAccountPassword(password.value);
+    if (pErr) {
+      err.textContent = pErr;
+      err.style.display = "block";
+      return;
+    }
+    try {
+      await registerUser(username, password.value);
+      ok.textContent = "Account created — your guest album was kept.";
+      ok.style.display = "block";
+      password.value = "";
+      await refreshStatus();
+      await onAlbumChanged();
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
+  btnLog.addEventListener("click", async () => {
+    err.style.display = "none";
+    ok.style.display = "none";
+    const username = accountUsernameForApi(user.value);
+    const uErr = validateAccountUsername(username);
+    if (uErr) {
+      err.textContent = uErr;
+      err.style.display = "block";
+      return;
+    }
+    const pErr = validateAccountPassword(password.value);
+    if (pErr) {
+      err.textContent = pErr;
+      err.style.display = "block";
+      return;
+    }
+    try {
+      const me = await getAuthMe();
+      if (me.mode === "guest") {
+        const m = await getMetrics();
+        if (guestAlbumHasRecoverableData(m)) {
+          const okGo = window.confirm(
+            "This guest album has progress (stickers and/or session counters). Signing in loads the account’s saved album from the server — this guest data will be left behind in the browser.\n\nDownload a JSON backup from Overview first if you want a copy.\n\nContinue sign in?",
+          );
+          if (!okGo) return;
+        }
+      }
+      await loginUser(username, password.value);
+      ok.textContent = "Signed in.";
+      ok.style.display = "block";
+      password.value = "";
+      await refreshStatus();
+      await onAlbumChanged();
+    } catch (e) {
+      err.textContent = e instanceof ApiError ? e.message : String(e);
+      err.style.display = "block";
+    }
+  });
 
   wrap.appendChild(err);
   wrap.appendChild(ok);

@@ -117,3 +117,28 @@ def create_fresh_album_file(path: Path | str) -> None:
         conn.commit()
     finally:
         conn.close()
+
+
+def copy_album_database_file(src: Path | str, dst: Path | str) -> None:
+    """Copy an album SQLite file using the backup API (WAL-safe). Overwrites ``dst``."""
+    import sqlite3 as _sqlite3
+
+    s_path = Path(src)
+    d_path = Path(dst)
+    if not s_path.is_file():
+        raise FileNotFoundError(str(s_path))
+    d_path.parent.mkdir(parents=True, exist_ok=True)
+    if d_path.exists():
+        d_path.unlink()
+    for suffix in ("-wal", "-shm"):
+        side = Path(str(d_path) + suffix)
+        if side.exists():
+            side.unlink()
+    src_conn = _sqlite3.connect(str(s_path), timeout=30.0)
+    dst_conn = _sqlite3.connect(str(d_path), timeout=30.0)
+    try:
+        src_conn.backup(dst_conn)
+        dst_conn.commit()
+    finally:
+        src_conn.close()
+        dst_conn.close()
