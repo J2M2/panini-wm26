@@ -1,12 +1,12 @@
 # Fly.io setup (one-time):
 #   1. fly auth signup   (or: fly auth login)
 #   2. fly apps create panini-wm26          (must match app = below, globally unique)
-#   3. fly volumes create panini_data --region mad --size 1
+#   3. fly volumes create panini_data --region ams --size 1
 #   4. fly deploy
 # After deploy your app is at https://panini-wm26.fly.dev
 
 app = "panini-wm26"
-primary_region = "mad"
+primary_region = "ams"
 
 [build]
 
