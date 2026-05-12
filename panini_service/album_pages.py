@@ -129,48 +129,31 @@ def album_index_group(category_code: str) -> str | None:
     return chr(ord("A") + idx // 4)
 
 
-_ROLE_LABEL: dict[str, str] = {
-    "shield": "Shield",
-    "team_photo": "Team photo",
-    "fwc_special": "FWC special (00)",
-    "fwc": "FWC",
-}
-
-
-def _role_line(role: str | None) -> str:
-    if not role:
-        return "Player slot"
-    return _ROLE_LABEL.get(role, str(role))
+def album_sticker_type_label(category_code: str, role: str | None) -> str:
+    """Short sticker kind for UI: Shield, Player, Team picture, or Special (all FWC slots)."""
+    cat = category_code.upper()
+    if cat == FWC_CODE:
+        return "Special"
+    if role == "shield":
+        return "Shield"
+    if role == "team_photo":
+        return "Team picture"
+    return "Player"
 
 
 def album_list_hover_hint(category_code: str, slot_code: str, role: str | None) -> str:
-    """Single-line hint for list row tooltips; mirrors lookup facts without parentheses."""
+    """Single-line hint for list row tooltips (Group / Page / Type + paste)."""
     cat = category_code.upper()
     sc = str(slot_code).strip()
     page = printed_album_page(cat, sc)
-    rl = _role_line(role)
+    t = album_sticker_type_label(cat, role)
     if cat == FWC_CODE:
         ac = fwc_album_code_for_internal_slot(sc)
         paste = f"FWC {ac} | p.{page}"
-        return f"Page {page} | {rl} | {paste} | {fwc_index_blurb(int(sc))}"
+        return f"Page: {page} | Type: {t} | {paste}"
     g = album_index_group(cat)
-    n = TEAM_CODES.index(cat) + 1
-    spread = "stickers 1-10" if int(sc) <= 10 else "stickers 11-20"
     paste = f"{cat} {sc} | p.{page}"
-    return f"Page {page} | Group {g} | Team #{n}/48 | {spread} | {rl} | {paste}"
+    if g:
+        return f"Group: {g} | Page: {page} | Type: {t} | {paste}"
+    return f"Page: {page} | Type: {t} | {paste}"
 
-
-def team_spread_description(slot_code: str) -> str:
-    """Which side of the team's two-page spread (slots 1-10 vs 11-20)."""
-    s = int(str(slot_code).strip())
-    if s <= 10:
-        return "left page, stickers 1-10"
-    return "right page, stickers 11-20"
-
-
-def fwc_index_blurb(internal_slot: int) -> str:
-    """Short reminder of front/back FWC page clusters."""
-    p = _fwc_printed_page(internal_slot)
-    if p <= 3:
-        return "FWC block at the front of the album (printed pages 0-3; 00 on page 0; slots 1-8 on pages 1-3)."
-    return "FWC block near the back of the album (printed pages 106-109)."

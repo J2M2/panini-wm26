@@ -24,7 +24,6 @@ from panini_catalog import (  # noqa: E402
 from panini_service.album_pages import (  # noqa: E402
     album_index_group,
     album_list_hover_hint,
-    fwc_index_blurb,
     printed_album_page,
 )
 from panini_service.refs import format_sticker_ref  # noqa: E402
@@ -46,10 +45,7 @@ def _album_paste_and_location(category_code: str, slot_code: str) -> dict[str, A
     if cat == FWC_CODE:
         ac = fwc_album_code_for_internal_slot(sc)
         paste = f"FWC {ac} | p.{page}"
-        loc = (
-            f"Printed album page {page}, FWC sticker {ac}. "
-            f"{fwc_index_blurb(int(sc))}"
-        )
+        loc = f"Page: {page}"
         return {
             "album_paste_line": paste,
             "album_location": loc,
@@ -62,18 +58,12 @@ def _album_paste_and_location(category_code: str, slot_code: str) -> dict[str, A
     except ValueError:
         idx = -1
     n = idx + 1 if idx >= 0 else None
-    sn = int(sc) if sc.isdigit() else sc
     paste = f"{cat} {sc} | p.{page}"
     g = album_index_group(cat)
     if n is not None and g is not None:
-        loc = (
-            f"Printed album page {page}. Group {g}. "
-            f"Team {cat}, slot {sn}/20. "
-            f"Contents index order: team #{n} of {len(TEAM_CODES)}. "
-            "Two pages per team: stickers 1-10 then 11-20."
-        )
+        loc = f"Group: {g}\nPage: {page}"
     else:
-        loc = f"Printed album page {page}. Team {cat}, slot {sn}/20."
+        loc = f"Page: {page}"
     return {
         "album_paste_line": paste,
         "album_location": loc,
@@ -287,6 +277,52 @@ def list_sticker_canonical_refs(conn: sqlite3.Connection) -> list[str]:
         """
     ).fetchall()
     return [format_sticker_ref(r["category_code"], r["slot_code"]) for r in rows]
+
+
+def list_album_table(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """All stickers with inventory + album hints (same shape as ``get_sticker`` rows)."""
+    rows = conn.execute(
+        """
+        SELECT s.id, s.category_code, s.slot_code, s.role, i.qty
+        FROM stickers s
+        JOIN inventory i ON i.sticker_id = s.id
+        ORDER BY s.category_code, CAST(s.slot_code AS INTEGER)
+        """
+    ).fetchall()
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        qty = int(r["qty"])
+        spare = max(0, qty - 1)
+        cat = r["category_code"]
+        sc = r["slot_code"]
+        item: dict[str, Any] = {
+            "id": int(r["id"]),
+            "category_code": cat,
+            "slot_code": sc,
+            "role": r["role"],
+            "qty": qty,
+            "spare_copies": spare,
+            "ref": format_sticker_ref(cat, sc),
+            "status": "missing" if qty == 0 else ("duplicate" if qty > 1 else "single"),
+        }
+        item.update(_album_field(cat, sc))
+        item.update(_album_paste_and_location(cat, sc))
+        _attach_list_album_hints(item, cat, sc, r["role"])
+        out.append(item)
+
+    def _album_table_sort_key(item: dict[str, Any]) -> tuple[int, int, int]:
+        cat = str(item["category_code"])
+        slot = int(str(item["slot_code"]))
+        if cat == FWC_CODE:
+            return (0, 0, slot)
+        try:
+            ti = TEAM_CODES.index(cat)
+        except ValueError:
+            return (1, 9999, slot)
+        return (1, ti, slot)
+
+    out.sort(key=_album_table_sort_key)
+    return out
 
 
 def get_sticker(conn: sqlite3.Connection, category_code: str, slot_code: str) -> dict[str, Any] | None:

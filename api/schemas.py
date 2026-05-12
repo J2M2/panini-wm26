@@ -30,6 +30,13 @@ class PackOpen(BaseModel):
     per_pack: int = Field(STICKERS_PER_PACK, ge=1, le=50)
 
 
+class PackUndo(BaseModel):
+    """Same ``stickers`` list and ``packs_opened_delta`` from the completed POST /packs/open response."""
+
+    stickers: list[str] = Field(..., min_length=1)
+    packs_opened_delta: int = Field(..., ge=1)
+
+
 class TradeRequest(BaseModel):
     give: list[str]
     take: list[str]

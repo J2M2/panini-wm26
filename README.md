@@ -193,7 +193,9 @@ Team slots are **1–20** (1 = shield, 13 = team photo). FWC uses the same inter
 | Set session notes | `PATCH` | `/session` | Body: optional `packs_opened`, `traded_out_count`, `traded_in_count` |
 | Missing / duplicates lists | `GET` | `/lists/missing`, `/lists/duplicates` | `format=json`, `table` (TSV), or **`compact`** (e.g. `MEX: 1, 5, 13` per line — duplicates compact omits how many spares) |
 | Printable trading sheet | `GET` | **`/lists/print`** | Plain text: summary + missing + duplicates — open in browser and **Print** |
-| Open one pack | `POST` | `/packs/open` | Body: `stickers` (array of refs), `per_pack` (default 7) |
+| Preview one pack (no writes) | `POST` | **`/packs/check`** | Body: `stickers`, `per_pack` — new vs duplicate slots, in-pack repeats, album page order, `packs_opened_delta` preview |
+| Open one pack | `POST` | `/packs/open` | Body: `stickers` (any length ≥1), `per_pack` (default 7). `packs_opened` += `round(n/per_pack)` (min 1). Warns if `n` is not a multiple of `per_pack` |
+| Undo last pack | `POST` | **`/packs/undo`** | Body: same `stickers` list + `packs_opened_delta` from the `/packs/open` response |
 | Add / remove copies | `POST` | `/stickers/add`, `/stickers/remove` | `ref` + `count` |
 | Trade | `POST` | `/trades` | `give` / `take` ref lists; `strict_duplicates_only`, `allow_uneven` |
 | Undo last trade | `POST` | **`/trades/undo`** | Body: same `give` / `take` as the forward trade; restores qty and rolls back session trade counters |

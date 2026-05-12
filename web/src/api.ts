@@ -1,7 +1,10 @@
 import type {
   InventoryMetrics,
   ListStickerRow,
+  PackCheckResponse,
   PackOpenResponse,
+  PackOutlookResponse,
+  PackUndoResponse,
   PaniniSnapshot,
   SessionSnapshot,
   StickerDetail,
@@ -96,8 +99,23 @@ export function getAnalyticsTeams(): Promise<{ teams: TeamAnalyticsRow[] }> {
   return apiGetJson("/analytics/teams");
 }
 
+export function getPackOutlook(
+  tradeRepeatP: number,
+  opts?: { perPack?: number; trials?: number },
+): Promise<PackOutlookResponse> {
+  const q = new URLSearchParams();
+  q.set("trade_repeat_p", String(tradeRepeatP));
+  if (opts?.perPack !== undefined) q.set("per_pack", String(opts.perPack));
+  if (opts?.trials !== undefined) q.set("trials", String(opts.trials));
+  return apiGetJson(`/analytics/pack-outlook?${q.toString()}`);
+}
+
 export function getStickerRefsCatalog(): Promise<{ refs: string[] }> {
   return apiGetJson("/catalog/sticker-refs");
+}
+
+export function getAlbumTable(): Promise<StickerDetail[]> {
+  return apiGetJson("/lists/album-table");
 }
 
 export function getMissingList(): Promise<ListStickerRow[]> {
@@ -128,8 +146,16 @@ export function removeSticker(ref: string, count: number): Promise<unknown> {
   return apiSendJson("POST", "/stickers/remove", { ref, count });
 }
 
+export function checkPack(stickers: string[], perPack: number): Promise<PackCheckResponse> {
+  return apiSendJson("POST", "/packs/check", { stickers, per_pack: perPack });
+}
+
 export function openPack(stickers: string[], perPack: number): Promise<PackOpenResponse> {
   return apiSendJson("POST", "/packs/open", { stickers, per_pack: perPack });
+}
+
+export function undoPackOpen(stickers: string[], packsOpenedDelta: number): Promise<PackUndoResponse> {
+  return apiSendJson("POST", "/packs/undo", { stickers, packs_opened_delta: packsOpenedDelta });
 }
 
 export function executeTrade(

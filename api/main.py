@@ -26,12 +26,15 @@ from panini_service.inventory_ops import (  # noqa: E402
     TradeImpossibleError,
     TradeResult,
     add_stickers,
+    check_pack,
     execute_trade,
     open_pack,
     remove_stickers,
+    reverse_pack_open,
     reverse_trade,
 )
 from panini_service.migrate import ensure_schema  # noqa: E402
+from panini_service.pack_projection import pack_outlook_projection  # noqa: E402
 from panini_service.queries import (  # noqa: E402
     analytics,
     format_compact_duplicates,
@@ -42,6 +45,7 @@ from panini_service.queries import (  # noqa: E402
     inventory_metrics,
     list_duplicates,
     list_missing,
+    list_album_table,
     list_sticker_canonical_refs,
     get_category,
     get_sticker,
@@ -55,7 +59,7 @@ from panini_service.refs import (  # noqa: E402
 from panini_service.session_store import set_session_stats  # noqa: E402
 from panini_service.snapshot import build_full_snapshot, import_album_snapshot  # noqa: E402
 
-from .schemas import PackOpen, SessionPatch, StickerAdd, StickerRemove, TradeRequest, TradeUndoBody  # noqa: E402
+from .schemas import PackOpen, PackUndo, SessionPatch, StickerAdd, StickerRemove, TradeRequest, TradeUndoBody  # noqa: E402
 
 
 def _cors_allow_origins() -> list[str]:
@@ -160,6 +164,29 @@ def get_analytics(
     return analytics(conn, include=keys)
 
 
+@app.get("/analytics/pack-outlook")
+def get_pack_outlook(
+    trade_repeat_p: float = Query(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="After each simulated pack, probability (0–1) of filling one random missing slot via trading a duplicate.",
+    ),
+    per_pack: int = Query(7, ge=1, le=50),
+    trials: int = Query(1200, ge=50, le=10_000),
+    seed: int | None = Query(None, description="Optional RNG seed for reproducible runs"),
+    conn=Depends(get_db),
+):
+    """Monte Carlo estimate of packs (and implied sticker pulls) still needed from current album state."""
+    return pack_outlook_projection(
+        conn,
+        trade_repeat_p=trade_repeat_p,
+        per_pack=per_pack,
+        trials=trials,
+        seed=seed,
+    )
+
+
 @app.get("/analytics/teams")
 def get_analytics_teams(conn=Depends(get_db)):
     """Per team (48 pages): completion %, shield (slot 1) and team photo (slot 13) flags."""
@@ -170,6 +197,12 @@ def get_analytics_teams(conn=Depends(get_db)):
 def get_sticker_refs_catalog(conn=Depends(get_db)):
     """Canonical refs for all stickers (autocomplete / quick search in the UI)."""
     return {"refs": list_sticker_canonical_refs(conn)}
+
+
+@app.get("/lists/album-table")
+def get_lists_album_table(conn=Depends(get_db)):
+    """Full album (980 rows): ref, qty, status, printed page, paste line, etc."""
+    return list_album_table(conn)
 
 
 @app.get("/lists/missing")
@@ -210,14 +243,31 @@ def get_lists_printable(conn=Depends(get_db)):
     return format_printable_lists(conn)
 
 
+@app.post("/packs/check")
+def post_pack_check(body: PackOpen, conn=Depends(get_db)):
+    """Preview pack: new vs duplicate slots, album order, in-pack repeats — no DB writes."""
+    try:
+        return check_pack(conn, body.stickers, per_pack=body.per_pack)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
 @app.post("/packs/open")
 def post_pack_open(body: PackOpen, conn=Depends(get_db)):
     try:
         r: PackOpenResult = open_pack(conn, body.stickers, per_pack=body.per_pack)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
-    from dataclasses import asdict
+    return asdict(r)
 
+
+@app.post("/packs/undo")
+def post_pack_undo(body: PackUndo, conn=Depends(get_db)):
+    """Reverse one registered pack (same sticker list + packs_opened_delta from the open response)."""
+    try:
+        r = reverse_pack_open(conn, body.stickers, packs_opened_delta=body.packs_opened_delta)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
     return asdict(r)
 
 

@@ -1,8 +1,8 @@
 /**
  * Mirrors Python export (`scripts/export_json.py`) for WM26 Panini tracker.
  * `slot_code`: team "1"–"20". FWC also "1"–"20" in the DB; **slot "20"** is the
- * physical sticker printed as **00** only (`role` === "fwc_special"). Use
- * `album_code` on FWC rows for display when present (schema_version >= 2).
+ * physical sticker printed as **00** only (`role` === "fwc_special"). In the web UI
+ * that slot is shown as **00** (no `FWC` prefix); `album_code` is still present on rows.
  */
 
 export type CategoryKind = "fwc" | "team";
@@ -70,7 +70,7 @@ export interface StickerDetail {
   album_code?: string;
   /** Space-separated form for notes / spreadsheets (e.g. `MEX 5`, `FWC 14`). */
   album_paste_line?: string;
-  /** Where this sticker sits in the physical album (approximate for teams). */
+  /** Short album index (`Group:` when applicable, `Page:`); mirrors structured fields. */
   album_location?: string;
   /** Printed album page number from the WM26 contents index (manual). */
   album_printed_page?: number;
@@ -102,11 +102,63 @@ export interface TradeResponse {
   received: { ref: string; qty_before: number; qty_after: number }[];
 }
 
+export interface PackInPackDup {
+  ref: string;
+  occurrences: number;
+}
+
+export interface PackCheckRow {
+  ref: string;
+  category_code: string;
+  slot_code: string;
+  qty_before: number;
+  album_printed_page: number;
+  album_index_group: string | null;
+}
+
+export interface PackCheckResponse {
+  per_pack: number;
+  sticker_count: number;
+  packs_opened_delta: number;
+  warnings: string[];
+  in_pack_duplicates: PackInPackDup[];
+  new_to_album: PackCheckRow[];
+  would_duplicate: PackCheckRow[];
+}
+
 export interface PackOpenResponse {
   per_pack: number;
+  sticker_count: number;
+  packs_opened_delta: number;
   added_as_new: Record<string, unknown>[];
   added_as_duplicate: Record<string, unknown>[];
   warnings: string[];
+  in_pack_duplicates: PackInPackDup[];
+}
+
+export interface PackUndoResponse {
+  warnings: string[];
+  reverted: { ref: string; qty_before: number; qty_after: number }[];
+}
+
+export interface PackOutlookResponse {
+  album_unique_slots: number;
+  unique_slots_missing: number;
+  pct_complete_unique: number;
+  spare_copies: number;
+  session_packs_opened: number;
+  per_pack: number;
+  trade_repeat_p: number;
+  trials_requested: number;
+  trials_used: number;
+  p50_packs: number;
+  p90_packs: number;
+  mean_packs: number;
+  p50_stickers: number;
+  p90_stickers: number;
+  mean_stickers: number;
+  truncated_note: string | null;
+  disclaimer: string;
 }
 
 /** GET /analytics/teams — one row per national team page. */

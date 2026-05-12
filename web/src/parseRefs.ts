@@ -28,6 +28,11 @@ export function normalizeStickerRef(raw: string): string {
   let s = raw.trim().replace(/\s+/g, " ");
   if (!s) throw new Error("Empty ref");
 
+  /** Album sticker printed as "00" only (no FWC prefix on the physical sticker). */
+  if (/^0+$/.test(s)) {
+    return "FWC:20";
+  }
+
   const colonIdx = s.indexOf(":");
   if (colonIdx !== -1) {
     const cat = s.slice(0, colonIdx).trim();

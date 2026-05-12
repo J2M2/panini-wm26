@@ -60,7 +60,7 @@ def test_sticker_00_solo(client):
     assert data.get("album_code") == "00"
     assert data.get("album_paste_line") == "FWC 00 | p.0"
     assert data.get("album_printed_page") == 0
-    assert "Printed album page 0" in (data.get("album_location") or "")
+    assert data.get("album_location") == "Page: 0"
     assert data.get("album_team_ordinal") is None
     assert data.get("album_index_group") is None
 
@@ -71,16 +71,16 @@ def test_sticker_team_album_hints(client):
     data = r.json()
     assert data.get("album_paste_line") == "MEX 1 | p.8"
     assert data.get("album_printed_page") == 8
-    assert "MEX" in (data.get("album_location") or "")
+    assert data.get("album_location") == "Group: A\nPage: 8"
     assert data.get("album_team_ordinal") == 1
     assert data.get("album_index_group") == "A"
-    assert "Group A" in (data.get("album_location") or "")
 
     r11 = client.get("/stickers/MEX/11")
     assert r11.status_code == 200
     d11 = r11.json()
     assert d11.get("album_printed_page") == 9
     assert d11.get("album_paste_line") == "MEX 11 | p.9"
+    assert d11.get("album_location") == "Group: A\nPage: 9"
 
 
 def test_lists_json_includes_album_hover(client):
@@ -112,6 +112,26 @@ def test_snapshot_get(client):
     assert data.get("schema_version") >= 3
     assert "session" in data
     assert len(data.get("stickers", [])) == 980
+
+
+def test_catalog_sticker_refs(client):
+    r = client.get("/catalog/sticker-refs")
+    assert r.status_code == 200
+    data = r.json()
+    assert isinstance(data.get("refs"), list)
+    assert len(data["refs"]) == 980
+    assert "MEX:1" in data["refs"]
+    assert "FWC:20" in data["refs"]
+
+
+def test_lists_album_table(client):
+    r = client.get("/lists/album-table")
+    assert r.status_code == 200
+    rows = r.json()
+    assert isinstance(rows, list)
+    assert len(rows) == 980
+    assert rows[0].get("category_code") == "FWC"
+    assert any(row.get("ref") == "MEX:1" for row in rows)
 
 
 def test_analytics_team_progress_leaders(client):
@@ -180,3 +200,16 @@ def test_analytics_teams(client):
     assert "pct_complete" in row0
     assert "shield_ok" in row0
     assert "team_photo_ok" in row0
+
+
+def test_album_sticker_type_label_and_hover():
+    from panini_service.album_pages import album_list_hover_hint, album_sticker_type_label
+
+    assert album_sticker_type_label("MEX", "shield") == "Shield"
+    assert album_sticker_type_label("MEX", "team_photo") == "Team picture"
+    assert album_sticker_type_label("MEX", None) == "Player"
+    assert album_sticker_type_label("FWC", "fwc_special") == "Special"
+    assert album_sticker_type_label("FWC", "fwc") == "Special"
+    assert "Type: Shield" in album_list_hover_hint("MEX", "1", "shield")
+    assert "Type: Special" in album_list_hover_hint("FWC", "20", "fwc_special")
+    assert "Type: Special" in album_list_hover_hint("FWC", "1", "fwc")

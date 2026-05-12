@@ -15,6 +15,12 @@ describe("normalizeStickerRef", () => {
     expect(normalizeStickerRef("MEX: 5")).toBe("MEX:5");
     expect(normalizeStickerRef("fwc:00")).toBe("FWC:20");
   });
+
+  it("accepts bare album 00 as FWC:20", () => {
+    expect(normalizeStickerRef("00")).toBe("FWC:20");
+    expect(normalizeStickerRef("0")).toBe("FWC:20");
+    expect(expandRefsFromLine("00")).toEqual(["FWC:20"]);
+  });
 });
 
 describe("canonicalRef", () => {
@@ -22,6 +28,7 @@ describe("canonicalRef", () => {
     expect(canonicalRef("FWC:00")).toBe("FWC:20");
     expect(canonicalRef("fwc:0")).toBe("FWC:20");
   });
+
   it("normalizes team slots", () => {
     expect(canonicalRef("mex:5")).toBe("MEX:5");
     expect(canonicalRef("ENG 12")).toBe("ENG:12");
