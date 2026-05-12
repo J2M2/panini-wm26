@@ -1,9 +1,12 @@
-# Fly.io — create the app first: fly apps create <name>, then set app = "<name>" below.
-# Deploy: fly deploy
-# Create volume (once): fly volumes create panini_data --region <region> --size 1
+# Fly.io setup (one-time):
+#   1. fly auth signup   (or: fly auth login)
+#   2. fly apps create panini-wm26          (must match app = below, globally unique)
+#   3. fly volumes create panini_data --region mad --size 1
+#   4. fly deploy
+# After deploy your app is at https://panini-wm26.fly.dev
 
-app = "panini-wm26-replace-me"
-primary_region = "iad"
+app = "panini-wm26"
+primary_region = "mad"
 
 [build]
 
