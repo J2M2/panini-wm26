@@ -349,14 +349,18 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   wrap.appendChild(signedOut);
   wrap.appendChild(signedIn);
 
+  function applySignedInUi(displayName: string): void {
+    signedInName.textContent = displayName;
+    signedOut.style.display = "none";
+    signedIn.style.display = "block";
+    status.style.display = "none";
+  }
+
   async function refreshStatus(): Promise<void> {
     try {
       const me = await getAuthMe();
       if (me.mode === "user" && me.username) {
-        signedInName.textContent = me.username;
-        signedOut.style.display = "none";
-        signedIn.style.display = "block";
-        status.style.display = "none";
+        applySignedInUi(me.username);
       } else {
         signedOut.style.display = "block";
         signedIn.style.display = "none";
@@ -389,16 +393,20 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
       return;
     }
+    btnReg.disabled = true;
     try {
-      await registerUser(username, password.value);
+      const r = await registerUser(username, password.value);
       ok.textContent = "Account created — your guest album was kept.";
       ok.style.display = "block";
       password.value = "";
-      await refreshStatus();
-      await onAlbumChanged();
+      applySignedInUi(r.username);
+      void refreshStatus();
+      void onAlbumChanged();
     } catch (e) {
       err.textContent = e instanceof ApiError ? e.message : String(e);
       err.style.display = "block";
+    } finally {
+      btnReg.disabled = false;
     }
   });
   btnLog.addEventListener("click", async () => {
@@ -417,6 +425,7 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
       return;
     }
+    btnLog.disabled = true;
     try {
       const me = await getAuthMe();
       if (me.mode === "guest") {
@@ -428,15 +437,18 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
           if (!okGo) return;
         }
       }
-      await loginUser(username, password.value);
+      const r = await loginUser(username, password.value);
       ok.textContent = "Signed in.";
       ok.style.display = "block";
       password.value = "";
-      await refreshStatus();
-      await onAlbumChanged();
+      applySignedInUi(r.username);
+      void refreshStatus();
+      void onAlbumChanged();
     } catch (e) {
       err.textContent = e instanceof ApiError ? e.message : String(e);
       err.style.display = "block";
+    } finally {
+      btnLog.disabled = false;
     }
   });
 
@@ -1172,43 +1184,44 @@ function buildOverview(): HTMLElement {
   async function loadMetrics(): Promise<void> {
     metricsHost.innerHTML = "<p class='muted'>Loading…</p>";
     analyticsHost.innerHTML = "";
-    let emptyAlbum = false;
-    try {
-      const m = await getMetrics();
-      emptyAlbum = m.unique_slots_filled === 0;
-      metricsHost.innerHTML = "";
-      metricsHost.appendChild(el("h3", {}, "Collection"));
-      metricsHost.appendChild(
-        collectionProgressBlock(m.pct_complete_unique, m.unique_slots_filled, m.album_unique_slots),
-      );
-      const g = el("div", { class: "grid-metrics" });
-      const cells: [string, string][] = [
-        ["Missing", String(m.unique_slots_missing)],
-        ["Filled", String(m.unique_slots_filled)],
-        ["Spares", String(m.spare_copies)],
-        ["Total stickers", String(m.total_physical_stickers)],
-      ];
-      for (const [label, val] of cells) {
-        g.appendChild(
-          el("div", { class: "metric" }, el("div", { class: "label" }, label), el("div", { class: "value" }, val)),
-        );
-      }
-      metricsHost.appendChild(g);
+    const [mRes, anRes] = await Promise.allSettled([getMetrics(), getAnalytics()]);
 
-      lastSession.packs = m.session.packs_opened;
-      lastSession.out = m.session.traded_out_count;
-      lastSession.inn = m.session.traded_in_count;
-      applySessionToUI();
-      if (sessionEditing) leaveSessionEdit();
-    } catch (e) {
+    if (mRes.status === "rejected") {
       metricsHost.innerHTML = "";
-      metricsHost.appendChild(errBox(e));
+      metricsHost.appendChild(errBox(mRes.reason));
       analyticsHost.innerHTML = "";
       return;
     }
 
-    try {
-      const an = await getAnalytics();
+    const m = mRes.value;
+    const emptyAlbum = m.unique_slots_filled === 0;
+    metricsHost.innerHTML = "";
+    metricsHost.appendChild(el("h3", {}, "Collection"));
+    metricsHost.appendChild(
+      collectionProgressBlock(m.pct_complete_unique, m.unique_slots_filled, m.album_unique_slots),
+    );
+    const g = el("div", { class: "grid-metrics" });
+    const cells: [string, string][] = [
+      ["Missing", String(m.unique_slots_missing)],
+      ["Filled", String(m.unique_slots_filled)],
+      ["Spares", String(m.spare_copies)],
+      ["Total stickers", String(m.total_physical_stickers)],
+    ];
+    for (const [label, val] of cells) {
+      g.appendChild(
+        el("div", { class: "metric" }, el("div", { class: "label" }, label), el("div", { class: "value" }, val)),
+      );
+    }
+    metricsHost.appendChild(g);
+
+    lastSession.packs = m.session.packs_opened;
+    lastSession.out = m.session.traded_out_count;
+    lastSession.inn = m.session.traded_in_count;
+    applySessionToUI();
+    if (sessionEditing) leaveSessionEdit();
+
+    if (anRes.status === "fulfilled") {
+      const an = anRes.value;
       analyticsHost.innerHTML = "";
       analyticsHost.appendChild(el("h3", {}, "Analytics"));
       analyticsHost.appendChild(renderAnalyticsWidgets(an, { emptyAlbum }));
@@ -1220,10 +1233,10 @@ function buildOverview(): HTMLElement {
       });
       foot.appendChild(link);
       analyticsHost.appendChild(foot);
-    } catch (e) {
+    } else {
       analyticsHost.innerHTML = "";
       analyticsHost.appendChild(el("h3", {}, "Analytics"));
-      analyticsHost.appendChild(errBox(e));
+      analyticsHost.appendChild(errBox(anRes.reason));
     }
   }
 
