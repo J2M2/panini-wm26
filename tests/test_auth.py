@@ -60,6 +60,15 @@ def test_login_bad_password(client):
     assert r.status_code == 401
 
 
+def test_login_invalid_username_format_returns_400(client):
+    """Invalid username must not become a 500 (validate_username raises ValueError)."""
+    r = client.post("/auth/login", json={"username": "ab", "password": "whatever12"})
+    assert r.status_code == 400
+    detail = r.json().get("detail", "")
+    assert isinstance(detail, str)
+    assert "lowercase" in detail.lower() or "24" in detail
+
+
 def test_user_cap(monkeypatch):
     monkeypatch.setattr("panini_service.registry.count_users", lambda: 50)
     with TestClient(app) as c:

@@ -1,6 +1,7 @@
 /**
- * Autocomplete sticker refs after `TEAM:` (e.g. `MEX:` → MEX:1 … MEX:20).
- * Works on inputs and textareas; uses catalog from GET /catalog/sticker-refs.
+ * Autocomplete 3-letter team codes only (before `:`). After `:` is typed, no suggestions.
+ * Uses catalog from GET /catalog/sticker-refs (unique TEAM from refs like TEAM:n).
+ * Keys when open: ↑/↓, Enter or Tab to accept, Esc to close. Tab does not move focus while accepting.
  */
 
 import { getStickerRefsCatalog } from "./api";
@@ -19,38 +20,45 @@ export function invalidateStickerRefCatalogCache(): void {
   cachedRefs = null;
 }
 
-export type TeamColonCompletion = {
+export type TeamPrefixCompletion = {
   lineStart: number;
-  team: string;
-  digitPrefix: string;
+  /** Uppercase partial team letters (1–3), no colon. */
+  prefix: string;
   tokenStart: number;
   caret: number;
 };
 
 /**
- * If the text before `caret` on the current line ends with `CCC:` or `CCC:digits`
- * (optional leading break), return token range for replacement.
+ * If the text before `caret` on the current line ends with 1–3 letters at a token start
+ * and there is no `:` in that token yet, return the range to replace with `TEAM:`.
  */
-export function getTeamColonCompletionState(value: string, caret: number): TeamColonCompletion | null {
+export function getTeamPrefixCompletionState(value: string, caret: number): TeamPrefixCompletion | null {
   if (caret < 0) return null;
   const c = Math.min(caret, value.length);
   const lineStart = value.lastIndexOf("\n", c - 1) + 1;
   const before = value.slice(lineStart, c);
-  const re = /(?:^|[\s,;])(([A-Za-z]{3}):(\d*))$/;
+  const re = /(?:^|[\s,;])([A-Za-z]{1,3})$/;
   const m = before.match(re);
   if (!m) return null;
-  const full = m[1]!;
-  const team = m[2]!.toUpperCase();
-  const digitPrefix = m[3] ?? "";
-  const tokenStart = lineStart + (before.length - full.length);
-  return { lineStart, team, digitPrefix, tokenStart, caret: c };
+  const letters = m[1]!;
+  const prefix = letters.toUpperCase();
+  const tokenStart = lineStart + (before.length - letters.length);
+  return { lineStart, prefix, tokenStart, caret: c };
 }
 
-function suggestionsFor(refs: string[], team: string, digitPrefix: string): string[] {
-  const p = `${team}:`;
-  const base = refs.filter((x) => x.toUpperCase().startsWith(p));
-  if (!digitPrefix) return base;
-  return base.filter((x) => x.slice(p.length).startsWith(digitPrefix));
+/** Unique TEAM codes (AAA) from refs shaped AAA:n… */
+export function teamsFromStickerRefs(refs: string[]): string[] {
+  const s = new Set<string>();
+  for (const r of refs) {
+    const m = r.match(/^([A-Za-z]{3}):/);
+    if (m) s.add(m[1]!.toUpperCase());
+  }
+  return [...s].sort();
+}
+
+function suggestionsForTeams(teams: string[], prefix: string): string[] {
+  const p = prefix.toUpperCase();
+  return teams.filter((t) => t.startsWith(p)).slice(0, 48);
 }
 
 function positionPopup(anchor: HTMLElement, popup: HTMLElement): void {
@@ -64,7 +72,7 @@ function positionPopup(anchor: HTMLElement, popup: HTMLElement): void {
 }
 
 /**
- * Attach TEAM:`:` … autocomplete to a field. Safe to call multiple times (one popup per field).
+ * Attach team-prefix autocomplete to a field. Safe to call multiple times (one popup per field).
  */
 export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextAreaElement): void {
   if ((el as HTMLElement).dataset.refAc === "1") return;
@@ -79,7 +87,7 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
 
   let selIdx = 0;
   let lastSuggestions: string[] = [];
-  let lastState: TeamColonCompletion | null = null;
+  let lastState: TeamPrefixCompletion | null = null;
   let scrollBound = false;
 
   const onScrollClose = (): void => {
@@ -106,15 +114,17 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
     active?.scrollIntoView({ block: "nearest" });
   }
 
-  function apply(ref: string): void {
+  /** Insert `TEAM:` so the user types the number without further autocomplete. */
+  function apply(team: string): void {
     const st = lastState;
     if (!st) return;
     const v = el.value;
     const start = st.tokenStart;
     const end = st.caret;
-    const next = v.slice(0, start) + ref + v.slice(end);
+    const insert = `${team}:`;
+    const next = v.slice(0, start) + insert + v.slice(end);
     el.value = next;
-    const newCaret = start + ref.length;
+    const newCaret = start + insert.length;
     el.setSelectionRange(newCaret, newCaret);
     el.dispatchEvent(new Event("input", { bubbles: true }));
     close();
@@ -123,13 +133,14 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
 
   async function openOrUpdate(): Promise<void> {
     const caret = el.selectionStart ?? el.value.length;
-    const st = getTeamColonCompletionState(el.value, caret);
+    const st = getTeamPrefixCompletionState(el.value, caret);
     if (!st) {
       close();
       return;
     }
     const refs = await ensureRefs();
-    const list = suggestionsFor(refs, st.team, st.digitPrefix).slice(0, 48);
+    const teams = teamsFromStickerRefs(refs);
+    const list = suggestionsForTeams(teams, st.prefix);
     if (list.length === 0) {
       close();
       return;
@@ -138,17 +149,17 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
     lastSuggestions = list;
     selIdx = 0;
     popup.replaceChildren();
-    for (const ref of list) {
+    for (const team of list) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "sticker-ref-ac__item";
       b.setAttribute("role", "option");
-      b.textContent = ref;
+      b.textContent = team;
       b.addEventListener("mousedown", (ev) => {
         ev.preventDefault();
         lastState = st;
         lastSuggestions = list;
-        apply(ref);
+        apply(team);
       });
       popup.appendChild(b);
     }
@@ -184,12 +195,12 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
       highlight();
       return;
     }
-    if (ke.key === "Enter" && !ke.shiftKey) {
-      const ref = lastSuggestions[selIdx];
-      if (ref) {
+    if ((ke.key === "Enter" && !ke.shiftKey) || (ke.key === "Tab" && !ke.shiftKey)) {
+      const team = lastSuggestions[selIdx];
+      if (team) {
         ke.preventDefault();
         ke.stopImmediatePropagation();
-        apply(ref);
+        apply(team);
       }
       return;
     }

@@ -119,6 +119,21 @@ function el<K extends keyof HTMLElementTagNameMap>(
 
 const views: Record<string, HTMLElement> = {};
 
+/** Last sidebar route; used to clear sticker drafts when switching views. */
+let lastNavRoute: string | null = null;
+
+const PANINI_CLEAR_STICKER_DRAFTS = "panini-clear-sticker-drafts";
+
+function clearStickerDraftsForView(route: string): void {
+  const section = views[route];
+  if (!section?.isConnected) return;
+  section.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-sticker-draft]").forEach((field) => {
+    field.value = "";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  section.dispatchEvent(new CustomEvent(PANINI_CLEAR_STICKER_DRAFTS));
+}
+
 /** Canonical missing refs (qty === 0). */
 let tradeMissingRefs: Set<string> | null = null;
 /** Canonical ref → qty/spares for stickers with qty > 1. */
@@ -209,12 +224,30 @@ function renderTradeDupPicker(): void {
   }
 }
 
+/** Same rule as server `panini_service.registry.validate_username`. */
+const ACCOUNT_USERNAME_RE = /^[a-z0-9_]{3,24}$/;
+
+function accountUsernameForApi(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+function validateAccountUsername(u: string): string | null {
+  if (!ACCOUNT_USERNAME_RE.test(u)) {
+    return "Username must be 3–24 characters: lowercase letters, digits, and underscore only (no spaces or hyphens).";
+  }
+  return null;
+}
+
+function validateAccountPassword(pw: string): string | null {
+  if (pw.length < 8) return "Password must be at least 8 characters.";
+  return null;
+}
+
 function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   const wrap = el("div", { class: "card account-panel" });
-  wrap.appendChild(el("h3", { style: "margin-top:0" }, "Your collection"));
+  wrap.appendChild(el("h3", { class: "account-panel__title" }, "Account"));
   const status = el("p", {
-    class: "muted",
-    style: "margin:0 0 0.75rem;font-size:0.85rem;line-height:1.45",
+    class: "muted account-panel__status",
     id: "account-status",
   });
   wrap.appendChild(status);
@@ -223,55 +256,74 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
     try {
       const me = await getAuthMe();
       if (me.mode === "user" && me.username) {
-        status.textContent = `Signed in as ${me.username} (saved on server).`;
+        status.textContent = `Signed in as ${me.username}.`;
       } else if (me.mode === "legacy") {
         status.textContent = "Shared database (legacy).";
       } else {
-        status.textContent = "Guest — this browser only. Register or use JSON backup.";
+        status.textContent = "Guest — this browser only.";
       }
     } catch (e) {
       status.textContent = e instanceof Error ? e.message : String(e);
     }
   }
 
-  const regUser = el("input", {
+  const user = el("input", {
     type: "text",
-    placeholder: "username (a-z, 0-9, _)",
+    placeholder: "Username",
     autocomplete: "username",
+    class: "account-panel__input",
+    title: "3–24 characters: lowercase a–z, 0–9, underscore (server lowercases letters)",
+    spellcheck: false,
+    autocapitalize: "off",
   }) as HTMLInputElement;
-  const regPw = el("input", {
+  const password = el("input", {
     type: "password",
-    placeholder: "password (8+ chars)",
-    autocomplete: "new-password",
-  }) as HTMLInputElement;
-  const logUser = el("input", {
-    type: "text",
-    placeholder: "username",
-    autocomplete: "username",
-  }) as HTMLInputElement;
-  const logPw = el("input", {
-    type: "password",
-    placeholder: "password",
+    placeholder: "Password",
     autocomplete: "current-password",
+    class: "account-panel__input",
+    title: "At least 8 characters",
   }) as HTMLInputElement;
 
-  const err = el("div", { class: "msg-error", id: "account-err", style: "display:none;margin-top:0.5rem" });
-  const ok = el("div", { class: "msg-ok", id: "account-ok", style: "display:none;margin-top:0.5rem" });
+  const err = el("div", { class: "msg-error account-panel__flash", id: "account-err", style: "display:none" });
+  const ok = el("div", { class: "msg-ok account-panel__flash", id: "account-ok", style: "display:none" });
 
+  const authRow = el("div", { class: "account-panel__auth-row" });
+  const btnLog = el("button", { class: "btn btn-compact", type: "button" }, "Sign in");
+  const btnReg = el("button", { class: "btn btn-primary btn-compact", type: "button" }, "Register");
+  authRow.append(btnLog, btnReg);
+
+  wrap.appendChild(user);
+  wrap.appendChild(password);
+  wrap.appendChild(authRow);
   wrap.appendChild(
-    el("p", { class: "muted", style: "margin:0 0 0.35rem;font-size:0.78rem" }, "New account (max 50)"),
+    el(
+      "p",
+      { class: "muted account-panel__hint" },
+      "Username: 3–24 chars (a–z, 0–9, _). Password: 8+ chars. JSON backup in Overview.",
+    ),
   );
-  wrap.appendChild(regUser);
-  wrap.appendChild(regPw);
-  const btnReg = el("button", { class: "btn btn-primary", type: "button", style: "margin:0.35rem 0 0.75rem" }, "Register");
+
   btnReg.addEventListener("click", async () => {
     err.style.display = "none";
     ok.style.display = "none";
+    const username = accountUsernameForApi(user.value);
+    const uErr = validateAccountUsername(username);
+    if (uErr) {
+      err.textContent = uErr;
+      err.style.display = "block";
+      return;
+    }
+    const pErr = validateAccountPassword(password.value);
+    if (pErr) {
+      err.textContent = pErr;
+      err.style.display = "block";
+      return;
+    }
     try {
-      await registerUser(regUser.value.trim(), regPw.value);
+      await registerUser(username, password.value);
       ok.textContent = "Registered and signed in.";
       ok.style.display = "block";
-      regPw.value = "";
+      password.value = "";
       await refreshStatus();
       await onAlbumChanged();
     } catch (e) {
@@ -279,20 +331,27 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
     }
   });
-  wrap.appendChild(btnReg);
-
-  wrap.appendChild(el("p", { class: "muted", style: "margin:0 0 0.35rem;font-size:0.78rem" }, "Sign in"));
-  wrap.appendChild(logUser);
-  wrap.appendChild(logPw);
-  const btnLog = el("button", { class: "btn", type: "button", style: "margin:0.35rem 0.35rem 0 0" }, "Log in");
   btnLog.addEventListener("click", async () => {
     err.style.display = "none";
     ok.style.display = "none";
+    const username = accountUsernameForApi(user.value);
+    const uErr = validateAccountUsername(username);
+    if (uErr) {
+      err.textContent = uErr;
+      err.style.display = "block";
+      return;
+    }
+    const pErr = validateAccountPassword(password.value);
+    if (pErr) {
+      err.textContent = pErr;
+      err.style.display = "block";
+      return;
+    }
     try {
-      await loginUser(logUser.value.trim(), logPw.value);
+      await loginUser(username, password.value);
       ok.textContent = "Signed in.";
       ok.style.display = "block";
-      logPw.value = "";
+      password.value = "";
       await refreshStatus();
       await onAlbumChanged();
     } catch (e) {
@@ -300,9 +359,9 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
     }
   });
-  wrap.appendChild(btnLog);
 
-  const btnOut = el("button", { class: "btn", type: "button", style: "margin-right:0.35rem" }, "Log out");
+  const tools = el("div", { class: "account-panel__tools" });
+  const btnOut = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "Log out");
   btnOut.addEventListener("click", async () => {
     err.style.display = "none";
     ok.style.display = "none";
@@ -310,16 +369,15 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       await logoutUser();
       await refreshStatus();
       await onAlbumChanged();
-      ok.textContent = "Logged out — new empty guest album.";
+      ok.textContent = "Logged out — new guest album.";
       ok.style.display = "block";
     } catch (e) {
       err.textContent = e instanceof ApiError ? e.message : String(e);
       err.style.display = "block";
     }
   });
-  wrap.appendChild(btnOut);
 
-  const btnReset = el("button", { class: "btn", type: "button" }, "Reset album");
+  const btnReset = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "Reset album");
   btnReset.title = "Clear all stickers and session counters for this profile.";
   btnReset.addEventListener("click", async () => {
     if (!window.confirm("Reset this album to empty (all slots qty 0, session counters 0)? This cannot be undone."))
@@ -336,7 +394,8 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       err.style.display = "block";
     }
   });
-  wrap.appendChild(btnReset);
+  tools.append(btnOut, btnReset);
+  wrap.appendChild(tools);
 
   wrap.appendChild(err);
   wrap.appendChild(ok);
@@ -383,9 +442,14 @@ export function initApp(root: HTMLElement): void {
 
   root.appendChild(sidebar);
   root.appendChild(main);
+  lastNavRoute = "overview";
 }
 
 function showView(id: string): void {
+  if (lastNavRoute !== null && lastNavRoute !== id) {
+    clearStickerDraftsForView(lastNavRoute);
+  }
+  lastNavRoute = id;
   document.querySelectorAll(".nav-btn").forEach((b) => {
     b.classList.toggle("active", (b as HTMLElement).dataset.route === id);
   });
@@ -497,9 +561,27 @@ function analyticsHBar(pct: number): HTMLElement {
   return track;
 }
 
+type RenderAnalyticsOpts = {
+  /** No unique slots filled yet — avoid huge “all teams tied” copy. */
+  emptyAlbum?: boolean;
+};
+
+function tieOrEmptyNote(
+  emptyAlbum: boolean,
+  tied: boolean,
+  tieNote: string,
+  whenEmpty: string,
+): HTMLElement | null {
+  if (!tied) return null;
+  const text = emptyAlbum ? whenEmpty : tieNote;
+  if (!text) return null;
+  return formatTieNote(text);
+}
+
 /** Rich overview cards from `GET /analytics` (replaces raw JSON dump). */
-function renderAnalyticsWidgets(data: Record<string, unknown>): HTMLElement {
+function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnalyticsOpts): HTMLElement {
   const grid = el("div", { class: "analytics-widget-grid" });
+  const emptyAlbum = opts?.emptyAlbum === true;
 
   const repeated = _rec(data.most_repeated);
   if (repeated) {
@@ -509,9 +591,19 @@ function renderAnalyticsWidgets(data: Record<string, unknown>): HTMLElement {
     const sub = album ? `${ref} · album ${album}` : ref;
     const w = el("article", { class: "stat-widget stat-widget--gold" });
     w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Duplicate champion"));
-    w.appendChild(el("div", { class: "stat-widget__hero ref" }, ref));
-    w.appendChild(el("div", { class: "stat-widget__metric" }, el("span", { class: "stat-widget__qty" }, `×${qty}`), " in the stack"));
-    w.appendChild(el("p", { class: "stat-widget__hint" }, sub));
+    if (emptyAlbum && qty === 0) {
+      w.appendChild(
+        el(
+          "p",
+          { class: "stat-widget__hint", style: "margin:0" },
+          "Nothing to rank yet — add stickers to see which ref piles up the most.",
+        ),
+      );
+    } else {
+      w.appendChild(el("div", { class: "stat-widget__hero ref" }, ref));
+      w.appendChild(el("div", { class: "stat-widget__metric" }, el("span", { class: "stat-widget__qty" }, `×${qty}`), " in the stack"));
+      w.appendChild(el("p", { class: "stat-widget__hint" }, sub));
+    }
     grid.appendChild(w);
   }
 
@@ -541,7 +633,13 @@ function renderAnalyticsWidgets(data: Record<string, unknown>): HTMLElement {
         `${slotsDup} slot${slotsDup === 1 ? "" : "s"} with qty>1 · sum of extras beyond the first copy each`,
       ),
     );
-    if (tied && tieNote) w.appendChild(formatTieNote(tieNote));
+    const tieDup = tieOrEmptyNote(
+      emptyAlbum,
+      tied,
+      tieNote,
+      "All teams are tied until you have stickers on the pages.",
+    );
+    if (tieDup) w.appendChild(tieDup);
     w.appendChild(analyticsHBar(Math.min(100, pctSlots)));
     grid.appendChild(w);
   }
@@ -582,7 +680,13 @@ function renderAnalyticsWidgets(data: Record<string, unknown>): HTMLElement {
           `${have} slot${have === 1 ? "" : "s"} with at least one copy · ${miss} still empty on this page`,
         ),
       );
-      if (tied && tieNote) col.appendChild(formatTieNote(tieNote));
+      const tieBest = tieOrEmptyNote(
+        emptyAlbum,
+        tied,
+        tieNote,
+        "Every national team page is still at 0/20 — add stickers to see who pulls ahead.",
+      );
+      if (tieBest) col.appendChild(tieBest);
       col.appendChild(analyticsHBar(pct));
       row.appendChild(col);
     }
@@ -606,7 +710,13 @@ function renderAnalyticsWidgets(data: Record<string, unknown>): HTMLElement {
     col.appendChild(
       el("p", { class: "stat-widget__hint" }, `${miss} sticker${miss === 1 ? "" : "s"} still missing here — trade priority?`),
     );
-    if (tied && tieNote) col.appendChild(formatTieNote(tieNote));
+    const tieWorst = tieOrEmptyNote(
+      emptyAlbum,
+      tied,
+      tieNote,
+      "Every team still has all 20 slots missing — rankings appear once you start filling the album.",
+    );
+    if (tieWorst) col.appendChild(tieWorst);
     col.appendChild(analyticsHBar(pct));
     row.appendChild(col);
     w.appendChild(row);
@@ -1019,8 +1129,10 @@ function buildOverview(): HTMLElement {
   async function loadMetrics(): Promise<void> {
     metricsHost.innerHTML = "<p class='muted'>Loading…</p>";
     analyticsHost.innerHTML = "";
+    let emptyAlbum = false;
     try {
       const m = await getMetrics();
+      emptyAlbum = m.unique_slots_filled === 0;
       metricsHost.innerHTML = "";
       metricsHost.appendChild(el("h3", {}, "Collection"));
       metricsHost.appendChild(
@@ -1056,7 +1168,7 @@ function buildOverview(): HTMLElement {
       const an = await getAnalytics();
       analyticsHost.innerHTML = "";
       analyticsHost.appendChild(el("h3", {}, "Analytics"));
-      analyticsHost.appendChild(renderAnalyticsWidgets(an));
+      analyticsHost.appendChild(renderAnalyticsWidgets(an, { emptyAlbum }));
       const foot = el("p", { class: "analytics-card-foot" });
       const link = el("a", { href: "#", class: "analytics-full-link" }, "Open team analytics");
       link.addEventListener("click", (ev) => {
@@ -1311,6 +1423,7 @@ function buildLists(): HTMLElement {
     placeholder: "Filter or ref (e.g. MEX:1) · Enter = look up",
     autocomplete: "off",
     spellcheck: false,
+    "data-sticker-draft": "1",
   }) as HTMLInputElement;
   searchField.appendChild(searchInput);
   const searchGo = el("button", { class: "btn btn-primary", type: "button" }, "Look up");
@@ -1578,6 +1691,7 @@ function buildDesk(): HTMLElement {
   const refInput = el("input", {
     type: "text",
     placeholder: "MEX:5 · 00 · FWC 14 · MEX: 1, 2, 3",
+    "data-sticker-draft": "1",
   }) as HTMLInputElement;
   const lookupResultHost = el("div", { class: "lookup-result-host" });
   const lookupErr = el("div", { class: "lookup-errors" });
@@ -1619,6 +1733,7 @@ function buildDesk(): HTMLElement {
   addCard.appendChild(el("h3", {}, "Add stickers"));
   const batchAdd = el("textarea", {
     placeholder: `MEX:5\n00\nFWC 14\nRSA 7\nMEX: 1, 2, 3\nFWC:12 x3`,
+    "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
   const addPreview = el("div", { class: "compact-list" });
   const addMsg = el("div");
@@ -1684,7 +1799,7 @@ function buildDesk(): HTMLElement {
 
   const remCard = el("div", { class: "card" });
   remCard.appendChild(el("h3", {}, "Remove stickers"));
-  const batchRem = el("textarea", { placeholder: "Same format as add" }) as HTMLTextAreaElement;
+  const batchRem = el("textarea", { placeholder: "Same format as add", "data-sticker-draft": "1" }) as HTMLTextAreaElement;
   const remMsg = el("div");
   const applyRem = el("button", { class: "btn btn-primary", type: "button" }, "Apply removes");
   applyRem.addEventListener("click", async () => {
@@ -1708,7 +1823,7 @@ function buildDesk(): HTMLElement {
 
   const singleCard = el("div", { class: "card" });
   singleCard.appendChild(el("h3", {}, "Single add / remove"));
-  const sRef = el("input", { type: "text", placeholder: "MEX:5" }) as HTMLInputElement;
+  const sRef = el("input", { type: "text", placeholder: "MEX:5", "data-sticker-draft": "1" }) as HTMLInputElement;
   const sCount = el("input", { type: "number", min: "1", value: "1" }) as HTMLInputElement;
   const singleMsg = el("div");
   singleCard.appendChild(el("div", { class: "row" }));
@@ -1737,6 +1852,16 @@ function buildDesk(): HTMLElement {
   });
   singleCard.appendChild(el("div", { class: "row" }, bAdd, bRem));
   singleCard.appendChild(singleMsg);
+
+  section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+    lookupResultHost.replaceChildren();
+    lookupErr.replaceChildren();
+    addPreview.textContent = "";
+    addMsg.replaceChildren();
+    remMsg.replaceChildren();
+    singleMsg.replaceChildren();
+    lastAddTotal = 0;
+  });
 
   openDeskLookupFromLists = async (ref: string) => {
     refInput.value = ref.trim();
@@ -1774,6 +1899,7 @@ function buildPack(): HTMLElement {
 
   const ta = el("textarea", {
     placeholder: `One ref per line (often ${STICKERS_PER_PACK}; fewer or more is ok)`,
+    "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
 
   const editNominalId = "pack-edit-nominal";
@@ -1986,6 +2112,8 @@ function buildPack(): HTMLElement {
           resultCard.appendChild(
             el("p", { class: "muted" }, "Inventory and packs_opened were restored. Paste the list again if you still want to register it."),
           );
+          void overviewPage.reload();
+          void loadTradePreviewData();
         } catch (e) {
           undoBtn.disabled = false;
           resultCard.appendChild(errBox(e));
@@ -1993,6 +2121,8 @@ function buildPack(): HTMLElement {
       });
       undoRow.appendChild(undoBtn);
       resultCard.appendChild(undoRow);
+      void overviewPage.reload();
+      void loadTradePreviewData();
     } catch (e) {
       resultCard.style.display = "block";
       resultCard.replaceChildren(errBox(e));
@@ -2012,6 +2142,16 @@ function buildPack(): HTMLElement {
 
   section.appendChild(card);
   section.appendChild(resultCard);
+
+  section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+    invalidatePackValidation();
+    previewHost.replaceChildren();
+    staleHint.hidden = true;
+    resultCard.style.display = "none";
+    resultCard.replaceChildren();
+    pendingUndo = null;
+  });
+
   return section;
 }
 
@@ -2155,19 +2295,24 @@ function buildPackOutlook(): HTMLElement {
     max: "100",
     value: "30",
     class: "pack-outlook-range",
-    "aria-label": "Percent chance per pack to trade a duplicate for a missing slot",
+    "aria-label": "How often you trade spare stickers: percent of times a duplicate could be swapped for a missing slot after each simulated pack",
   }) as HTMLInputElement;
   const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, "30%");
   sliderRow.appendChild(range);
   sliderRow.appendChild(pctLabel);
   sliderCard.appendChild(sliderRow);
-  sliderCard.appendChild(
-    el(
-      "p",
-      { class: "muted", style: "margin:0.5rem 0 0;font-size:0.82rem;line-height:1.4" },
-      `Assumes ${STICKERS_PER_PACK} stickers per pack (same as Pack).`,
-    ),
-  );
+  const tradeRepeatHint = el("p", {
+    class: "muted",
+    style: "margin:0.5rem 0 0;font-size:0.82rem;line-height:1.45",
+  }) as HTMLParagraphElement;
+  sliderCard.appendChild(tradeRepeatHint);
+
+  function syncTradeRepeatHint(): void {
+    const v = range.value;
+    pctLabel.textContent = `${v}%`;
+    tradeRepeatHint.textContent = `Assuming you trade ${v}% of spare stickers. Uses ${STICKERS_PER_PACK} stickers per pack — same as Pack.`;
+  }
+  syncTradeRepeatHint();
 
   rowTop.appendChild(ringWrap);
   rowTop.appendChild(sliderCard);
@@ -2254,7 +2399,7 @@ function buildPackOutlook(): HTMLElement {
   async function loadProjection(): Promise<void> {
     const mySeq = ++seq;
     const tradeP = Number(range.value) / 100;
-    pctLabel.textContent = `${range.value}%`;
+    syncTradeRepeatHint();
     status.textContent = "Running simulation…";
     statsBody.replaceChildren();
     try {
@@ -2285,7 +2430,7 @@ function buildPackOutlook(): HTMLElement {
   }
 
   range.addEventListener("input", () => {
-    pctLabel.textContent = `${range.value}%`;
+    syncTradeRepeatHint();
     scheduleLoad();
   });
 
@@ -2368,6 +2513,7 @@ function buildCrosscheck(): HTMLElement {
   const taNeed = el("textarea", {
     placeholder: "Their list: one ref per line, MEX: 1, 2, 3, or a copied block from chat / export",
     rows: "8",
+    "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
   const outNeedPre = el("pre", {
     class: "ref",
@@ -2421,6 +2567,7 @@ function buildCrosscheck(): HTMLElement {
   const taGive = el("textarea", {
     placeholder: "Their missing list (compact or one ref per line)",
     rows: "8",
+    "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
   const outGivePre = el("pre", {
     class: "ref",
@@ -2530,6 +2677,18 @@ function buildCrosscheck(): HTMLElement {
   taNeed.addEventListener("input", () => invalidateNeedCompare());
   taGive.addEventListener("input", () => invalidateGiveCompare());
 
+  section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+    outNeedPre.textContent = "";
+    outGivePre.textContent = "";
+    outNeedErr.replaceChildren();
+    outGiveErr.replaceChildren();
+    needCompared = false;
+    giveCompared = false;
+    lastNeedHits = null;
+    lastGiveHits = null;
+    syncTradeJumpButtons();
+  });
+
   section.appendChild(status);
   section.appendChild(intro);
   section.appendChild(cardNeed);
@@ -2550,8 +2709,16 @@ function buildTrade(): HTMLElement {
   });
   section.appendChild(prefillBanner);
 
-  const giveTa = el("textarea", { id: "trade-give", placeholder: "Stickers you give (one per line)" }) as HTMLTextAreaElement;
-  const takeTa = el("textarea", { id: "trade-take", placeholder: "Stickers you receive" }) as HTMLTextAreaElement;
+  const giveTa = el("textarea", {
+    id: "trade-give",
+    placeholder: "Stickers you give (one per line)",
+    "data-sticker-draft": "1",
+  }) as HTMLTextAreaElement;
+  const takeTa = el("textarea", {
+    id: "trade-take",
+    placeholder: "Stickers you receive",
+    "data-sticker-draft": "1",
+  }) as HTMLTextAreaElement;
   attachStickerRefAutocomplete(giveTa);
   attachStickerRefAutocomplete(takeTa);
   const strictCb = el("input", { type: "checkbox", id: "trade-strict" }) as HTMLInputElement;
@@ -2882,6 +3049,11 @@ function buildTrade(): HTMLElement {
   const dupPicker = el("div", { id: "trade-dup-picker", class: "compact-list" });
   dupCard.appendChild(dupPicker);
   section.appendChild(dupCard);
+
+  section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+    clearTradeOutcome();
+    setTradePrefillBanner("");
+  });
 
   updateTradePreview();
 

@@ -65,7 +65,81 @@ a:hover {
 
 .account-panel {
   margin: 0 1rem 1rem;
-  padding: 0.75rem 0.85rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.account-panel__title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-panel__status {
+  margin: 0 0 0.45rem;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.account-panel input[type="text"],
+.account-panel input[type="password"] {
+  display: block;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 0 0 0.3rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+}
+
+.account-panel__auth-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.account-panel__hint {
+  margin: 0.25rem 0 0.45rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.account-panel__tools {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.account-panel__flash {
+  margin-top: 0.4rem;
+  font-size: 0.74rem;
+  padding: 0.3rem 0.4rem;
+}
+
+.btn-compact {
+  font-size: 0.76rem;
+  padding: 0.28rem 0.55rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  font-size: 0.74rem;
+  padding: 0.24rem 0.4rem;
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface2);
 }
 
 .nav-btn {

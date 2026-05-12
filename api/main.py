@@ -191,7 +191,10 @@ def post_auth_register(body: RegisterBody, response: Response):
 
 @app.post("/auth/login")
 def post_auth_login(body: LoginBody, response: Response):
-    row = verify_login(body.username, body.password)
+    try:
+        row = verify_login(body.username, body.password)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
     if row is None:
         raise HTTPException(401, "Invalid username or password.")
     apply_cookie_to_response(response, make_user_cookie_value(row.id))
