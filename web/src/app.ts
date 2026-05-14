@@ -27,6 +27,7 @@ import {
   undoPackOpen,
   undoTrade,
 } from "./api";
+import { getLocale, setLocale, tr, trf } from "./i18n";
 import { STICKERS_PER_PACK } from "./constants";
 import {
   canonicalRef,
@@ -185,7 +186,7 @@ async function loadTradePreviewData(): Promise<void> {
     tradeDupRows = [];
     tradePreviewLoadError = e instanceof Error ? e.message : String(e);
     const box = document.getElementById("trade-dup-picker");
-    if (box) box.textContent = "Could not load lists.";
+    if (box) box.textContent = tr("Could not load lists.");
     document.getElementById("trade-give")?.dispatchEvent(new Event("input"));
   }
 }
@@ -196,14 +197,14 @@ function renderTradeDupPicker(): void {
   try {
     box.innerHTML = "";
     const tbl = el("table", { class: "data" });
-    const thead = el("thead", {}, el("tr", {}, el("th", {}, "ref"), el("th", {}, "spares")));
+    const thead = el("thead", {}, el("tr", {}, el("th", {}, tr("ref")), el("th", {}, tr("spares"))));
     const tbody = el("tbody");
     for (const r of tradeDupRows.slice(0, 80)) {
-      const tr = el("tr", { style: "cursor:pointer" });
-      tr.appendChild(el("td", { class: "ref" }, r.ref));
-      tr.appendChild(el("td", {}, String(r.spare_copies ?? r.qty - 1)));
-      tr.title = "Click to append to Give";
-      tr.addEventListener("click", () => {
+      const row = el("tr", { style: "cursor:pointer" });
+      row.appendChild(el("td", { class: "ref" }, r.ref));
+      row.appendChild(el("td", {}, String(r.spare_copies ?? r.qty - 1)));
+      row.title = tr("Click to append to Give");
+      row.addEventListener("click", () => {
         const ta = document.getElementById("trade-give") as HTMLTextAreaElement | null;
         if (!ta) return;
         const lines = parseRefLines(ta.value);
@@ -211,17 +212,17 @@ function renderTradeDupPicker(): void {
         ta.value = `${lines.join("\n")}\n`;
         ta.dispatchEvent(new Event("input", { bubbles: true }));
       });
-      tbody.appendChild(tr);
+      tbody.appendChild(row);
     }
     tbl.append(thead, tbody);
     box.appendChild(tbl);
     if (tradeDupRows.length > 80) {
       box.appendChild(
-        el("p", { style: "font-size:0.85rem;color:var(--muted)" }, `Showing 80 of ${tradeDupRows.length}. See Lists for full table.`),
+        el("p", { style: "font-size:0.85rem;color:var(--muted)" }, trf("Showing 80 of {n}. See Lists for full table.", { n: String(tradeDupRows.length) })),
       );
     }
   } catch {
-    box.textContent = "Could not render duplicates.";
+    box.textContent = tr("Could not render duplicates.");
   }
 }
 
@@ -234,13 +235,15 @@ function accountUsernameForApi(raw: string): string {
 
 function validateAccountUsername(u: string): string | null {
   if (!ACCOUNT_USERNAME_RE.test(u)) {
-    return "Username must be 3–24 characters: lowercase letters, digits, and underscore only (no spaces or hyphens).";
+    return tr(
+      "Username must be 3–24 characters: lowercase letters, digits, and underscore only (no spaces or hyphens).",
+    );
   }
   return null;
 }
 
 function validateAccountPassword(pw: string): string | null {
-  if (pw.length < 8) return "Password must be at least 8 characters.";
+  if (pw.length < 8) return tr("Password must be at least 8 characters.");
   return null;
 }
 
@@ -257,7 +260,7 @@ function guestAlbumHasRecoverableData(m: InventoryMetrics): boolean {
 
 function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   const wrap = el("div", { class: "card account-panel" });
-  wrap.appendChild(el("h3", { class: "account-panel__title" }, "Account"));
+  wrap.appendChild(el("h3", { class: "account-panel__title" }, tr("Account")));
   const status = el("p", {
     class: "muted account-panel__status",
     id: "account-status",
@@ -268,33 +271,33 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
   const signedIn = el("div", { class: "account-panel__signed-in", style: "display:none" });
   const signedInName = el("div", {
     class: "account-panel__signed-in-name ref",
-    title: "Signed in",
+    title: tr("Signed in"),
   });
   const signedInActions = el("div", { class: "account-panel__signed-in-actions" });
 
   const user = el("input", {
     type: "text",
-    placeholder: "Username",
+    placeholder: tr("Username"),
     autocomplete: "username",
     class: "account-panel__input",
-    title: "3–24 characters: lowercase a–z, 0–9, underscore (server lowercases letters)",
+    title: tr("3–24 characters: lowercase a–z, 0–9, underscore (server lowercases letters)"),
     spellcheck: false,
     autocapitalize: "off",
   }) as HTMLInputElement;
   const password = el("input", {
     type: "password",
-    placeholder: "Password",
+    placeholder: tr("Password"),
     autocomplete: "current-password",
     class: "account-panel__input",
-    title: "At least 8 characters",
+    title: tr("At least 8 characters"),
   }) as HTMLInputElement;
 
   const err = el("div", { class: "msg-error account-panel__flash", id: "account-err", style: "display:none" });
   const ok = el("div", { class: "msg-ok account-panel__flash", id: "account-ok", style: "display:none" });
 
   const authRow = el("div", { class: "account-panel__auth-row" });
-  const btnLog = el("button", { class: "btn btn-compact", type: "button" }, "Sign in");
-  const btnReg = el("button", { class: "btn btn-primary btn-compact", type: "button" }, "Register");
+  const btnLog = el("button", { class: "btn btn-compact", type: "button" }, tr("Sign in"));
+  const btnReg = el("button", { class: "btn btn-primary btn-compact", type: "button" }, tr("Register"));
   authRow.append(btnLog, btnReg);
 
   signedOut.appendChild(user);
@@ -304,11 +307,11 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
     el(
       "p",
       { class: "muted account-panel__hint" },
-      "Username: 3–24 chars (a–z, 0–9, _). Password: 8+ chars. JSON backup in Overview.",
+      tr("Username: 3–24 chars (a–z, 0–9, _). Password: 8+ chars. JSON backup in Overview."),
     ),
   );
 
-  const btnOut = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "Log out");
+  const btnOut = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, tr("Log out"));
   btnOut.addEventListener("click", async () => {
     err.style.display = "none";
     ok.style.display = "none";
@@ -316,7 +319,7 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
       await logoutUser();
       await refreshStatus();
       await onAlbumChanged();
-      ok.textContent = "Logged out — new guest album.";
+      ok.textContent = tr("Logged out — new guest album.");
       ok.style.display = "block";
     } catch (e) {
       err.textContent = e instanceof ApiError ? e.message : String(e);
@@ -324,17 +327,17 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
     }
   });
 
-  const btnReset = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "Reset album");
-  btnReset.title = "Clear all stickers and session counters for this profile.";
+  const btnReset = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, tr("Reset album"));
+  btnReset.title = tr("Clear all stickers and session counters for this profile.");
   btnReset.addEventListener("click", async () => {
-    if (!window.confirm("Reset this album to empty (all slots qty 0, session counters 0)? This cannot be undone."))
+    if (!window.confirm(tr("Reset this album to empty (all slots qty 0, session counters 0)? This cannot be undone.")))
       return;
     err.style.display = "none";
     ok.style.display = "none";
     try {
       await resetAlbum();
       await onAlbumChanged();
-      ok.textContent = "Album reset.";
+      ok.textContent = tr("Album reset.");
       ok.style.display = "block";
     } catch (e) {
       err.textContent = e instanceof ApiError ? e.message : String(e);
@@ -366,9 +369,9 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
         signedIn.style.display = "none";
         status.style.display = "";
         if (me.mode === "legacy") {
-          status.textContent = "Shared database (legacy).";
+          status.textContent = tr("Shared database (legacy).");
         } else {
-          status.textContent = "Guest — this browser only.";
+          status.textContent = tr("Guest — this browser only.");
         }
       }
     } catch (e) {
@@ -396,7 +399,7 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
     btnReg.disabled = true;
     try {
       const r = await registerUser(username, password.value);
-      ok.textContent = "Account created — your guest album was kept.";
+      ok.textContent = tr("Account created — your guest album was kept.");
       ok.style.display = "block";
       password.value = "";
       applySignedInUi(r.username);
@@ -432,13 +435,15 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
         const m = await getMetrics();
         if (guestAlbumHasRecoverableData(m)) {
           const okGo = window.confirm(
-            "This guest album has progress (stickers and/or session counters). Signing in loads the account’s saved album from the server — this guest data will be left behind in the browser.\n\nDownload a JSON backup from Overview first if you want a copy.\n\nContinue sign in?",
+            tr(
+              "This guest album has progress (stickers and/or session counters). Signing in loads the account’s saved album from the server — this guest data will be left behind in the browser.\n\nDownload a JSON backup from Overview first if you want a copy.\n\nContinue sign in?",
+            ),
           );
           if (!okGo) return;
         }
       }
       const r = await loginUser(username, password.value);
-      ok.textContent = "Signed in.";
+      ok.textContent = tr("Signed in.");
       ok.style.display = "block";
       password.value = "";
       applySignedInUi(r.username);
@@ -461,16 +466,16 @@ function buildAccountPanel(onAlbumChanged: () => Promise<void>): HTMLElement {
 export function initApp(root: HTMLElement): void {
   root.innerHTML = "";
   const sidebar = el("nav", { class: "sidebar" });
-  sidebar.appendChild(el("h1", {}, "Panini WM26"));
+  sidebar.appendChild(el("h1", {}, tr("Panini WM26")));
   const routes = [
-    ["overview", "Overview"],
-    ["analytics", "Team analytics"],
-    ["pack-outlook", "Pack outlook"],
-    ["lists", "Lists"],
-    ["desk", "Sticker desk"],
-    ["pack", "Pack"],
-    ["trade", "Trade"],
-    ["crosscheck", "Crosscheck"],
+    ["overview", tr("Overview")],
+    ["analytics", tr("Team analytics")],
+    ["pack-outlook", tr("Pack outlook")],
+    ["lists", tr("Lists")],
+    ["desk", tr("Sticker desk")],
+    ["pack", tr("Pack")],
+    ["trade", tr("Trade")],
+    ["crosscheck", tr("Crosscheck")],
   ] as const;
   for (const [id, label] of routes) {
     const b = el("button", { class: "nav-btn", type: "button", "data-route": id }, label);
@@ -478,6 +483,20 @@ export function initApp(root: HTMLElement): void {
     b.addEventListener("click", () => showView(id));
     sidebar.appendChild(b);
   }
+
+  const langRow = el("div", { class: "sidebar-lang-row" });
+  const bEn = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "EN");
+  bEn.disabled = getLocale() === "en";
+  bEn.addEventListener("click", () => {
+    if (getLocale() !== "en") setLocale("en");
+  });
+  const bEs = el("button", { class: "btn btn-ghost btn-compact", type: "button" }, "ES");
+  bEs.disabled = getLocale() === "es";
+  bEs.addEventListener("click", () => {
+    if (getLocale() !== "es") setLocale("es");
+  });
+  langRow.append(bEn, bEs);
+  sidebar.appendChild(langRow);
 
   const main = el("main", {});
   main.appendChild(buildOverview());
@@ -582,7 +601,9 @@ function collectionProgressBlock(pct: number, filled: number, total: number): HT
   const wrap = el("div", { class: "collection-progress" });
   const head = el("div", { class: "collection-progress-head" });
   head.appendChild(el("span", { class: "collection-progress-pct" }, `${Math.round(p)}%`));
-  head.appendChild(el("span", { class: "collection-progress-meta" }, `${filled} / ${total} unique`));
+  head.appendChild(
+    el("span", { class: "collection-progress-meta" }, trf("{filled} / {total} unique", { filled: String(filled), total: String(total) })),
+  );
   wrap.appendChild(head);
   const track = el("div", {
     class: "collection-progress-track",
@@ -590,7 +611,7 @@ function collectionProgressBlock(pct: number, filled: number, total: number): HT
     "aria-valuenow": String(Math.round(p)),
     "aria-valuemin": "0",
     "aria-valuemax": "100",
-    "aria-label": `Album ${Math.round(p)} percent complete`,
+    "aria-label": trf("Album {pct} percent complete", { pct: String(Math.round(p)) }),
   });
   const fill = el("div", { class: "collection-progress-fill" });
   fill.style.width = `${p}%`;
@@ -645,7 +666,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const album = _str(repeated.album_code, "");
     const sub = album ? `${ref} · album ${album}` : ref;
     const w = el("article", { class: "stat-widget stat-widget--gold" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Duplicate champion"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Duplicate champion")));
     if (emptyAlbum && qty === 0) {
       w.appendChild(
         el(
@@ -656,7 +677,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       );
     } else {
       w.appendChild(el("div", { class: "stat-widget__hero ref" }, ref));
-      w.appendChild(el("div", { class: "stat-widget__metric" }, el("span", { class: "stat-widget__qty" }, `×${qty}`), " in the stack"));
+      w.appendChild(el("div", { class: "stat-widget__metric" }, el("span", { class: "stat-widget__qty" }, `×${qty}`), tr(" in the stack")));
       w.appendChild(el("p", { class: "stat-widget__hint" }, sub));
     }
     grid.appendChild(w);
@@ -671,7 +692,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const tieNote = _str(dupTeam.tie_note, "");
     const tied = _bool(dupTeam.tied);
     const w = el("article", { class: "stat-widget stat-widget--dup-team" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Most duplicated team"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Most duplicated team")));
     w.appendChild(el("div", { class: "stat-widget__hero ref" }, code));
     w.appendChild(
       el(
@@ -703,12 +724,12 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
   if (best) {
     const allDone = _bool(best.all_teams_complete);
     const w = el("article", { class: "stat-widget stat-widget--team" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Closest to complete"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Closest to complete")));
     const row = el("div", { class: "stat-widget__row" });
     if (allDone) {
       row.appendChild(analyticsPctRing(100, "20/20"));
       const col = el("div", { class: "stat-widget__col" });
-      col.appendChild(el("div", { class: "stat-widget__title" }, "All national teams"));
+      col.appendChild(el("div", { class: "stat-widget__title" }, tr("All national teams")));
       col.appendChild(
         el(
           "p",
@@ -757,7 +778,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const tieNote = _str(worst.tie_note, "");
     const tied = _bool(worst.tied);
     const w = el("article", { class: "stat-widget stat-widget--hunt" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Hunt zone"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Hunt zone")));
     const row = el("div", { class: "stat-widget__row" });
     row.appendChild(analyticsPctRing(pct, `${20 - miss}/20`));
     const col = el("div", { class: "stat-widget__col" });
@@ -786,7 +807,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const have = _num(fwc.slots_with_copy, 0);
     const total = _num(fwc.slots_total, 20);
     const w = el("article", { class: "stat-widget stat-widget--cup" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Specials"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Specials")));
     const row = el("div", { class: "stat-widget__row" });
     row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
     const col = el("div", { class: "stat-widget__col" });
@@ -807,9 +828,9 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       const total = _num(shield.total, 48);
       const miss = _num(shield.missing, 0);
       const w = el("article", { class: "stat-widget stat-widget--crest" });
-      w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Team shields"));
+      w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Team shields")));
       w.appendChild(
-        el("p", { class: "stat-widget__hint", style: "margin:0 0 0.35rem" }, "Slot 1 on every team page (48 crest stickers)."),
+        el("p", { class: "stat-widget__hint", style: "margin:0 0 0.35rem" }, tr("Slot 1 on every team page (48 crest stickers).")),
       );
       const row = el("div", { class: "stat-widget__row" });
       row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
@@ -834,9 +855,9 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       const total = _num(photo.total, 48);
       const miss = _num(photo.missing, 0);
       const w = el("article", { class: "stat-widget stat-widget--jersey" });
-      w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Team photos"));
+      w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Team photos")));
       w.appendChild(
-        el("p", { class: "stat-widget__hint", style: "margin:0 0 0.35rem" }, "Slot 13 on every team page (48 squad photos)."),
+        el("p", { class: "stat-widget__hint", style: "margin:0 0 0.35rem" }, tr("Slot 13 on every team page (48 squad photos).")),
       );
       const row = el("div", { class: "stat-widget__row" });
       row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
@@ -863,7 +884,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const pct = _num(teamsFull.pct_teams_fully_complete, 0);
     const rest = Math.max(0, total - n);
     const w = el("article", { class: "stat-widget stat-widget--squad" });
-    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, "Full team pages"));
+    w.appendChild(el("div", { class: "stat-widget__eyebrow" }, tr("Full team pages")));
     w.appendChild(
       el(
         "p",
@@ -892,7 +913,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
 
   if (!grid.children.length) {
     grid.appendChild(
-      el("p", { class: "stat-widget__empty", style: "margin:0;color:var(--muted)" }, "No analytics yet — add some stickers first."),
+      el("p", { class: "stat-widget__empty", style: "margin:0;color:var(--muted)" }, tr("No analytics yet — add some stickers first.")),
     );
   }
 
@@ -908,12 +929,14 @@ function flagCell(ok: boolean, title: string): HTMLElement {
 function buildAnalytics(): HTMLElement {
   const section = el("section", { class: "view", id: "view-analytics" });
   views.analytics = section;
-  section.appendChild(el("h2", {}, "Team analytics"));
+  section.appendChild(el("h2", {}, tr("Team analytics")));
   section.appendChild(
     el(
       "p",
       { class: "muted", style: "margin:0 0 1rem;font-size:0.95rem;max-width:52rem" },
-      "Each row is one national team page (20 stickers). Shield is slot 1, team photo is slot 13. Flags show whether you have at least one copy. Click column headers to sort.",
+      tr(
+        "Each row is one national team page (20 stickers). Shield is slot 1, team photo is slot 13. Flags show whether you have at least one copy. Click column headers to sort.",
+      ),
     ),
   );
   const host = el("div", { id: "analytics-teams-host" });
@@ -965,8 +988,8 @@ function buildAnalytics(): HTMLElement {
   }
 
   function buildTeamRow(t: TeamAnalyticsRow): HTMLTableRowElement {
-    const tr = el("tr", {});
-    tr.appendChild(el("td", { class: "ref" }, t.code));
+    const row = el("tr", {});
+    row.appendChild(el("td", { class: "ref" }, t.code));
     const pct = Math.min(100, Math.max(0, t.pct_complete));
     const pctCell = el("td", { class: "team-pct-cell" });
     const track = el("div", { class: "team-pct-track" });
@@ -981,22 +1004,22 @@ function buildAnalytics(): HTMLElement {
     );
     track.appendChild(label);
     pctCell.appendChild(track);
-    tr.appendChild(pctCell);
-    tr.appendChild(
+    row.appendChild(pctCell);
+    row.appendChild(
       el(
         "td",
         { class: "team-flag-cell" },
-        flagCell(t.shield_ok, t.shield_ok ? "Shield in album" : "Shield missing"),
+        flagCell(t.shield_ok, t.shield_ok ? tr("Shield in album") : tr("Shield missing")),
       ),
     );
-    tr.appendChild(
+    row.appendChild(
       el(
         "td",
         { class: "team-flag-cell" },
-        flagCell(t.team_photo_ok, t.team_photo_ok ? "Team photo in album" : "Team photo missing"),
+        flagCell(t.team_photo_ok, t.team_photo_ok ? tr("Team photo in album") : tr("Team photo missing")),
       ),
     );
-    return tr;
+    return row;
   }
 
   function renderTeamTableBody(tbody: HTMLElement, thead: HTMLElement): void {
@@ -1024,7 +1047,7 @@ function buildAnalytics(): HTMLElement {
 
   async function loadTeams(): Promise<void> {
     host.innerHTML = "";
-    host.appendChild(el("p", { class: "muted" }, "Loading…"));
+    host.appendChild(el("p", { class: "muted" }, tr("Loading…")));
     try {
       const { teams } = await getAnalyticsTeams();
       cachedTeams = teams;
@@ -1039,18 +1062,18 @@ function buildAnalytics(): HTMLElement {
         el(
           "tr",
           {},
-          el("th", { class: "th-sortable", "data-sort": "code", title: "Album order · click to sort" }, "Team"),
-          el("th", { class: "th-sortable", "data-sort": "pct_complete", title: "Click to sort by completion %" }, "% complete"),
+          el("th", { class: "th-sortable", "data-sort": "code", title: tr("Album order · click to sort") }, tr("Team")),
+          el("th", { class: "th-sortable", "data-sort": "pct_complete", title: tr("Click to sort by completion %") }, tr("% complete")),
           el("th", {
             class: "th-sortable",
             "data-sort": "shield_ok",
-            title: "Slot 1 — shield / crest · click to sort",
-          }, "Shield"),
+            title: tr("Slot 1 — shield / crest · click to sort"),
+          }, tr("Shield")),
           el("th", {
             class: "th-sortable",
             "data-sort": "team_photo_ok",
-            title: "Slot 13 — squad photo · click to sort",
-          }, "Photo"),
+            title: tr("Slot 13 — squad photo · click to sort"),
+          }, tr("Photo")),
         ),
       );
       const tbody = el("tbody");
@@ -1073,7 +1096,7 @@ function buildAnalytics(): HTMLElement {
 function buildOverview(): HTMLElement {
   const section = el("section", { class: "view active", id: "view-overview" });
   views.overview = section;
-  section.appendChild(el("h2", {}, "Overview"));
+  section.appendChild(el("h2", {}, tr("Overview")));
 
   const metricsHost = el("div", { class: "card" });
   const analyticsHost = el("div", { class: "card" });
@@ -1107,26 +1130,26 @@ function buildOverview(): HTMLElement {
     row.appendChild(valEl);
     sessionReadHost.appendChild(row);
   }
-  sessionAddReadRow("Packs opened", sessionReadVals.packs);
-  sessionAddReadRow("Traded out", sessionReadVals.out);
-  sessionAddReadRow("Traded in", sessionReadVals.inn);
+  sessionAddReadRow(tr("Packs opened"), sessionReadVals.packs);
+  sessionAddReadRow(tr("Traded out"), sessionReadVals.out);
+  sessionAddReadRow(tr("Traded in"), sessionReadVals.inn);
 
   const sessionEditHost = el("div", { class: "session-edit-host" });
   sessionEditHost.style.display = "none";
   const sg = el("div", { class: "session-grid" });
-  sg.appendChild(el("div", {}, el("label", { class: "field" }, "Packs opened"), sessionInputs.packs));
-  sg.appendChild(el("div", {}, el("label", { class: "field" }, "Traded out"), sessionInputs.out));
-  sg.appendChild(el("div", {}, el("label", { class: "field" }, "Traded in"), sessionInputs.inn));
+  sg.appendChild(el("div", {}, el("label", { class: "field" }, tr("Packs opened")), sessionInputs.packs));
+  sg.appendChild(el("div", {}, el("label", { class: "field" }, tr("Traded out")), sessionInputs.out));
+  sg.appendChild(el("div", {}, el("label", { class: "field" }, tr("Traded in")), sessionInputs.inn));
   sessionEditHost.appendChild(sg);
   const editActions = el("div", { class: "session-edit-actions" });
-  const saveSession = el("button", { class: "btn btn-primary", type: "button" }, "Save");
-  const cancelSession = el("button", { class: "btn", type: "button" }, "Cancel");
+  const saveSession = el("button", { class: "btn btn-primary", type: "button" }, tr("Save"));
+  const cancelSession = el("button", { class: "btn", type: "button" }, tr("Cancel"));
   editActions.append(saveSession, cancelSession);
   sessionEditHost.appendChild(editActions);
 
   const sessionHead = el("div", { class: "session-head" });
-  sessionHead.appendChild(el("h3", {}, "Session"));
-  const editSessionBtn = el("button", { class: "btn", type: "button" }, "Edit");
+  sessionHead.appendChild(el("h3", {}, tr("Session")));
+  const editSessionBtn = el("button", { class: "btn", type: "button" }, tr("Edit"));
   sessionHead.appendChild(editSessionBtn);
 
   function applySessionToUI(): void {
@@ -1175,14 +1198,14 @@ function buildOverview(): HTMLElement {
       lastSession.inn = parseInt(sessionInputs.inn.value, 10) || 0;
       applySessionToUI();
       leaveSessionEdit();
-      sessionMsg.textContent = "Saved.";
+      sessionMsg.textContent = tr("Saved.");
     } catch (e) {
       sessionErr.replaceChildren(errBox(e));
     }
   });
 
   async function loadMetrics(): Promise<void> {
-    metricsHost.innerHTML = "<p class='muted'>Loading…</p>";
+    metricsHost.innerHTML = tr("<p class='muted'>Loading…</p>");
     analyticsHost.innerHTML = "";
     const [mRes, anRes] = await Promise.allSettled([getMetrics(), getAnalytics()]);
 
@@ -1196,16 +1219,16 @@ function buildOverview(): HTMLElement {
     const m = mRes.value;
     const emptyAlbum = m.unique_slots_filled === 0;
     metricsHost.innerHTML = "";
-    metricsHost.appendChild(el("h3", {}, "Collection"));
+    metricsHost.appendChild(el("h3", {}, tr("Collection")));
     metricsHost.appendChild(
       collectionProgressBlock(m.pct_complete_unique, m.unique_slots_filled, m.album_unique_slots),
     );
     const g = el("div", { class: "grid-metrics" });
     const cells: [string, string][] = [
-      ["Missing", String(m.unique_slots_missing)],
-      ["Filled", String(m.unique_slots_filled)],
-      ["Spares", String(m.spare_copies)],
-      ["Total stickers", String(m.total_physical_stickers)],
+      [tr("Missing"), String(m.unique_slots_missing)],
+      [tr("Filled"), String(m.unique_slots_filled)],
+      [tr("Spares"), String(m.spare_copies)],
+      [tr("Total stickers"), String(m.total_physical_stickers)],
     ];
     for (const [label, val] of cells) {
       g.appendChild(
@@ -1223,10 +1246,10 @@ function buildOverview(): HTMLElement {
     if (anRes.status === "fulfilled") {
       const an = anRes.value;
       analyticsHost.innerHTML = "";
-      analyticsHost.appendChild(el("h3", {}, "Analytics"));
+      analyticsHost.appendChild(el("h3", {}, tr("Analytics")));
       analyticsHost.appendChild(renderAnalyticsWidgets(an, { emptyAlbum }));
       const foot = el("p", { class: "analytics-card-foot" });
-      const link = el("a", { href: "#", class: "analytics-full-link" }, "Open team analytics");
+      const link = el("a", { href: "#", class: "analytics-full-link" }, tr("Open team analytics"));
       link.addEventListener("click", (ev) => {
         ev.preventDefault();
         showView("analytics");
@@ -1235,23 +1258,23 @@ function buildOverview(): HTMLElement {
       analyticsHost.appendChild(foot);
     } else {
       analyticsHost.innerHTML = "";
-      analyticsHost.appendChild(el("h3", {}, "Analytics"));
+      analyticsHost.appendChild(el("h3", {}, tr("Analytics")));
       analyticsHost.appendChild(errBox(anRes.reason));
     }
   }
 
   sessionHost.appendChild(sessionHead);
   sessionHost.appendChild(
-    el("p", { class: "muted", style: "margin:0 0 0.75rem;font-size:0.85rem" }, "From packs and trades. Edit if you need to fix counts."),
+    el("p", { class: "muted", style: "margin:0 0 0.75rem;font-size:0.85rem" }, tr("From packs and trades. Edit if you need to fix counts.")),
   );
   sessionHost.appendChild(sessionReadHost);
   sessionHost.appendChild(sessionEditHost);
   sessionHost.appendChild(sessionMsg);
   sessionHost.appendChild(sessionErr);
 
-  ioHost.appendChild(el("h3", {}, "Backup"));
+  ioHost.appendChild(el("h3", {}, tr("Backup")));
   const ioRow = el("div", { class: "row" });
-  const exportBtn = el("button", { class: "btn btn-primary", type: "button" }, "Download snapshot JSON");
+  const exportBtn = el("button", { class: "btn btn-primary", type: "button" }, tr("Download snapshot JSON"));
   exportBtn.addEventListener("click", async () => {
     try {
       const snap = await getSnapshot();
@@ -1265,7 +1288,7 @@ function buildOverview(): HTMLElement {
       alert(String(e instanceof Error ? e.message : e));
     }
   });
-  const printLink = el("a", { href: listsPrintUrl(), target: "_blank", rel: "noopener" }, "Open printable sheet");
+  const printLink = el("a", { href: listsPrintUrl(), target: "_blank", rel: "noopener" }, tr("Open printable sheet"));
   ioRow.append(exportBtn, printLink);
   ioHost.appendChild(ioRow);
 
@@ -1291,14 +1314,14 @@ function buildOverview(): HTMLElement {
     fileInput.value = "";
   });
   ioHost.appendChild(
-    el("div", { class: "checkbox-row" }, applySess, el("label", {}, "Include session counters")),
+    el("div", { class: "checkbox-row" }, applySess, el("label", {}, tr("Include session counters"))),
   );
-  ioHost.appendChild(el("label", { class: "field" }, "Import snapshot JSON"));
+  ioHost.appendChild(el("label", { class: "field" }, tr("Import snapshot JSON")));
   ioHost.appendChild(fileInput);
   ioHost.appendChild(importMsg);
   ioHost.appendChild(importErr);
 
-  const refresh = el("button", { class: "btn", type: "button" }, "Refresh");
+  const refresh = el("button", { class: "btn", type: "button" }, tr("Refresh"));
   refresh.addEventListener("click", () => loadMetrics());
   section.insertBefore(refresh, metricsHost);
 
@@ -1319,9 +1342,9 @@ function lookupStatusBadgeClass(status: string): string {
 }
 
 function formatLookupStatusLabel(status: string): string {
-  if (status === "missing") return "Missing";
-  if (status === "duplicate") return "Duplicates";
-  return "In album";
+  if (status === "missing") return tr("Missing");
+  if (status === "duplicate") return tr("Duplicates");
+  return tr("In album");
 }
 
 /** Compact album lines: `Group:` when applicable, `Page:`, always `Type:`. */
@@ -1332,13 +1355,13 @@ function renderLookupAlbumKv(r: StickerDetail): HTMLElement {
   const hasGroup = typeof grp === "string" && grp.trim().length > 0;
   const box = el("div", { class: "lookup-album-kv" });
   if (hasGroup) {
-    box.appendChild(el("div", { class: "lookup-album-kv-line" }, `Group: ${grp}`));
+    box.appendChild(el("div", { class: "lookup-album-kv-line" }, `${tr("Group")}: ${grp}`));
   }
   if (hasPage) {
-    box.appendChild(el("div", { class: "lookup-album-kv-line" }, `Page: ${page}`));
+    box.appendChild(el("div", { class: "lookup-album-kv-line" }, `${tr("Page")}: ${page}`));
   }
   box.appendChild(
-    el("div", { class: "lookup-album-kv-line" }, `Type: ${stickerTypeShortLabel(r.category_code, r.role)}`),
+    el("div", { class: "lookup-album-kv-line" }, `${tr("Type")}: ${stickerTypeShortLabel(r.category_code, r.role)}`),
   );
   return box;
 }
@@ -1379,10 +1402,10 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
   const paste = albumPasteLineForDetail(r);
   if (paste) {
     const pasteCard = el("div", { class: "lookup-paste-card" });
-    pasteCard.appendChild(el("div", { class: "lookup-paste-label" }, "Album / paste line"));
+    pasteCard.appendChild(el("div", { class: "lookup-paste-label" }, tr("Album / paste line")));
     pasteCard.appendChild(el("div", { class: "lookup-paste-line ref" }, paste));
     const btnRow = el("div", { class: "lookup-paste-actions" });
-    const copyAlbum = el("button", { class: "btn btn-primary", type: "button" }, "Copy album line");
+    const copyAlbum = el("button", { class: "btn btn-primary", type: "button" }, tr("Copy album line"));
     copyAlbum.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(paste);
@@ -1394,7 +1417,7 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
         copyAlbum.textContent = "Copy failed";
       }
     });
-    const copyRef = el("button", { class: "btn", type: "button" }, "Copy app ref");
+    const copyRef = el("button", { class: "btn", type: "button" }, tr("Copy app ref"));
     copyRef.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(r.ref);
@@ -1412,7 +1435,7 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
   }
 
   if (displayRef !== r.ref && r.role !== "fwc_special") {
-    host.appendChild(el("p", { class: "lookup-result-meta" }, `App ref: ${r.ref}`));
+    host.appendChild(el("p", { class: "lookup-result-meta" }, `${tr("App ref")}: ${r.ref}`));
   }
 
   return host;
@@ -1421,19 +1444,19 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
 function buildLists(): HTMLElement {
   const section = el("section", { class: "view", id: "view-lists" });
   views.lists = section;
-  section.appendChild(el("h2", {}, "Lists"));
+  section.appendChild(el("h2", {}, tr("Lists")));
 
   const lead = el("p", { class: "lists-lead" });
   lead.textContent = "Loading…";
   section.appendChild(lead);
 
   const toolbar = el("div", { class: "lists-toolbar" });
-  const loadBtn = el("button", { class: "btn btn-primary", type: "button" }, "Reload");
+  const loadBtn = el("button", { class: "btn btn-primary", type: "button" }, tr("Reload"));
   const copyMiss = el("button", {
     class: "btn",
     type: "button",
     title: "Copy compact missing list",
-  }, "Copy missing");
+  }, tr("Copy missing"));
   copyMiss.addEventListener("click", async () => {
     try {
       const t = await getMissingCompact();
@@ -1450,7 +1473,7 @@ function buildLists(): HTMLElement {
     class: "btn",
     type: "button",
     title: "Copy compact duplicates list",
-  }, "Copy dups");
+  }, tr("Copy dups"));
   copyDup.addEventListener("click", async () => {
     try {
       const t = await getDuplicatesCompact();
@@ -1476,13 +1499,13 @@ function buildLists(): HTMLElement {
   const searchInput = el("input", {
     type: "text",
     class: "lists-search-input",
-    placeholder: "Filter or ref (e.g. MEX:1) · Enter = look up",
+    placeholder: tr("Filter or ref (e.g. MEX:1) · Enter = look up"),
     autocomplete: "off",
     spellcheck: false,
     "data-sticker-draft": "1",
   }) as HTMLInputElement;
   searchField.appendChild(searchInput);
-  const searchGo = el("button", { class: "btn btn-primary", type: "button" }, "Look up");
+  const searchGo = el("button", { class: "btn btn-primary", type: "button" }, tr("Look up"));
   searchWrap.append(searchField, searchGo);
   section.appendChild(searchWrap);
   attachStickerRefAutocomplete(searchInput);
@@ -1492,7 +1515,7 @@ function buildLists(): HTMLElement {
   const albumToolbar = el("div", { class: "lists-album-toolbar" });
   const typeFilter = el("select", {
     class: "lists-album-filter",
-    "aria-label": "Filter by sticker type",
+    "aria-label": tr("Filter by sticker type"),
   }) as HTMLSelectElement;
   for (const [val, lab] of [
     ["all", "All types"],
@@ -1501,11 +1524,11 @@ function buildLists(): HTMLElement {
     ["Team picture", "Team picture"],
     ["Special", "Special"],
   ] as const) {
-    typeFilter.appendChild(el("option", { value: val }, lab));
+    typeFilter.appendChild(el("option", { value: val }, tr(lab)));
   }
   const statusFilter = el("select", {
     class: "lists-album-filter",
-    "aria-label": "Filter by inventory status",
+    "aria-label": tr("Filter by inventory status"),
   }) as HTMLSelectElement;
   for (const [val, lab] of [
     ["all", "All statuses"],
@@ -1513,12 +1536,12 @@ function buildLists(): HTMLElement {
     ["duplicate", "Duplicates"],
     ["single", "In album"],
   ] as const) {
-    statusFilter.appendChild(el("option", { value: val }, lab));
+    statusFilter.appendChild(el("option", { value: val }, tr(lab)));
   }
   albumToolbar.append(typeFilter, statusFilter);
 
-  const legend = el("div", { class: "lists-legend", "aria-label": "Sticker type colors" });
-  legend.appendChild(el("span", { class: "lists-legend-title" }, "Types"));
+  const legend = el("div", { class: "lists-legend", "aria-label": tr("Sticker type colors") });
+  legend.appendChild(el("span", { class: "lists-legend-title" }, tr("Types")));
   const legendPairs: [string, string][] = [
     ["lists-line-ref--shield", "Shield"],
     ["lists-line-ref--photo", "Team picture"],
@@ -1528,7 +1551,7 @@ function buildLists(): HTMLElement {
   ];
   for (const [cls, label] of legendPairs) {
     legend.appendChild(document.createTextNode(" · "));
-    legend.appendChild(el("span", { class: `lists-legend-chip ${cls}` }, label));
+    legend.appendChild(el("span", { class: `lists-legend-chip ${cls}` }, tr(label)));
   }
 
   const albumScroll = el("div", { class: "lists-album-scroll" });
@@ -1539,13 +1562,13 @@ function buildLists(): HTMLElement {
     el(
       "tr",
       {},
-      el("th", { scope: "col" }, "Ref"),
+      el("th", { scope: "col" }, tr("Ref")),
       el("th", { scope: "col" }, "Type"),
-      el("th", { scope: "col" }, "Group"),
-      el("th", { scope: "col" }, "Page"),
-      el("th", { scope: "col" }, "Status"),
-      el("th", { scope: "col" }, "Qty"),
-      el("th", { scope: "col" }, "Spare"),
+      el("th", { scope: "col" }, tr("Group")),
+      el("th", { scope: "col" }, tr("Page")),
+      el("th", { scope: "col" }, tr("Status")),
+      el("th", { scope: "col" }, tr("Qty")),
+      el("th", { scope: "col" }, tr("Spare")),
     ),
   );
   const albumTbody = el("tbody");
@@ -1554,14 +1577,14 @@ function buildLists(): HTMLElement {
   listsMain.append(albumToolbar, legend, albumScroll);
 
   const inspector = el("aside", { class: "lists-inspector card" });
-  inspector.appendChild(el("h3", { class: "lists-inspector-title" }, "Details"));
+  inspector.appendChild(el("h3", { class: "lists-inspector-title" }, tr("Details")));
   const inspectStatus = el("div", { class: "lists-inspector-status", hidden: true });
   const inspectBody = el("div", { class: "lists-inspector-body" });
   inspectBody.appendChild(
-    el("p", { class: "lists-empty lists-inspector-hint" }, "Tap a row or look up a ref."),
+    el("p", { class: "lists-empty lists-inspector-hint" }, tr("Tap a row or look up a ref.")),
   );
   const inspectFoot = el("div", { class: "lists-inspector-foot" });
-  const deskBtn = el("button", { class: "btn", type: "button", disabled: true }, "Open in Desk");
+  const deskBtn = el("button", { class: "btn", type: "button", disabled: true }, tr("Open in Desk"));
   let lastInspect: StickerDetail | null = null;
   deskBtn.addEventListener("click", () => {
     if (!lastInspect) return;
@@ -1617,25 +1640,25 @@ function buildLists(): HTMLElement {
   }
 
   function buildAlbumRow(d: StickerDetail): HTMLTableRowElement {
-    const tr = el("tr", { class: "lists-album-row", tabindex: "0", role: "button" });
-    tr.addEventListener("click", () => showInspectorDetail(d));
+    const row = el("tr", { class: "lists-album-row", tabindex: "0", role: "button" });
+    row.addEventListener("click", () => showInspectorDetail(d));
     const refShown = albumStickerRefLabel(d);
     const tdRef = el("td", { class: "lists-album-td-ref" });
     tdRef.appendChild(el("span", { class: listStickerRoleRefClass(d.role) }, refShown));
-    tr.appendChild(tdRef);
-    tr.appendChild(el("td", { class: "ref" }, stickerTypeShortLabel(d.category_code, d.role)));
+    row.appendChild(tdRef);
+    row.appendChild(el("td", { class: "ref" }, tr(stickerTypeShortLabel(d.category_code, d.role))));
     const g =
       typeof d.album_index_group === "string" && d.album_index_group.trim().length > 0 ? d.album_index_group : "—";
-    tr.appendChild(el("td", { class: "ref" }, g));
+    row.appendChild(el("td", { class: "ref" }, g));
     const pageStr =
       typeof d.album_printed_page === "number" && d.album_printed_page >= 0 ? String(d.album_printed_page) : "—";
-    tr.appendChild(el("td", { class: "ref" }, pageStr));
+    row.appendChild(el("td", { class: "ref" }, pageStr));
     const tdSt = el("td", { class: "lists-album-td-status" });
     tdSt.appendChild(el("span", { class: lookupStatusBadgeClass(d.status) }, formatLookupStatusLabel(d.status)));
-    tr.appendChild(tdSt);
-    tr.appendChild(el("td", { class: "ref" }, String(d.qty)));
-    tr.appendChild(el("td", { class: "ref" }, String(d.spare_copies)));
-    return tr;
+    row.appendChild(tdSt);
+    row.appendChild(el("td", { class: "ref" }, String(d.qty)));
+    row.appendChild(el("td", { class: "ref" }, String(d.spare_copies)));
+    return row;
   }
 
   function renderAlbumTable(): void {
@@ -1678,18 +1701,18 @@ function buildLists(): HTMLElement {
       const expanded = expandRefsFromLine(raw.trim());
       if (expanded.length === 0) {
         inspectStatus.hidden = false;
-        inspectStatus.appendChild(el("div", { class: "msg-error" }, "Enter a sticker ref."));
+        inspectStatus.appendChild(el("div", { class: "msg-error" }, tr("Enter a sticker ref.")));
         return;
       }
       if (expanded.length > 1) {
         inspectStatus.hidden = false;
         inspectStatus.appendChild(
-          el("div", { class: "msg-error" }, "One ref at a time."),
+          el("div", { class: "msg-error" }, tr("One ref at a time.")),
         );
         return;
       }
       inspectStatus.hidden = false;
-      inspectStatus.appendChild(el("p", { class: "lists-empty" }, "Loading…"));
+      inspectStatus.appendChild(el("p", { class: "lists-empty" }, tr("Loading…")));
       const ref = expanded[0]!;
       const detail = await getStickerByRef(ref);
       showInspectorDetail(detail);
@@ -1716,7 +1739,7 @@ function buildLists(): HTMLElement {
       el(
         "tr",
         {},
-        el("td", { colspan: "7", class: "lists-album-empty" }, "Loading album…"),
+        el("td", { colspan: "7", class: "lists-album-empty" }, tr("Loading album…")),
       ),
     );
     try {
@@ -1741,28 +1764,28 @@ function buildLists(): HTMLElement {
 function buildDesk(): HTMLElement {
   const section = el("section", { class: "view", id: "view-desk" });
   views.desk = section;
-  section.appendChild(el("h2", {}, "Sticker desk"));
+  section.appendChild(el("h2", {}, tr("Sticker desk")));
 
   const lookupCard = el("div", { class: "card" });
   const refInput = el("input", {
     type: "text",
-    placeholder: "MEX:5 · 00 · FWC 14 · MEX: 1, 2, 3",
+    placeholder: tr("MEX:5 · 00 · FWC 14 · MEX: 1, 2, 3"),
     "data-sticker-draft": "1",
   }) as HTMLInputElement;
   const lookupResultHost = el("div", { class: "lookup-result-host" });
   const lookupErr = el("div", { class: "lookup-errors" });
-  lookupCard.appendChild(el("h3", {}, "Lookup"));
-  lookupCard.appendChild(el("label", { class: "field" }, "Sticker ref"));
+  lookupCard.appendChild(el("h3", {}, tr("Lookup")));
+  lookupCard.appendChild(el("label", { class: "field" }, tr("Sticker ref")));
   lookupCard.appendChild(refInput);
   attachStickerRefAutocomplete(refInput);
-  const lookupBtn = el("button", { class: "btn btn-primary", type: "button" }, "Look up");
+  const lookupBtn = el("button", { class: "btn btn-primary", type: "button" }, tr("Look up"));
   async function runLookup(): Promise<void> {
     lookupResultHost.replaceChildren();
     lookupErr.replaceChildren();
     try {
       const expanded = expandRefsFromLine(refInput.value.trim());
       if (expanded.length === 0) {
-        lookupErr.appendChild(el("div", { class: "msg-error" }, "Enter a sticker ref."));
+        lookupErr.appendChild(el("div", { class: "msg-error" }, tr("Enter a sticker ref.")));
         return;
       }
       if (expanded.length > 1) {
@@ -1786,7 +1809,7 @@ function buildDesk(): HTMLElement {
   lookupCard.appendChild(lookupResultHost);
 
   const addCard = el("div", { class: "card" });
-  addCard.appendChild(el("h3", {}, "Add stickers"));
+  addCard.appendChild(el("h3", {}, tr("Add stickers")));
   const batchAdd = el("textarea", {
     placeholder: `MEX:5\n00\nFWC 14\nRSA 7\nMEX: 1, 2, 3\nFWC:12 x3`,
     "data-sticker-draft": "1",
@@ -1803,7 +1826,7 @@ function buildDesk(): HTMLElement {
       addPreview.textContent = "";
     }
   });
-  const applyAdd = el("button", { class: "btn btn-primary", type: "button" }, "Apply adds");
+  const applyAdd = el("button", { class: "btn btn-primary", type: "button" }, tr("Apply adds"));
   const suggestPacksBtn = el("button", { class: "btn", type: "button" }, `Add ~packs to session (${STICKERS_PER_PACK}/pack)`);
   suggestPacksBtn.title = "After adds: increment packs_opened by ceil(N/7). Run once after Apply adds.";
   let lastAddTotal = 0;
@@ -1826,7 +1849,7 @@ function buildDesk(): HTMLElement {
   suggestPacksBtn.addEventListener("click", async () => {
     addMsg.innerHTML = "";
     if (lastAddTotal <= 0) {
-      addMsg.appendChild(el("div", { class: "banner-info" }, "Use Apply adds first, or enter a total manually via Overview → session."));
+      addMsg.appendChild(el("div", { class: "banner-info" }, tr("Use Apply adds first, or enter a total manually via Overview → session.")));
       return;
     }
     const delta = Math.ceil(lastAddTotal / STICKERS_PER_PACK);
@@ -1846,7 +1869,7 @@ function buildDesk(): HTMLElement {
     }
   });
 
-  addCard.appendChild(el("label", { class: "field" }, "Batch (optional: REF x3)"));
+  addCard.appendChild(el("label", { class: "field" }, tr("Batch (optional: REF x3)")));
   addCard.appendChild(batchAdd);
   attachStickerRefAutocomplete(batchAdd);
   addCard.appendChild(addPreview);
@@ -1854,10 +1877,10 @@ function buildDesk(): HTMLElement {
   addCard.appendChild(addMsg);
 
   const remCard = el("div", { class: "card" });
-  remCard.appendChild(el("h3", {}, "Remove stickers"));
-  const batchRem = el("textarea", { placeholder: "Same format as add", "data-sticker-draft": "1" }) as HTMLTextAreaElement;
+  remCard.appendChild(el("h3", {}, tr("Remove stickers")));
+  const batchRem = el("textarea", { placeholder: tr("Same format as add"), "data-sticker-draft": "1" }) as HTMLTextAreaElement;
   const remMsg = el("div");
-  const applyRem = el("button", { class: "btn btn-primary", type: "button" }, "Apply removes");
+  const applyRem = el("button", { class: "btn btn-primary", type: "button" }, tr("Apply removes"));
   applyRem.addEventListener("click", async () => {
     remMsg.innerHTML = "";
     try {
@@ -1871,28 +1894,28 @@ function buildDesk(): HTMLElement {
       remMsg.appendChild(errBox(e));
     }
   });
-  remCard.appendChild(el("label", { class: "field" }, "Batch"));
+  remCard.appendChild(el("label", { class: "field" }, tr("Batch")));
   remCard.appendChild(batchRem);
   attachStickerRefAutocomplete(batchRem);
   remCard.appendChild(applyRem);
   remCard.appendChild(remMsg);
 
   const singleCard = el("div", { class: "card" });
-  singleCard.appendChild(el("h3", {}, "Single add / remove"));
-  const sRef = el("input", { type: "text", placeholder: "MEX:5", "data-sticker-draft": "1" }) as HTMLInputElement;
+  singleCard.appendChild(el("h3", {}, tr("Single add / remove")));
+  const sRef = el("input", { type: "text", placeholder: tr("MEX:5"), "data-sticker-draft": "1" }) as HTMLInputElement;
   const sCount = el("input", { type: "number", min: "1", value: "1" }) as HTMLInputElement;
   const singleMsg = el("div");
   singleCard.appendChild(el("div", { class: "row" }));
-  singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, "Ref"), sRef));
-  singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, "Count"), sCount));
+  singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, tr("Ref")), sRef));
+  singleCard.querySelector(".row")!.appendChild(el("div", {}, el("label", { class: "field" }, tr("Count")), sCount));
   attachStickerRefAutocomplete(sRef);
-  const bAdd = el("button", { class: "btn", type: "button" }, "Add");
-  const bRem = el("button", { class: "btn", type: "button" }, "Remove");
+  const bAdd = el("button", { class: "btn", type: "button" }, tr("Add"));
+  const bRem = el("button", { class: "btn", type: "button" }, tr("Remove"));
   bAdd.addEventListener("click", async () => {
     singleMsg.innerHTML = "";
     try {
       await addSticker(sRef.value.trim(), parseInt(sCount.value, 10) || 1);
-      singleMsg.appendChild(el("div", { class: "msg-ok" }, "OK"));
+      singleMsg.appendChild(el("div", { class: "msg-ok" }, tr("OK")));
     } catch (e) {
       singleMsg.appendChild(errBox(e));
     }
@@ -1901,7 +1924,7 @@ function buildDesk(): HTMLElement {
     singleMsg.innerHTML = "";
     try {
       await removeSticker(sRef.value.trim(), parseInt(sCount.value, 10) || 1);
-      singleMsg.appendChild(el("div", { class: "msg-ok" }, "OK"));
+      singleMsg.appendChild(el("div", { class: "msg-ok" }, tr("OK")));
     } catch (e) {
       singleMsg.appendChild(errBox(e));
     }
@@ -1942,7 +1965,7 @@ function packStickerListsEqual(a: string[], b: string[]): boolean {
 function buildPack(): HTMLElement {
   const section = el("section", { class: "view", id: "view-pack" });
   views.pack = section;
-  section.appendChild(el("h2", {}, "Open pack"));
+  section.appendChild(el("h2", {}, tr("Open pack")));
 
   const card = el("div", { class: "card" });
   card.appendChild(
@@ -1954,7 +1977,7 @@ function buildPack(): HTMLElement {
   );
 
   const ta = el("textarea", {
-    placeholder: `One ref per line (often ${STICKERS_PER_PACK}; fewer or more is ok)`,
+    placeholder: trf("One ref per line (often {n}; fewer or more is ok)", { n: String(STICKERS_PER_PACK) }),
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
 
@@ -1978,7 +2001,7 @@ function buildPack(): HTMLElement {
   );
   nominalRow.appendChild(perPack);
   nominalRow.appendChild(editNominalCb);
-  nominalRow.appendChild(el("label", { for: editNominalId, style: "font-size:0.9rem" }, "Allow editing nominal size"));
+  nominalRow.appendChild(el("label", { for: editNominalId, style: "font-size:0.9rem" }, tr("Allow editing nominal size")));
 
   type PackValidated = { stickers: string[]; perPack: number; check: PackCheckResponse };
   let lastValidated: PackValidated | null = null;
@@ -1992,8 +2015,8 @@ function buildPack(): HTMLElement {
   staleHint.textContent = "List or nominal size changed — run Check pack again before registering.";
 
   const previewHost = el("div", { class: "pack-preview-host" });
-  const checkBtn = el("button", { class: "btn", type: "button" }, "Check pack");
-  const regBtn = el("button", { class: "btn btn-primary", type: "button", disabled: true }, "Register pack");
+  const checkBtn = el("button", { class: "btn", type: "button" }, tr("Check pack"));
+  const regBtn = el("button", { class: "btn btn-primary", type: "button", disabled: true }, tr("Register pack"));
   const resultCard = el("div", { class: "card pack-result-card" });
   resultCard.style.display = "none";
 
@@ -2123,7 +2146,7 @@ function buildPack(): HTMLElement {
     if (!lastValidated || !packStickerListsEqual(stickers, lastValidated.stickers) || pp !== lastValidated.perPack) {
       resultCard.style.display = "block";
       resultCard.replaceChildren(
-        el("div", { class: "msg-error" }, "Run Check pack again — the list or nominal per-pack no longer matches the preview."),
+        el("div", { class: "msg-error" }, tr("Run Check pack again — the list or nominal per-pack no longer matches the preview.")),
       );
       regBtn.disabled = true;
       return;
@@ -2138,7 +2161,7 @@ function buildPack(): HTMLElement {
 
       resultCard.style.display = "block";
       resultCard.replaceChildren();
-      resultCard.appendChild(el("h3", {}, "Pack registered"));
+      resultCard.appendChild(el("h3", {}, tr("Pack registered")));
       resultCard.appendChild(
         el(
           "p",
@@ -2156,7 +2179,7 @@ function buildPack(): HTMLElement {
         );
       }
       const undoRow = el("div", { class: "trade-result-actions" });
-      const undoBtn = el("button", { class: "btn", type: "button" }, "Undo this pack");
+      const undoBtn = el("button", { class: "btn", type: "button" }, tr("Undo this pack"));
       undoBtn.addEventListener("click", async () => {
         if (!pendingUndo) return;
         undoBtn.disabled = true;
@@ -2164,9 +2187,9 @@ function buildPack(): HTMLElement {
           await undoPackOpen(pendingUndo.stickers, pendingUndo.packs_opened_delta);
           pendingUndo = null;
           resultCard.replaceChildren();
-          resultCard.appendChild(el("h3", {}, "Pack undone"));
+          resultCard.appendChild(el("h3", {}, tr("Pack undone")));
           resultCard.appendChild(
-            el("p", { class: "muted" }, "Inventory and packs_opened were restored. Paste the list again if you still want to register it."),
+            el("p", { class: "muted" }, tr("Inventory and packs_opened were restored. Paste the list again if you still want to register it.")),
           );
           void overviewPage.reload();
           void loadTradePreviewData();
@@ -2188,7 +2211,7 @@ function buildPack(): HTMLElement {
   const btnRow = el("div", { class: "row", style: "gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0" });
   btnRow.append(checkBtn, regBtn);
 
-  card.appendChild(el("label", { class: "field" }, "Stickers in this pack (one ref per line)"));
+  card.appendChild(el("label", { class: "field" }, tr("Stickers in this pack (one ref per line)")));
   card.appendChild(ta);
   attachStickerRefAutocomplete(ta);
   card.appendChild(nominalRow);
@@ -2328,7 +2351,7 @@ function fairTradePairedLists(
 function buildPackOutlook(): HTMLElement {
   const section = el("section", { class: "view", id: "view-pack-outlook" });
   views["pack-outlook"] = section;
-  section.appendChild(el("h2", {}, "Pack outlook"));
+  section.appendChild(el("h2", {}, tr("Pack outlook")));
 
   const intro = el("p", {
     class: "muted",
@@ -2343,7 +2366,7 @@ function buildPackOutlook(): HTMLElement {
   ringWrap.appendChild(ringHost);
 
   const sliderCard = el("div", { class: "card", style: "flex:1 1 18rem;min-width:min(100%,16rem)" });
-  sliderCard.appendChild(el("h3", { style: "margin-top:0" }, "Trading repeats"));
+  sliderCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Trading repeats")));
   const sliderRow = el("div", { class: "pack-outlook-slider-row", style: "display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap" });
   const range = el("input", {
     type: "range",
@@ -2353,7 +2376,7 @@ function buildPackOutlook(): HTMLElement {
     class: "pack-outlook-range",
     "aria-label": "How often you trade spare stickers: percent of times a duplicate could be swapped for a missing slot after each simulated pack",
   }) as HTMLInputElement;
-  const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, "30%");
+  const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, tr("30%"));
   sliderRow.appendChild(range);
   sliderRow.appendChild(pctLabel);
   sliderCard.appendChild(sliderRow);
@@ -2382,7 +2405,7 @@ function buildPackOutlook(): HTMLElement {
   section.appendChild(status);
 
   const statsCard = el("div", { class: "card" });
-  statsCard.appendChild(el("h3", { style: "margin-top:0" }, "How many more packs?"));
+  statsCard.appendChild(el("h3", { style: "margin-top:0" }, tr("How many more packs?")));
   const statsBody = el("div", { id: "pack-outlook-stats", style: "font-size:0.95rem;line-height:1.55" });
   statsCard.appendChild(statsBody);
   section.appendChild(statsCard);
@@ -2402,7 +2425,7 @@ function buildPackOutlook(): HTMLElement {
     const miss = d.unique_slots_missing;
     if (miss <= 0) {
       statsBody.replaceChildren(
-        el("p", { style: "margin:0" }, "Album complete on unique slots — no further packs needed in this model."),
+        el("p", { style: "margin:0" }, tr("Album complete on unique slots — no further packs needed in this model.")),
         el(
           "p",
           { class: "muted", style: "margin:0.5rem 0 0;font-size:0.88rem" },
@@ -2499,7 +2522,7 @@ function buildPackOutlook(): HTMLElement {
 function buildCrosscheck(): HTMLElement {
   const section = el("section", { class: "view", id: "view-crosscheck" });
   views.crosscheck = section;
-  section.appendChild(el("h2", {}, "Crosscheck"));
+  section.appendChild(el("h2", {}, tr("Crosscheck")));
 
   let missingSet: Set<string> | null = null;
   let dupGiveSet: Set<string> | null = null;
@@ -2558,7 +2581,7 @@ function buildCrosscheck(): HTMLElement {
     "Paste a friend’s list in the same ref formats as Desk (including compact lines like MEX: 1, 5, 13). Lines that look like export headers (Missing, Progress:, etc.) are skipped. Lines that fail to parse are listed below the result but other lines still count.";
 
   const cardNeed = el("div", { class: "card" });
-  cardNeed.appendChild(el("h3", {}, "Their haves / duplicates → what I need"));
+  cardNeed.appendChild(el("h3", {}, tr("Their haves / duplicates → what I need")));
   cardNeed.appendChild(
     el(
       "p",
@@ -2567,7 +2590,7 @@ function buildCrosscheck(): HTMLElement {
     ),
   );
   const taNeed = el("textarea", {
-    placeholder: "Their list: one ref per line, MEX: 1, 2, 3, or a copied block from chat / export",
+    placeholder: tr("Their list: one ref per line, MEX: 1, 2, 3, or a copied block from chat / export"),
     rows: "8",
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
@@ -2576,13 +2599,13 @@ function buildCrosscheck(): HTMLElement {
     style: "margin:0.65rem 0 0;font-size:0.85rem;line-height:1.35;white-space:pre-wrap",
   });
   const outNeedErr = el("div");
-  const btnNeed = el("button", { class: "btn btn-primary", type: "button" }, "Compare to my missing");
+  const btnNeed = el("button", { class: "btn btn-primary", type: "button" }, tr("Compare to my missing"));
   btnNeed.addEventListener("click", async () => {
     outNeedErr.replaceChildren();
     if (!missingSet) await loadCrosscheckLists();
     if (!missingSet) {
       outNeedPre.textContent = "";
-      outNeedErr.appendChild(el("div", { class: "msg-error" }, "Lists not loaded."));
+      outNeedErr.appendChild(el("div", { class: "msg-error" }, tr("Lists not loaded.")));
       return;
     }
     const { refs, errors } = parseTheirRefPaste(taNeed.value);
@@ -2603,16 +2626,16 @@ function buildCrosscheck(): HTMLElement {
       );
     }
   });
-  cardNeed.appendChild(el("label", { class: "field" }, "Their list"));
+  cardNeed.appendChild(el("label", { class: "field" }, tr("Their list")));
   cardNeed.appendChild(taNeed);
   attachStickerRefAutocomplete(taNeed);
   cardNeed.appendChild(btnNeed);
-  cardNeed.appendChild(el("label", { class: "field" }, "You need from them (compact)"));
+  cardNeed.appendChild(el("label", { class: "field" }, tr("You need from them (compact)")));
   cardNeed.appendChild(outNeedPre);
   cardNeed.appendChild(outNeedErr);
 
   const cardGive = el("div", { class: "card" });
-  cardGive.appendChild(el("h3", {}, "Their missing → what I can give"));
+  cardGive.appendChild(el("h3", {}, tr("Their missing → what I can give")));
   cardGive.appendChild(
     el(
       "p",
@@ -2621,7 +2644,7 @@ function buildCrosscheck(): HTMLElement {
     ),
   );
   const taGive = el("textarea", {
-    placeholder: "Their missing list (compact or one ref per line)",
+    placeholder: tr("Their missing list (compact or one ref per line)"),
     rows: "8",
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
@@ -2630,13 +2653,13 @@ function buildCrosscheck(): HTMLElement {
     style: "margin:0.65rem 0 0;font-size:0.85rem;line-height:1.35;white-space:pre-wrap",
   });
   const outGiveErr = el("div");
-  const btnGive = el("button", { class: "btn btn-primary", type: "button" }, "Compare to my spares");
+  const btnGive = el("button", { class: "btn btn-primary", type: "button" }, tr("Compare to my spares"));
   btnGive.addEventListener("click", async () => {
     outGiveErr.replaceChildren();
     if (!dupGiveSet) await loadCrosscheckLists();
     if (!dupGiveSet) {
       outGivePre.textContent = "";
-      outGiveErr.appendChild(el("div", { class: "msg-error" }, "Lists not loaded."));
+      outGiveErr.appendChild(el("div", { class: "msg-error" }, tr("Lists not loaded.")));
       return;
     }
     const { refs, errors } = parseTheirRefPaste(taGive.value);
@@ -2657,11 +2680,11 @@ function buildCrosscheck(): HTMLElement {
       );
     }
   });
-  cardGive.appendChild(el("label", { class: "field" }, "Their missing"));
+  cardGive.appendChild(el("label", { class: "field" }, tr("Their missing")));
   cardGive.appendChild(taGive);
   attachStickerRefAutocomplete(taGive);
   cardGive.appendChild(btnGive);
-  cardGive.appendChild(el("label", { class: "field" }, "You can give (compact)"));
+  cardGive.appendChild(el("label", { class: "field" }, tr("You can give (compact)")));
   cardGive.appendChild(outGivePre);
   cardGive.appendChild(outGiveErr);
 
@@ -2683,7 +2706,7 @@ function buildCrosscheck(): HTMLElement {
   }
 
   const cardTradeJump = el("div", { class: "card" });
-  cardTradeJump.appendChild(el("h3", {}, "Send to Trade"));
+  cardTradeJump.appendChild(el("h3", {}, tr("Send to Trade")));
   cardTradeJump.appendChild(
     el(
       "p",
@@ -2691,8 +2714,8 @@ function buildCrosscheck(): HTMLElement {
       "After you run both Compare buttons on the current text, you can open Trade with lists prefilled. Suggest trade pairs FWC with FWC, team photo with team photo, shield with shield, then players — equal count on both sides when possible. Send ALL copies every overlap (enables uneven counts if the two lists differ in length). You still review and execute on Trade.",
     ),
   );
-  const btnSuggest = el("button", { class: "btn", type: "button", disabled: true }, "Suggest trade (fair pairs)");
-  const btnSendAll = el("button", { class: "btn", type: "button", disabled: true }, "Send ALL to Trade");
+  const btnSuggest = el("button", { class: "btn", type: "button", disabled: true }, tr("Suggest trade (fair pairs)"));
+  const btnSendAll = el("button", { class: "btn", type: "button", disabled: true }, tr("Send ALL to Trade"));
   btnSuggest.addEventListener("click", () => {
     if (!needCompared || !giveCompared || lastNeedHits === null || lastGiveHits === null) return;
     const { give, take, leftoverGive, leftoverTake } = fairTradePairedLists(
@@ -2757,7 +2780,7 @@ function buildCrosscheck(): HTMLElement {
 function buildTrade(): HTMLElement {
   const section = el("section", { class: "view", id: "view-trade" });
   views.trade = section;
-  section.appendChild(el("h2", {}, "Trade"));
+  section.appendChild(el("h2", {}, tr("Trade")));
   const prefillBanner = el("div", {
     id: "trade-prefill-banner",
     class: "banner-info",
@@ -2767,12 +2790,12 @@ function buildTrade(): HTMLElement {
 
   const giveTa = el("textarea", {
     id: "trade-give",
-    placeholder: "Stickers you give (one per line)",
+    placeholder: tr("Stickers you give (one per line)"),
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
   const takeTa = el("textarea", {
     id: "trade-take",
-    placeholder: "Stickers you receive",
+    placeholder: tr("Stickers you receive"),
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
   attachStickerRefAutocomplete(giveTa);
@@ -2821,13 +2844,13 @@ function buildTrade(): HTMLElement {
   function renderUndoOutcome(ur: TradeResponse): void {
     tradeResultCard.style.display = "block";
     tradeResultCard.replaceChildren();
-    tradeResultCard.appendChild(el("h3", {}, "Trade undone"));
+    tradeResultCard.appendChild(el("h3", {}, tr("Trade undone")));
     const grid = el("div", { class: "trade-result-grid" });
     const colRm = el("div", { class: "trade-result-col trade-result-col--out" });
-    colRm.appendChild(el("div", { class: "trade-result-col-title" }, "Returned / removed"));
+    colRm.appendChild(el("div", { class: "trade-result-col-title" }, tr("Returned / removed")));
     colRm.appendChild(renderRefChips(ur.gave));
     const colOk = el("div", { class: "trade-result-col trade-result-col--in" });
-    colOk.appendChild(el("div", { class: "trade-result-col-title" }, "Restored to your album"));
+    colOk.appendChild(el("div", { class: "trade-result-col-title" }, tr("Restored to your album")));
     colOk.appendChild(renderRefChips(ur.received));
     grid.append(colRm, colOk);
     tradeResultCard.appendChild(grid);
@@ -2837,7 +2860,7 @@ function buildTrade(): HTMLElement {
     pendingUndo = { give: [...forwardGive], take: [...forwardTake] };
     tradeResultCard.style.display = "block";
     tradeResultCard.replaceChildren();
-    tradeResultCard.appendChild(el("h3", {}, "Trade recorded"));
+    tradeResultCard.appendChild(el("h3", {}, tr("Trade recorded")));
     tradeResultCard.appendChild(
       el(
         "p",
@@ -2848,23 +2871,23 @@ function buildTrade(): HTMLElement {
 
     const grid = el("div", { class: "trade-result-grid" });
     const colOut = el("div", { class: "trade-result-col trade-result-col--out" });
-    colOut.appendChild(el("div", { class: "trade-result-col-title" }, "Out of your album"));
+    colOut.appendChild(el("div", { class: "trade-result-col-title" }, tr("Out of your album")));
     colOut.appendChild(renderRefChips(r.gave));
     const colIn = el("div", { class: "trade-result-col trade-result-col--in" });
-    colIn.appendChild(el("div", { class: "trade-result-col-title" }, "Into your album"));
+    colIn.appendChild(el("div", { class: "trade-result-col-title" }, tr("Into your album")));
     colIn.appendChild(renderRefChips(r.received));
     grid.append(colOut, colIn);
     tradeResultCard.appendChild(grid);
 
     if (r.warnings.length > 0) {
       const wbox = el("div", { class: "banner-info trade-result-warn" });
-      wbox.appendChild(el("strong", {}, "Notes — "));
+      wbox.appendChild(el("strong", {}, tr("Notes — ")));
       wbox.appendChild(document.createTextNode(r.warnings.join(" · ")));
       tradeResultCard.appendChild(wbox);
     }
 
     const undoRow = el("div", { class: "trade-result-actions" });
-    const undoBtn = el("button", { class: "btn", type: "button" }, "Undo this trade");
+    const undoBtn = el("button", { class: "btn", type: "button" }, tr("Undo this trade"));
     undoBtn.addEventListener("click", async () => {
       if (!pendingUndo) return;
       undoBtn.disabled = true;
@@ -2890,7 +2913,7 @@ function buildTrade(): HTMLElement {
   }
 
   const previewCard = el("div", { class: "card trade-preview-card" });
-  previewCard.appendChild(el("h3", {}, "Preview"));
+  previewCard.appendChild(el("h3", {}, tr("Preview")));
   const previewHost = el("div", { class: "trade-preview-host", id: "trade-preview-host" });
 
   function updateTradePreview(): void {
@@ -2932,7 +2955,7 @@ function buildTrade(): HTMLElement {
 
     if (!tradeMissingRefs || !tradeDupMap) {
       previewHost.appendChild(
-        el("p", { style: "margin:0;font-size:0.9rem;color:var(--muted)" }, "Loading album data for preview…"),
+        el("p", { style: "margin:0;font-size:0.9rem;color:var(--muted)" }, tr("Loading album data for preview…")),
       );
       return;
     }
@@ -3052,7 +3075,7 @@ function buildTrade(): HTMLElement {
       previewHost.querySelectorAll(".preview-block").length === 0
     ) {
       previewHost.appendChild(
-        el("p", { style: "margin:0;font-size:0.9rem;color:var(--muted)" }, "Enter refs above to see an analysis."),
+        el("p", { style: "margin:0;font-size:0.9rem;color:var(--muted)" }, tr("Enter refs above to see an analysis.")),
       );
     }
   }
@@ -3061,7 +3084,7 @@ function buildTrade(): HTMLElement {
   giveTa.addEventListener("input", onGiveTakeInput);
   takeTa.addEventListener("input", onGiveTakeInput);
 
-  const submit = el("button", { class: "btn btn-primary", type: "button" }, "Execute trade");
+  const submit = el("button", { class: "btn btn-primary", type: "button" }, tr("Execute trade"));
 
   submit.addEventListener("click", async () => {
     clearTradeOutcome();
@@ -3082,26 +3105,26 @@ function buildTrade(): HTMLElement {
 
   const grid = el("div", { class: "trade-grid" });
   grid.appendChild(
-    el("div", { class: "card" }, el("h3", {}, "You give"), giveTa, countBadge),
+    el("div", { class: "card" }, el("h3", {}, tr("You give")), giveTa, countBadge),
   );
   grid.appendChild(
-    el("div", { class: "card" }, el("h3", {}, "You receive"), takeTa),
+    el("div", { class: "card" }, el("h3", {}, tr("You receive")), takeTa),
   );
 
   section.appendChild(grid);
   section.appendChild(previewCard);
   section.appendChild(infoUneven);
   section.appendChild(
-    el("div", { class: "checkbox-row" }, strictCb, el("label", { for: "trade-strict" }, "Strict: only trade duplicates (qty ≥ 2)")),
+    el("div", { class: "checkbox-row" }, strictCb, el("label", { for: "trade-strict" }, tr("Strict: only trade duplicates (qty ≥ 2)"))),
   );
   section.appendChild(
-    el("div", { class: "checkbox-row" }, unevenCb, el("label", { for: "trade-uneven" }, "Allow uneven counts")),
+    el("div", { class: "checkbox-row" }, unevenCb, el("label", { for: "trade-uneven" }, tr("Allow uneven counts"))),
   );
   section.appendChild(submit);
   section.appendChild(tradeResultCard);
 
   const dupCard = el("div", { class: "card" });
-  dupCard.appendChild(el("h3", {}, "Duplicates (click row to add to Give)"));
+  dupCard.appendChild(el("h3", {}, tr("Duplicates (click row to add to Give)")));
   const dupPicker = el("div", { id: "trade-dup-picker", class: "compact-list" });
   dupCard.appendChild(dupPicker);
   section.appendChild(dupCard);

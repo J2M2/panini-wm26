@@ -235,6 +235,30 @@ Full request/response shapes are in **`/docs`**.
 | [`Dockerfile`](Dockerfile), [`docker-compose.yml`](docker-compose.yml), [`deploy/docker-entrypoint.sh`](deploy/docker-entrypoint.sh) | Production image: API + `web/dist`, optional volume for SQLite |
 | [`fly.toml`](fly.toml) | Example Fly.io app + volume mount for `/data` |
 
+## Roadmap ideas
+
+### Social features
+- **Invite-only registration** — simplest: single `PANINI_INVITE_CODE` env var entered at signup. Better: one-time invite links (`invites` table in `registry.sqlite`, token → expires_at + used_by).
+- **Friend connections** — `friendships (user_id, friend_id, status)` table in `registry.sqlite`. Send / accept / decline flow.
+- **Friend overview (read-only)** — `GET /users/{username}/overview` checks friendship then opens their album DB in read-only mode. Only shows the summary, not the full sticker list.
+- **Cross-check with a friend** — `GET /users/{username}/crosscheck`: intersects your missing list with their duplicates and vice versa. Both SQLite files are already isolated; just open two connections and join in Python.
+
+All social features live in `registry.sqlite`. Album DBs stay untouched.
+
+### Badges
+Unlockable badges shown on the overview page, awarded by album milestones:
+
+| Badge | Condition |
+|-------|-----------|
+| **Calciatori** | Own `FWC:00` (the special album sticker) |
+| **SIUUU** | Complete the entire album (all 980 stickers) |
+| **Hat-trick** | Open 3+ packs in one session |
+| **Scout** | Have duplicates of every team's shield (slot 1) |
+| **Swap King** | Trade away 50+ stickers total |
+| *(more TBD)* | … |
+
+Implementation: a pure read-only function over the existing `inventory` + `session_stats` tables — no schema changes needed. Badges are computed on-the-fly from `/metrics` data and returned as part of the overview response or a dedicated `GET /badges` endpoint.
+
 ## Troubleshooting
 
 - **`cannot start a transaction`** / nested transactions: the API uses SQLite savepoints for multi-step actions; use one client connection per request (default with uvicorn).

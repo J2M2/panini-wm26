@@ -12,7 +12,7 @@ import bcrypt
 
 from panini_service.data_layout import registry_db_path
 
-MAX_USERS = 50
+MAX_USERS = 10
 
 _USERNAME_RE = re.compile(r"^[a-z0-9_]{3,24}$")
 
@@ -155,6 +155,27 @@ def list_users_summary() -> list[dict[str, Any]]:
         return out
     finally:
         conn.close()
+
+
+def delete_user(username: str) -> bool:
+    """Remove user from registry and delete their album file. Returns True if found."""
+    u = username.strip().lower()
+    conn = _connect_registry()
+    try:
+        row = conn.execute("SELECT id FROM users WHERE username = ?", (u,)).fetchone()
+        if row is None:
+            return False
+        uid = int(row["id"])
+        album = user_album_path(uid)
+        conn.execute("DELETE FROM users WHERE id = ?", (uid,))
+        conn.commit()
+    finally:
+        conn.close()
+    for suffix in ("", "-wal", "-shm"):
+        p = Path(str(album) + suffix)
+        if p.exists():
+            p.unlink()
+    return True
 
 
 def user_album_path(user_id: int) -> Path:

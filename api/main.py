@@ -67,7 +67,7 @@ from panini_service.refs import (  # noqa: E402
 )
 from panini_service.session_store import set_session_stats  # noqa: E402
 from panini_service.bootstrap_db import copy_album_database_file, create_fresh_album_file  # noqa: E402
-from panini_service.registry import create_user, ensure_registry_schema, get_user_by_id, list_users_summary, verify_login  # noqa: E402
+from panini_service.registry import MAX_USERS, create_user, delete_user, ensure_registry_schema, get_user_by_id, list_users_summary, verify_login  # noqa: E402
 from panini_service.snapshot import build_full_snapshot, import_album_snapshot  # noqa: E402
 
 from .schemas import (  # noqa: E402
@@ -189,10 +189,18 @@ def _require_panini_admin(x_panini_admin: str | None = Header(default=None, alia
 def get_admin_registry_users(_: None = Depends(_require_panini_admin)):
     users = list_users_summary()
     return {
-        "max_users": 50,
+        "max_users": MAX_USERS,
         "count": len(users),
         "users": users,
     }
+
+
+@app.delete("/admin/users/{username}")
+def delete_admin_user(username: str, _: None = Depends(_require_panini_admin)):
+    found = delete_user(username)
+    if not found:
+        raise HTTPException(status_code=404, detail=f"User '{username}' not found.")
+    return {"ok": True, "deleted": username}
 
 
 @app.post("/auth/register")

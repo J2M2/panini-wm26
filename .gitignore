@@ -17,6 +17,9 @@ panini_snapshot*.json
 # Raw spreadsheet dumps before import (repo root)
 panini_raw*.csv
 
+# Local secrets (never commit)
+.env
+
 # Python
 .venv/
 __pycache__/

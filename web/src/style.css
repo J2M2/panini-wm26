@@ -63,6 +63,13 @@ a:hover {
   letter-spacing: 0.02em;
 }
 
+.sidebar-lang-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin: 0 1rem 0.75rem;
+}
+
 .account-panel {
   margin: 0 1rem 1rem;
   padding: 0.55rem 0.65rem;
