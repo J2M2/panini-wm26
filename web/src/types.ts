@@ -174,6 +174,8 @@ export interface TeamAnalyticsRow {
   slots_with_copy: number;
   slots_missing: number;
   slots_total: number;
+  /** Sum of inventory qty on this team page (includes spares). */
+  total_stickers: number;
   pct_complete: number;
   shield_ok: boolean;
   team_photo_ok: boolean;

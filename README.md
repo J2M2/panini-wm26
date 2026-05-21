@@ -97,6 +97,8 @@ Shows totals, completion %, spare copies, optional Monte Carlo “packs to finis
 uvicorn api.main:app --reload --host 127.0.0.1 --port 8080
 ```
 
+(`api/main.py` adds `scripts/` to `sys.path` so `panini_catalog` imports work locally — same as Docker’s `PYTHONPATH`.)
+
 - Interactive docs: **http://127.0.0.1:8080/docs** (match the port you pass to `--port`)
 - Health: `GET /health`
 - Main reads/writes use the same SQLite file under [`data/panini_wm26.sqlite`](data/panini_wm26.sqlite).
@@ -216,7 +218,7 @@ Team slots are **1–20** (1 = shield, 13 = team photo). FWC uses the same inter
 | Export full album (backup) | `GET` | **`/snapshot`** | Same JSON as `export_json.py` (`schema_version` 3, includes **`session`**) |
 | Import snapshot | `POST` | **`/snapshot/import`** | Body = exported JSON. Query **`apply_session`** (default `true`): restore packs/trade counters only if the JSON has **`session`**; use `false` to restore **`qty`** only |
 | Fun aggregates | `GET` | `/analytics?include=...` | Comma-separated keys (see OpenAPI); includes `team_shield_photo` |
-| Per-team pages | `GET` | **`/analytics/teams`** | All 48 teams: `%` complete, `shield_ok`, `team_photo_ok` (slot 1 / 13) |
+| Per-team pages | `GET` | **`/analytics/teams`** | All 48 teams: `%` complete, `total_stickers` (qty sum incl. spares), `shield_ok`, `team_photo_ok` (slot 1 / 13) |
 
 Full request/response shapes are in **`/docs`**.
 

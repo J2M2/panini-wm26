@@ -110,6 +110,7 @@ def team_analytics_pages(conn: sqlite3.Connection) -> list[dict[str, Any]]:
           s.category_code AS code,
           SUM(CASE WHEN i.qty >= 1 THEN 1 ELSE 0 END) AS slots_with_copy,
           COUNT(*) AS slots_total,
+          SUM(i.qty) AS total_stickers,
           MAX(CASE WHEN s.role = 'shield' AND i.qty >= 1 THEN 1 ELSE 0 END) AS shield_ok,
           MAX(CASE WHEN s.role = 'team_photo' AND i.qty >= 1 THEN 1 ELSE 0 END) AS photo_ok
         FROM stickers s
@@ -135,6 +136,7 @@ def team_analytics_pages(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                 "slots_with_copy": have,
                 "slots_missing": miss,
                 "slots_total": total,
+                "total_stickers": int(r["total_stickers"] or 0),
                 "pct_complete": pct,
                 "shield_ok": bool(int(r["shield_ok"] or 0)),
                 "team_photo_ok": bool(int(r["photo_ok"] or 0)),

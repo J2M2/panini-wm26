@@ -200,6 +200,8 @@ def test_analytics_teams(client):
     assert "pct_complete" in row0
     assert "shield_ok" in row0
     assert "team_photo_ok" in row0
+    assert "total_stickers" in row0
+    assert isinstance(row0["total_stickers"], int)
 
 
 def test_album_sticker_type_label_and_hover():

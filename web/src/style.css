@@ -1160,10 +1160,20 @@ table.data .ref {
   border: 1px solid var(--border);
 }
 
-.analytics-teams-table th:nth-child(3),
 .analytics-teams-table th:nth-child(4),
+.analytics-teams-table th:nth-child(5),
 .analytics-teams-table .team-flag-cell {
   text-align: center;
+}
+
+.analytics-teams-table .team-stickers-cell {
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.analytics-teams-table .team-stickers-val {
+  font-variant-numeric: tabular-nums;
 }
 
 .analytics-teams-table th.th-sortable {

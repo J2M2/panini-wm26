@@ -16,8 +16,10 @@ from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 _ROOT = Path(__file__).resolve().parents[1]
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
+_SCRIPTS = _ROOT / "scripts"
+for _p in (_ROOT, _SCRIPTS):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 from panini_service.album_reset import reset_album_collection  # noqa: E402
 from panini_service.auth_context import (  # noqa: E402
@@ -300,7 +302,10 @@ def get_pack_outlook(
         0.0,
         ge=0.0,
         le=1.0,
-        description="After each simulated pack, probability (0–1) of filling one random missing slot via trading a duplicate.",
+        description=(
+            "Share of duplicate stickers (0–1) successfully traded for missing slots. "
+            "Each duplicate — starting inventory or from a pack — is an independent idealized trade try."
+        ),
     ),
     per_pack: int = Query(7, ge=1, le=50),
     trials: int = Query(1200, ge=50, le=10_000),

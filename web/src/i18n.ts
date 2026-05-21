@@ -37,3 +37,30 @@ export function trf(template: string, vars: Record<string, string | number>): st
   }
   return out;
 }
+
+/** Localize tie notes from `GET /analytics` (English prefixes from the API). */
+export function trTieNote(note: string): string {
+  if (getLocale() !== "es" || !note) return note;
+  const closest = note.match(/^Tied for closest: (.+)$/);
+  if (closest) return trf("Tied for closest: {codes}", { codes: closest[1] });
+  const missing = note.match(/^Tied for most missing: (.+)$/);
+  if (missing) return trf("Tied for most missing: {codes}", { codes: missing[1] });
+  const dupes = note.match(/^Tied for most duplicate copies: (.+)$/);
+  if (dupes) return trf("Tied for most duplicate copies: {codes}", { codes: dupes[1] });
+  return note;
+}
+
+/** Localize pack-outlook warnings returned by the API. */
+export function trApiNote(note: string): string {
+  if (getLocale() !== "es" || !note) return note;
+  const truncated = note.match(
+    /^Some trials exceeded max_packs \((\d+)\); increase the cap or lower trials — results may be biased low\.$/,
+  );
+  if (truncated) {
+    return trf(
+      "Some trials exceeded max_packs ({max}); increase the cap or lower trials — results may be biased low.",
+      { max: truncated[1] },
+    );
+  }
+  return note;
+}

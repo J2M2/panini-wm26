@@ -1,8 +1,8 @@
-"""Toy Monte Carlo: random packs + idealized post-pack trade hits for remaining album slots.
+"""Toy Monte Carlo: random packs + idealized duplicate trades for remaining album slots.
 
-Each pack draws ``per_pack`` i.i.d. uniform slots over the album. After each pack, with
-probability ``trade_repeat_p``, one uniformly chosen still-missing slot is filled
-(idealized: you always trade a duplicate for something you need).
+Each pack draws ``per_pack`` i.i.d. uniform slots over the album. Duplicates — from your
+starting inventory or from a pack — are independently traded with probability
+``trade_repeat_p`` for a random still-missing slot (idealized: you always find a match).
 
 Real packs and trades are not uniform — treat outputs as rough guidance only.
 """
@@ -17,7 +17,7 @@ from typing import Any
 from panini_service.queries import inventory_metrics
 
 
-def load_missing_indices(conn: sqlite3.Connection) -> set[int]:
+def load_album_state(conn: sqlite3.Connection) -> tuple[set[int], int]:
     """Sticker ids are 1..N in catalog row order; map to 0..N-1 index for simulation."""
     rows = conn.execute(
         """
@@ -28,23 +28,46 @@ def load_missing_indices(conn: sqlite3.Connection) -> set[int]:
         """
     ).fetchall()
     missing: set[int] = set()
+    spares = 0
     for r in rows:
         idx = int(r["id"]) - 1
-        if int(r["qty"]) < 1:
+        qty = int(r["qty"])
+        if qty < 1:
             missing.add(idx)
-    return missing
+        elif qty > 1:
+            spares += qty - 1
+    return missing, spares
+
+
+def apply_trades_on_duplicates(
+    n_dupes: int,
+    need: set[int],
+    trade_repeat_p: float,
+    rng: random.Random,
+) -> set[int]:
+    """Each duplicate independently trades with probability ``trade_repeat_p``."""
+    if n_dupes <= 0 or not need or trade_repeat_p <= 0.0:
+        return need
+    still = set(need)
+    for _ in range(n_dupes):
+        if not still:
+            break
+        if rng.random() < trade_repeat_p:
+            still.remove(rng.choice(tuple(still)))
+    return still
 
 
 def simulate_packs_one_trial(
     missing: set[int],
     *,
+    initial_spares: int,
     n_slots: int,
     per_pack: int,
     trade_repeat_p: float,
     rng: random.Random,
     max_packs: int,
 ) -> int:
-    need = set(missing)
+    need = apply_trades_on_duplicates(initial_spares, set(missing), trade_repeat_p, rng)
     if not need:
         return 0
     packs = 0
@@ -52,12 +75,14 @@ def simulate_packs_one_trial(
         packs += 1
         if packs > max_packs:
             return -1
+        pack_dupes = 0
         for _ in range(per_pack):
             j = rng.randrange(n_slots)
             if j in need:
                 need.remove(j)
-        if trade_repeat_p > 0.0 and rng.random() < trade_repeat_p and need:
-            need.remove(rng.choice(tuple(need)))
+            else:
+                pack_dupes += 1
+        need = apply_trades_on_duplicates(pack_dupes, need, trade_repeat_p, rng)
     return packs
 
 
@@ -75,6 +100,7 @@ def percentile_sorted(sorted_x: list[int], p: float) -> float:
 def run_monte_carlo(
     missing: set[int],
     *,
+    initial_spares: int,
     n_slots: int,
     per_pack: int,
     trade_repeat_p: float,
@@ -88,6 +114,7 @@ def run_monte_carlo(
     for _ in range(trials):
         r = simulate_packs_one_trial(
             missing,
+            initial_spares=initial_spares,
             n_slots=n_slots,
             per_pack=per_pack,
             trade_repeat_p=trade_repeat_p,
@@ -117,8 +144,8 @@ def pack_outlook_projection(
     max_packs: int = 500_000,
 ) -> dict[str, Any]:
     """
-    ``trade_repeat_p``: after each simulated pack, probability that one random still-missing
-    slot is filled via trading away a duplicate (0 = packs only, 1 = always).
+    ``trade_repeat_p``: share of duplicate stickers successfully traded (0–1). Each duplicate
+    — from starting inventory or from a pack — is an independent idealized trade try.
     """
     p = max(0.0, min(1.0, float(trade_repeat_p)))
     trials = max(50, min(10_000, int(trials)))
@@ -127,12 +154,13 @@ def pack_outlook_projection(
     m = inventory_metrics(conn)
     n_slots = int(m["album_unique_slots"])
     missing_n = int(m["unique_slots_missing"])
+    spare_copies = int(m["spare_copies"])
     if missing_n <= 0:
         return {
             "album_unique_slots": n_slots,
             "unique_slots_missing": 0,
             "pct_complete_unique": float(m["pct_complete_unique"]),
-            "spare_copies": int(m["spare_copies"]),
+            "spare_copies": spare_copies,
             "session_packs_opened": int(m["session"]["packs_opened"]),
             "per_pack": per_pack,
             "trade_repeat_p": p,
@@ -150,9 +178,10 @@ def pack_outlook_projection(
             ),
         }
 
-    need = load_missing_indices(conn)
+    need, initial_spares = load_album_state(conn)
     results, warn = run_monte_carlo(
         need,
+        initial_spares=initial_spares,
         n_slots=n_slots,
         per_pack=per_pack,
         trade_repeat_p=p,
@@ -170,7 +199,7 @@ def pack_outlook_projection(
         "album_unique_slots": n_slots,
         "unique_slots_missing": missing_n,
         "pct_complete_unique": float(m["pct_complete_unique"]),
-        "spare_copies": int(m["spare_copies"]),
+        "spare_copies": spare_copies,
         "session_packs_opened": int(m["session"]["packs_opened"]),
         "per_pack": per_pack,
         "trade_repeat_p": p,
@@ -184,8 +213,8 @@ def pack_outlook_projection(
         "mean_stickers": round(mean_p * per_pack, 1),
         "truncated_note": warn,
         "disclaimer": (
-            "Toy model: each pack = random stickers over the whole album; the slider is the chance "
-            "that after each pack you fill one extra missing slot by trading a duplicate. "
-            "Not financial or completion advice — use for ballpark sense only."
+            "Toy model: random stickers per pack; the slider is the share of duplicates "
+            "successfully traded for missing slots. Not financial or completion advice — "
+            "use for ballpark sense only."
         ),
     }

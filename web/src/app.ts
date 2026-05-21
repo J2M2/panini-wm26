@@ -27,7 +27,7 @@ import {
   undoPackOpen,
   undoTrade,
 } from "./api";
-import { getLocale, setLocale, tr, trf } from "./i18n";
+import { getLocale, setLocale, tr, trApiNote, trf, trTieNote } from "./i18n";
 import { STICKERS_PER_PACK } from "./constants";
 import {
   canonicalRef,
@@ -470,10 +470,9 @@ export function initApp(root: HTMLElement): void {
   const routes = [
     ["overview", tr("Overview")],
     ["analytics", tr("Team analytics")],
-    ["pack-outlook", tr("Pack outlook")],
+    ["pack-outlook", tr("Album completion estimate")],
     ["lists", tr("Lists")],
-    ["desk", tr("Sticker desk")],
-    ["pack", tr("Pack")],
+    ["desk", tr("Add stickers")],
     ["trade", tr("Trade")],
     ["crosscheck", tr("Crosscheck")],
   ] as const;
@@ -510,7 +509,6 @@ export function initApp(root: HTMLElement): void {
   main.appendChild(buildPackOutlook());
   main.appendChild(buildDesk());
   main.appendChild(buildLists());
-  main.appendChild(buildPack());
   main.appendChild(buildTrade());
   main.appendChild(buildCrosscheck());
 
@@ -649,7 +647,7 @@ function tieOrEmptyNote(
   whenEmpty: string,
 ): HTMLElement | null {
   if (!tied) return null;
-  const text = emptyAlbum ? whenEmpty : tieNote;
+  const text = emptyAlbum ? tr(whenEmpty) : trTieNote(tieNote);
   if (!text) return null;
   return formatTieNote(text);
 }
@@ -672,7 +670,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
         el(
           "p",
           { class: "stat-widget__hint", style: "margin:0" },
-          "Nothing to rank yet — add stickers to see which ref piles up the most.",
+          tr("Nothing to rank yet — add stickers to see which ref piles up the most."),
         ),
       );
     } else {
@@ -699,14 +697,14 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
         "div",
         { class: "stat-widget__metric" },
         el("span", { class: "stat-widget__qty" }, `+${spare}`),
-        " spare copies on this page",
+        tr(" spare copies on this page"),
       ),
     );
     w.appendChild(
       el(
         "p",
         { class: "stat-widget__hint" },
-        `${slotsDup} slot${slotsDup === 1 ? "" : "s"} with qty>1 · sum of extras beyond the first copy each`,
+        trf("{n} slots with qty>1 · sum of extras beyond the first copy each", { n: String(slotsDup) }),
       ),
     );
     const tieDup = tieOrEmptyNote(
@@ -734,7 +732,7 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
         el(
           "p",
           { class: "stat-widget__hint" },
-          "Every team page has all 20 stickers (at least one copy each).",
+          tr("Every team page has all 20 stickers (at least one copy each)."),
         ),
       );
       col.appendChild(analyticsHBar(100));
@@ -753,7 +751,10 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
         el(
           "p",
           { class: "stat-widget__hint" },
-          `${have} slot${have === 1 ? "" : "s"} with at least one copy · ${miss} still empty on this page`,
+          trf("{have} slots with at least one copy · {miss} still empty on this page", {
+            have: String(have),
+            miss: String(miss),
+          }),
         ),
       );
       const tieBest = tieOrEmptyNote(
@@ -784,7 +785,11 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     const col = el("div", { class: "stat-widget__col" });
     col.appendChild(el("div", { class: "stat-widget__code" }, code));
     col.appendChild(
-      el("p", { class: "stat-widget__hint" }, `${miss} sticker${miss === 1 ? "" : "s"} still missing here — trade priority?`),
+      el(
+        "p",
+        { class: "stat-widget__hint" },
+        trf("{miss} stickers still missing here — trade priority?", { miss: String(miss) }),
+      ),
     );
     const tieWorst = tieOrEmptyNote(
       emptyAlbum,
@@ -812,7 +817,9 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
     row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
     const col = el("div", { class: "stat-widget__col" });
     col.appendChild(el("div", { class: "stat-widget__title" }, name));
-    col.appendChild(el("p", { class: "stat-widget__hint" }, `${miss} missing in this sheet`));
+    col.appendChild(
+      el("p", { class: "stat-widget__hint" }, trf("{miss} missing in this sheet", { miss: String(miss) })),
+    );
     col.appendChild(analyticsHBar(pct));
     row.appendChild(col);
     w.appendChild(row);
@@ -835,12 +842,16 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       const row = el("div", { class: "stat-widget__row" });
       row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
       const col = el("div", { class: "stat-widget__col" });
-      col.appendChild(el("div", { class: "stat-widget__title" }, `${have} of ${total} in the album`));
+      col.appendChild(
+        el("div", { class: "stat-widget__title" }, trf("{have} of {total} in the album", { have: String(have), total: String(total) })),
+      );
       col.appendChild(
         el(
           "p",
           { class: "stat-widget__hint" },
-          miss === 0 ? "All shields accounted for." : `${miss} shield${miss === 1 ? "" : "s"} still missing.`,
+          miss === 0
+            ? tr("All shields accounted for.")
+            : trf("{miss} shields still missing.", { miss: String(miss) }),
         ),
       );
       col.appendChild(analyticsHBar(pct));
@@ -862,12 +873,16 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       const row = el("div", { class: "stat-widget__row" });
       row.appendChild(analyticsPctRing(pct, `${have}/${total}`));
       const col = el("div", { class: "stat-widget__col" });
-      col.appendChild(el("div", { class: "stat-widget__title" }, `${have} of ${total} in the album`));
+      col.appendChild(
+        el("div", { class: "stat-widget__title" }, trf("{have} of {total} in the album", { have: String(have), total: String(total) })),
+      );
       col.appendChild(
         el(
           "p",
           { class: "stat-widget__hint" },
-          miss === 0 ? "All team photos accounted for." : `${miss} photo${miss === 1 ? "" : "s"} still missing.`,
+          miss === 0
+            ? tr("All team photos accounted for.")
+            : trf("{miss} photos still missing.", { miss: String(miss) }),
         ),
       );
       col.appendChild(analyticsHBar(pct));
@@ -889,20 +904,22 @@ function renderAnalyticsWidgets(data: Record<string, unknown>, opts?: RenderAnal
       el(
         "p",
         { class: "stat-widget__hint", style: "margin:0 0 0.35rem" },
-        "National teams with all 20 stickers present (≥1 copy each).",
+        tr("National teams with all 20 stickers present (≥1 copy each)."),
       ),
     );
     const row = el("div", { class: "stat-widget__row" });
     row.appendChild(analyticsPctRing(pct, `${n}/${total}`));
     const col = el("div", { class: "stat-widget__col" });
-    col.appendChild(el("div", { class: "stat-widget__title" }, `${n} of ${total} complete`));
+    col.appendChild(
+      el("div", { class: "stat-widget__title" }, trf("{n} of {total} complete", { n: String(n), total: String(total) })),
+    );
     col.appendChild(
       el(
         "p",
         { class: "stat-widget__hint" },
         rest === 0
-          ? "Every team sheet is finished."
-          : `${rest} team sheet${rest === 1 ? "" : "s"} still incomplete — open Team analytics.`,
+          ? tr("Every team sheet is finished.")
+          : trf("{rest} team sheets still incomplete — open Team analytics.", { rest: String(rest) }),
       ),
     );
     col.appendChild(analyticsHBar(pct));
@@ -935,13 +952,13 @@ function buildAnalytics(): HTMLElement {
       "p",
       { class: "muted", style: "margin:0 0 1rem;font-size:0.95rem;max-width:52rem" },
       tr(
-        "Each row is one national team page (20 stickers). Shield is slot 1, team photo is slot 13. Flags show whether you have at least one copy. Click column headers to sort.",
+        "Each row is one national team page (20 stickers). Stickers counts every copy you own on that page (including spares). Shield is slot 1, team photo is slot 13. Click column headers to sort.",
       ),
     ),
   );
   const host = el("div", { id: "analytics-teams-host" });
 
-  type TeamSortKey = "code" | "pct_complete" | "shield_ok" | "team_photo_ok";
+  type TeamSortKey = "code" | "pct_complete" | "total_stickers" | "shield_ok" | "team_photo_ok";
   let cachedTeams: TeamAnalyticsRow[] = [];
   let catalogOrder = new Map<string, number>();
   let sortState: { key: TeamSortKey | null; dir: number } = { key: null, dir: 1 };
@@ -953,6 +970,9 @@ function buildAnalytics(): HTMLElement {
         return (catalogOrder.get(a.code)! - catalogOrder.get(b.code)!) * d;
       case "pct_complete":
         if (a.pct_complete !== b.pct_complete) return (a.pct_complete - b.pct_complete) * d;
+        return (catalogOrder.get(a.code)! - catalogOrder.get(b.code)!) * d;
+      case "total_stickers":
+        if (a.total_stickers !== b.total_stickers) return (a.total_stickers - b.total_stickers) * d;
         return (catalogOrder.get(a.code)! - catalogOrder.get(b.code)!) * d;
       case "shield_ok": {
         const va = a.shield_ok ? 1 : 0;
@@ -1005,6 +1025,18 @@ function buildAnalytics(): HTMLElement {
     track.appendChild(label);
     pctCell.appendChild(track);
     row.appendChild(pctCell);
+    const stickersCell = el("td", { class: "team-stickers-cell ref" });
+    stickersCell.appendChild(el("span", { class: "team-stickers-val" }, String(t.total_stickers)));
+    if (t.total_stickers > t.slots_with_copy) {
+      stickersCell.appendChild(
+        el(
+          "span",
+          { class: "muted team-stickers-spares", style: "display:block;font-size:0.78rem;margin-top:0.15rem" },
+          trf("+{n} extras", { n: String(t.total_stickers - t.slots_with_copy) }),
+        ),
+      );
+    }
+    row.appendChild(stickersCell);
     row.appendChild(
       el(
         "td",
@@ -1066,6 +1098,11 @@ function buildAnalytics(): HTMLElement {
           el("th", { class: "th-sortable", "data-sort": "pct_complete", title: tr("Click to sort by completion %") }, tr("% complete")),
           el("th", {
             class: "th-sortable",
+            "data-sort": "total_stickers",
+            title: tr("Total copies on this team page (including spares) · click to sort"),
+          }, tr("Stickers")),
+          el("th", {
+            class: "th-sortable",
             "data-sort": "shield_ok",
             title: tr("Slot 1 — shield / crest · click to sort"),
           }, tr("Shield")),
@@ -1097,6 +1134,20 @@ function buildOverview(): HTMLElement {
   const section = el("section", { class: "view active", id: "view-overview" });
   views.overview = section;
   section.appendChild(el("h2", {}, tr("Overview")));
+
+  const startCard = el("div", { class: "card overview-start-card" });
+  startCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Add stickers to your album")));
+  startCard.appendChild(
+    el(
+      "p",
+      { class: "muted", style: "margin:0 0 0.65rem;font-size:0.9rem;line-height:1.45" },
+      tr("Paste sticker refs (e.g. MEX:5 or one line per sticker from a pack). Use Add stickers in the sidebar."),
+    ),
+  );
+  const goAdd = el("button", { class: "btn btn-primary", type: "button" }, tr("Go to Add stickers"));
+  goAdd.addEventListener("click", () => showView("desk"));
+  startCard.appendChild(goAdd);
+  section.appendChild(startCard);
 
   const metricsHost = el("div", { class: "card" });
   const analyticsHost = el("div", { class: "card" });
@@ -1764,7 +1815,19 @@ function buildLists(): HTMLElement {
 function buildDesk(): HTMLElement {
   const section = el("section", { class: "view", id: "view-desk" });
   views.desk = section;
-  section.appendChild(el("h2", {}, tr("Sticker desk")));
+  section.appendChild(el("h2", {}, tr("Add stickers")));
+  section.appendChild(
+    el(
+      "p",
+      { class: "muted desk-intro", style: "margin:0 0 1rem;font-size:0.95rem;line-height:1.5;max-width:52rem" },
+      tr(
+        "Add stickers you own: open a physical pack (preview then register), paste a batch, or add one ref at a time. Ref format: MEX:5, 00, FWC 14, or MEX: 1, 2, 3.",
+      ),
+    ),
+  );
+
+  const { packRoot, clearPackDrafts } = buildPackPanel();
+  section.appendChild(packRoot);
 
   const lookupCard = el("div", { class: "card" });
   const refInput = el("input", {
@@ -1809,7 +1872,7 @@ function buildDesk(): HTMLElement {
   lookupCard.appendChild(lookupResultHost);
 
   const addCard = el("div", { class: "card" });
-  addCard.appendChild(el("h3", {}, tr("Add stickers")));
+  addCard.appendChild(el("h3", {}, tr("Batch add (any refs)")));
   const batchAdd = el("textarea", {
     placeholder: `MEX:5\n00\nFWC 14\nRSA 7\nMEX: 1, 2, 3\nFWC:12 x3`,
     "data-sticker-draft": "1",
@@ -1933,6 +1996,7 @@ function buildDesk(): HTMLElement {
   singleCard.appendChild(singleMsg);
 
   section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+    clearPackDrafts();
     lookupResultHost.replaceChildren();
     lookupErr.replaceChildren();
     addPreview.textContent = "";
@@ -1962,12 +2026,11 @@ function packStickerListsEqual(a: string[], b: string[]): boolean {
   return true;
 }
 
-function buildPack(): HTMLElement {
-  const section = el("section", { class: "view", id: "view-pack" });
-  views.pack = section;
-  section.appendChild(el("h2", {}, tr("Open pack")));
-
+/** Pack open flow (check → register → undo). Embedded in Add stickers; was a separate nav view. */
+function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void } {
+  const packRoot = el("div", { class: "desk-pack-host" });
   const card = el("div", { class: "card" });
+  card.appendChild(el("h3", { style: "margin-top:0" }, tr("Open a pack")));
   card.appendChild(
     el(
       "p",
@@ -2219,19 +2282,18 @@ function buildPack(): HTMLElement {
   card.appendChild(staleHint);
   card.appendChild(previewHost);
 
-  section.appendChild(card);
-  section.appendChild(resultCard);
+  packRoot.append(card, resultCard);
 
-  section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
+  function clearPackDrafts(): void {
     invalidatePackValidation();
     previewHost.replaceChildren();
     staleHint.hidden = true;
     resultCard.style.display = "none";
     resultCard.replaceChildren();
     pendingUndo = null;
-  });
+  }
 
-  return section;
+  return { packRoot, clearPackDrafts };
 }
 
 function formatPreviewRefList(refs: string[], max = 20): string {
@@ -2351,14 +2413,15 @@ function fairTradePairedLists(
 function buildPackOutlook(): HTMLElement {
   const section = el("section", { class: "view", id: "view-pack-outlook" });
   views["pack-outlook"] = section;
-  section.appendChild(el("h2", {}, tr("Pack outlook")));
+  section.appendChild(el("h2", {}, tr("Album completion estimate")));
 
   const intro = el("p", {
     class: "muted",
     style: "margin:0 0 1rem;font-size:0.88rem;line-height:1.45;max-width:52rem",
   });
-  intro.textContent =
-    "Rough Monte Carlo from your current album: each pack draws random slots over the whole album. The slider is the chance that after each pack you trade one duplicate for a slot you still need. Higher values assume you move spares into missing slots more often — so fewer packs to finish. This is a toy model, not real pack odds.";
+  intro.textContent = tr(
+    "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. The slider is the share of duplicate stickers you successfully trade for ones you still need — each duplicate is an independent try (starting repeats included; idealized — you always find a match). Higher values finish the album sooner. Rough simulation, not real Panini odds.",
+  );
 
   const rowTop = el("div", { class: "pack-outlook-top", style: "display:flex;flex-wrap:wrap;gap:1.25rem;align-items:flex-start;margin-bottom:1rem" });
   const ringWrap = el("div", { style: "flex:0 0 auto" });
@@ -2366,7 +2429,7 @@ function buildPackOutlook(): HTMLElement {
   ringWrap.appendChild(ringHost);
 
   const sliderCard = el("div", { class: "card", style: "flex:1 1 18rem;min-width:min(100%,16rem)" });
-  sliderCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Trading repeats")));
+  sliderCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Duplicate trade rate")));
   const sliderRow = el("div", { class: "pack-outlook-slider-row", style: "display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap" });
   const range = el("input", {
     type: "range",
@@ -2374,7 +2437,9 @@ function buildPackOutlook(): HTMLElement {
     max: "100",
     value: "30",
     class: "pack-outlook-range",
-    "aria-label": "How often you trade spare stickers: percent of times a duplicate could be swapped for a missing slot after each simulated pack",
+    "aria-label": tr(
+      "Share of duplicate stickers successfully traded for missing ones you still need",
+    ),
   }) as HTMLInputElement;
   const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, tr("30%"));
   sliderRow.appendChild(range);
@@ -2389,7 +2454,10 @@ function buildPackOutlook(): HTMLElement {
   function syncTradeRepeatHint(): void {
     const v = range.value;
     pctLabel.textContent = `${v}%`;
-    tradeRepeatHint.textContent = `Assuming you trade ${v}% of spare stickers. Uses ${STICKERS_PER_PACK} stickers per pack — same as Pack.`;
+    tradeRepeatHint.textContent = trf(
+      "{pct}% of duplicates successfully traded (inventory + new pulls). {perPack} stickers per pack — same as the Pack tab.",
+      { pct: v, perPack: String(STICKERS_PER_PACK) },
+    );
   }
   syncTradeRepeatHint();
 
@@ -2405,7 +2473,7 @@ function buildPackOutlook(): HTMLElement {
   section.appendChild(status);
 
   const statsCard = el("div", { class: "card" });
-  statsCard.appendChild(el("h3", { style: "margin-top:0" }, tr("How many more packs?")));
+  statsCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Estimate from here")));
   const statsBody = el("div", { id: "pack-outlook-stats", style: "font-size:0.95rem;line-height:1.55" });
   statsCard.appendChild(statsBody);
   section.appendChild(statsCard);
@@ -2420,19 +2488,30 @@ function buildPackOutlook(): HTMLElement {
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let seq = 0;
 
+  function packOutlookDisclaimer(complete: boolean): string {
+    return complete
+      ? tr("Toy uniform-pack model only; real Panini distribution and trading differ.")
+      : tr(
+          "Toy model: random stickers per pack; the slider is the share of duplicates successfully traded for missing slots. Not spending or completion advice — ballpark only.",
+        );
+  }
+
   function renderFromData(d: PackOutlookResponse): void {
-    ringHost.replaceChildren(analyticsPctRing(d.pct_complete_unique, "unique slots"));
+    ringHost.replaceChildren(analyticsPctRing(d.pct_complete_unique, tr("unique stickers")));
     const miss = d.unique_slots_missing;
     if (miss <= 0) {
       statsBody.replaceChildren(
-        el("p", { style: "margin:0" }, tr("Album complete on unique slots — no further packs needed in this model.")),
+        el("p", { style: "margin:0" }, tr("Album complete on unique stickers — no more packs needed in this model.")),
         el(
           "p",
           { class: "muted", style: "margin:0.5rem 0 0;font-size:0.88rem" },
-          `Session packs opened (counter): ${d.session_packs_opened}. Spare copies in inventory: ${d.spare_copies}.`,
+          trf("Session packs opened: {packs}. Spare copies in inventory: {spares}.", {
+            packs: String(d.session_packs_opened),
+            spares: String(d.spare_copies),
+          }),
         ),
       );
-      disc.textContent = d.disclaimer;
+      disc.textContent = packOutlookDisclaimer(true);
       return;
     }
     const p50 = d.p50_packs;
@@ -2440,54 +2519,76 @@ function buildPackOutlook(): HTMLElement {
     const meanP = d.mean_packs;
     const band =
       p90 > p50
-        ? `Typical spread in this run: about ${p50}–${p90} packs (50th–90th percentile).`
-        : `50th percentile ≈ ${p50} packs; 90th ≈ ${p90} packs.`;
+        ? trf("Typical spread: about {p50}–{p90} packs (50th–90th percentile).", {
+            p50: String(p50),
+            p90: String(p90),
+          })
+        : trf("50th percentile ≈ {p50} packs; 90th ≈ {p90} packs.", {
+            p50: String(p50),
+            p90: String(p90),
+          });
     const mid = el(
       "p",
       { style: "margin:0.65rem 0 0" },
-      "From here, median ≈ ",
-      el("strong", {}, String(p50)),
-      " more packs (~",
-      String(d.p50_stickers),
-      " sticker pulls), mean ≈ ",
-      String(meanP),
-      " packs. ",
-      band,
+      trf(
+        "From here, median ≈ {p50} more packs (~{stickers} pulls), mean ≈ {mean} packs. {band}",
+        {
+          p50: String(p50),
+          stickers: String(d.p50_stickers),
+          mean: String(meanP),
+          band,
+        },
+      ),
     );
     const tail = el(
       "p",
       { class: "muted", style: "margin:0.55rem 0 0;font-size:0.88rem" },
-      `Session packs opened (counter): ${d.session_packs_opened} — simulation restarts from your current gaps, it does not replay those opens.`,
+      trf(
+        "Session packs opened: {n} — simulation starts from your current gaps, not from replaying past opens.",
+        { n: String(d.session_packs_opened) },
+      ),
     );
     const warn = d.truncated_note
-      ? el("p", { class: "msg-error", style: "margin:0.55rem 0 0;font-size:0.88rem" }, d.truncated_note)
+      ? el("p", { class: "msg-error", style: "margin:0.55rem 0 0;font-size:0.88rem" }, trApiNote(d.truncated_note))
       : null;
     statsBody.replaceChildren(
       el(
         "p",
         { style: "margin:0" },
-        `You are ${Math.round(d.pct_complete_unique)}% done on unique slots (${d.album_unique_slots - miss} / ${d.album_unique_slots}). Still missing ${miss} slots.`,
+        trf("You have {pct}% of unique stickers ({filled} / {total}). Still missing {miss}.", {
+          pct: String(Math.round(d.pct_complete_unique)),
+          filled: String(d.album_unique_slots - miss),
+          total: String(d.album_unique_slots),
+          miss: String(miss),
+        }),
       ),
       mid,
       tail,
       ...(warn ? [warn] : []),
     );
-    disc.textContent = d.disclaimer;
+    disc.textContent = packOutlookDisclaimer(false);
   }
 
   async function loadProjection(): Promise<void> {
     const mySeq = ++seq;
     const tradeP = Number(range.value) / 100;
     syncTradeRepeatHint();
-    status.textContent = "Running simulation…";
+    status.textContent = tr("Running simulation…");
     statsBody.replaceChildren();
     try {
       const d = await getPackOutlook(tradeP, { perPack: STICKERS_PER_PACK });
       if (mySeq !== seq) return;
+      const detail =
+        d.trade_repeat_p === 0
+          ? tr("packs only")
+          : trf("{pct}% of duplicates traded", { pct: String(Math.round(d.trade_repeat_p * 100)) });
       status.textContent =
         d.trials_used > 0
-          ? `Based on ${d.trials_used} Monte Carlo trials (${d.trade_repeat_p === 0 ? "packs only" : `trade-after-pack chance ${Math.round(d.trade_repeat_p * 100)}%`}).`
-          : "Album already complete on unique slots.";
+          ? trf("Based on {trials} simulations ({detail}).", {
+              trials: String(d.trials_used),
+              detail,
+            })
+          : tr("Album already complete on unique stickers.");
       renderFromData(d);
     } catch (e) {
       if (mySeq !== seq) return;
