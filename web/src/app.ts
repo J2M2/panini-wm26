@@ -39,6 +39,14 @@ import {
   totalBatchCount,
 } from "./parseRefs";
 import { attachStickerRefAutocomplete } from "./refAutocomplete";
+import {
+  type AlbumOrderHint,
+  compareRefsAlphabetically,
+  compareRefsByAlbumOrder,
+  sortRefsByAlbumOrder,
+  sortTeamCodes,
+} from "./albumOrder";
+import { copyTextToClipboard, wrapFieldWithCopyButton } from "./copyField";
 import type {
   InventoryMetrics,
   ListStickerRow,
@@ -555,12 +563,38 @@ function setTradePrefillBanner(message: string): void {
 }
 
 /** Prefill Trade give/take and switch view. Optionally call ``setTradePrefillBanner`` first for a one-line note. */
-function applyTradePrefill(give: string[], take: string[], uneven: boolean): void {
+function albumHintsFromRows(
+  dupByCanon: Map<string, ListStickerRow>,
+  missingByCanon: Map<string, ListStickerRow>,
+): Map<string, AlbumOrderHint> {
+  const m = new Map<string, AlbumOrderHint>();
+  for (const row of dupByCanon.values()) {
+    const c = canonicalRef(row.ref);
+    m.set(c, {
+      category_code: row.category_code,
+      slot_code: row.slot_code,
+      album_printed_page: row.album_printed_page,
+    });
+  }
+  for (const row of missingByCanon.values()) {
+    const c = canonicalRef(row.ref);
+    if (!m.has(c)) {
+      m.set(c, {
+        category_code: row.category_code,
+        slot_code: row.slot_code,
+        album_printed_page: row.album_printed_page,
+      });
+    }
+  }
+  return m;
+}
+
+function applyTradePrefill(give: string[], take: string[], uneven: boolean, albumHints?: Map<string, AlbumOrderHint>): void {
   const giveTa = document.getElementById("trade-give") as HTMLTextAreaElement | null;
   const takeTa = document.getElementById("trade-take") as HTMLTextAreaElement | null;
   const unevenCb = document.getElementById("trade-uneven") as HTMLInputElement | null;
-  const g = [...new Set(give.map((r) => canonicalRef(r)))];
-  const t = [...new Set(take.map((r) => canonicalRef(r)))];
+  const g = sortRefsByAlbumOrder([...new Set(give.map((r) => canonicalRef(r)))], albumHints);
+  const t = sortRefsByAlbumOrder([...new Set(take.map((r) => canonicalRef(r)))], albumHints);
   if (giveTa) giveTa.value = g.join("\n");
   if (takeTa) takeTa.value = t.join("\n");
   if (unevenCb) unevenCb.checked = uneven;
@@ -1159,7 +1193,7 @@ function buildOverview(): HTMLElement {
   const sessionMsg = el("div", { class: "msg-ok" });
   const sessionErr = el("div", { class: "msg-error" });
 
-  const lastSession = { packs: 0, out: 0, inn: 0 };
+  const lastSession = { packs: 0, out: 0, inn: 0, dupRate: null as number | null };
   let sessionEditing = false;
 
   const sessionInputs = {
@@ -1172,6 +1206,7 @@ function buildOverview(): HTMLElement {
     packs: el("span", { class: "session-info-val" }),
     out: el("span", { class: "session-info-val" }),
     inn: el("span", { class: "session-info-val" }),
+    dupRate: el("span", { class: "session-info-val" }),
   };
 
   const sessionReadHost = el("div", { class: "session-readonly" });
@@ -1184,6 +1219,8 @@ function buildOverview(): HTMLElement {
   sessionAddReadRow(tr("Packs opened"), sessionReadVals.packs);
   sessionAddReadRow(tr("Traded out"), sessionReadVals.out);
   sessionAddReadRow(tr("Traded in"), sessionReadVals.inn);
+  sessionAddReadRow(tr("Duplicate trade rate"), sessionReadVals.dupRate);
+  sessionReadVals.dupRate.title = tr("Traded out ÷ (traded out + spares still held)");
 
   const sessionEditHost = el("div", { class: "session-edit-host" });
   sessionEditHost.style.display = "none";
@@ -1207,6 +1244,7 @@ function buildOverview(): HTMLElement {
     sessionReadVals.packs.textContent = String(lastSession.packs);
     sessionReadVals.out.textContent = String(lastSession.out);
     sessionReadVals.inn.textContent = String(lastSession.inn);
+    sessionReadVals.dupRate.textContent = formatSessionDuplicateTradeRate(lastSession.dupRate);
     sessionInputs.packs.value = String(lastSession.packs);
     sessionInputs.out.value = String(lastSession.out);
     sessionInputs.inn.value = String(lastSession.inn);
@@ -1291,6 +1329,7 @@ function buildOverview(): HTMLElement {
     lastSession.packs = m.session.packs_opened;
     lastSession.out = m.session.traded_out_count;
     lastSession.inn = m.session.traded_in_count;
+    lastSession.dupRate = m.session.duplicate_trade_rate ?? null;
     applySessionToUI();
     if (sessionEditing) leaveSessionEdit();
 
@@ -1398,6 +1437,12 @@ function formatLookupStatusLabel(status: string): string {
   return tr("In album");
 }
 
+/** Session observed duplicate trade rate (0–1) as a percent label, or em dash if undefined. */
+function formatSessionDuplicateTradeRate(rate: number | null | undefined): string {
+  if (rate == null || Number.isNaN(rate)) return tr("—");
+  return `${Math.round(rate * 100)}%`;
+}
+
 /** Compact album lines: `Group:` when applicable, `Page:`, always `Type:`. */
 function renderLookupAlbumKv(r: StickerDetail): HTMLElement {
   const page = r.album_printed_page;
@@ -1459,10 +1504,10 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
     const copyAlbum = el("button", { class: "btn btn-primary", type: "button" }, tr("Copy album line"));
     copyAlbum.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(paste);
-        copyAlbum.textContent = "Copied!";
+        await copyTextToClipboard(paste);
+        copyAlbum.textContent = tr("Copied!");
         setTimeout(() => {
-          copyAlbum.textContent = "Copy album line";
+          copyAlbum.textContent = tr("Copy album line");
         }, 1600);
       } catch {
         copyAlbum.textContent = "Copy failed";
@@ -1471,8 +1516,8 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
     const copyRef = el("button", { class: "btn", type: "button" }, tr("Copy app ref"));
     copyRef.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(r.ref);
-        copyRef.textContent = "Copied!";
+        await copyTextToClipboard(r.ref);
+        copyRef.textContent = tr("Copied!");
         setTimeout(() => {
           copyRef.textContent = "Copy app ref";
         }, 1600);
@@ -1511,13 +1556,13 @@ function buildLists(): HTMLElement {
   copyMiss.addEventListener("click", async () => {
     try {
       const t = await getMissingCompact();
-      await navigator.clipboard.writeText(t);
-      copyMiss.textContent = "Copied!";
+      await copyTextToClipboard(t);
+      copyMiss.textContent = tr("Copied!");
       setTimeout(() => {
-        copyMiss.textContent = "Copy missing";
+        copyMiss.textContent = tr("Copy missing");
       }, 1500);
     } catch (e) {
-      alert(String(e));
+      alert(e instanceof Error ? e.message : String(e));
     }
   });
   const copyDup = el("button", {
@@ -1528,13 +1573,13 @@ function buildLists(): HTMLElement {
   copyDup.addEventListener("click", async () => {
     try {
       const t = await getDuplicatesCompact();
-      await navigator.clipboard.writeText(t);
-      copyDup.textContent = "Copied!";
+      await copyTextToClipboard(t);
+      copyDup.textContent = tr("Copied!");
       setTimeout(() => {
-        copyDup.textContent = "Copy dups";
+        copyDup.textContent = tr("Copy dups");
       }, 1500);
     } catch (e) {
-      alert(String(e));
+      alert(e instanceof Error ? e.message : String(e));
     }
   });
   const printLink = el(
@@ -1821,13 +1866,15 @@ function buildDesk(): HTMLElement {
       "p",
       { class: "muted desk-intro", style: "margin:0 0 1rem;font-size:0.95rem;line-height:1.5;max-width:52rem" },
       tr(
-        "Add stickers you own: open a physical pack (preview then register), paste a batch, or add one ref at a time. Ref format: MEX:5, 00, FWC 14, or MEX: 1, 2, 3.",
+        "Paste sticker refs below, Preview to see new vs duplicate, then Add to album. Optional: count toward packs opened when you opened physical packs. Ref format: MEX:5, 00, FWC 14, MEX: 1, 2, 3, MEX:5 x3.",
       ),
     ),
   );
 
-  const { packRoot, clearPackDrafts } = buildPackPanel();
-  section.appendChild(packRoot);
+  const { addRoot, clearAddDrafts } = buildAddStickersPanel();
+  section.appendChild(addRoot);
+
+  const { validateRoot, clearValidateDrafts } = buildValidateListPanel();
 
   const lookupCard = el("div", { class: "card" });
   const refInput = el("input", {
@@ -1871,77 +1918,10 @@ function buildDesk(): HTMLElement {
   lookupCard.appendChild(lookupErr);
   lookupCard.appendChild(lookupResultHost);
 
-  const addCard = el("div", { class: "card" });
-  addCard.appendChild(el("h3", {}, tr("Batch add (any refs)")));
-  const batchAdd = el("textarea", {
-    placeholder: `MEX:5\n00\nFWC 14\nRSA 7\nMEX: 1, 2, 3\nFWC:12 x3`,
-    "data-sticker-draft": "1",
-  }) as HTMLTextAreaElement;
-  const addPreview = el("div", { class: "compact-list" });
-  const addMsg = el("div");
-  batchAdd.addEventListener("input", () => {
-    try {
-      const rows = parseBatchStickerLines(batchAdd.value);
-      const total = totalBatchCount(rows);
-      const packs = Math.ceil(total / STICKERS_PER_PACK);
-      addPreview.textContent = `${rows.length} line(s), ${total} sticker(s) (~${packs} packs if uniform).`;
-    } catch {
-      addPreview.textContent = "";
-    }
-  });
-  const applyAdd = el("button", { class: "btn btn-primary", type: "button" }, tr("Apply adds"));
-  const suggestPacksBtn = el("button", { class: "btn", type: "button" }, `Add ~packs to session (${STICKERS_PER_PACK}/pack)`);
-  suggestPacksBtn.title = "After adds: increment packs_opened by ceil(N/7). Run once after Apply adds.";
-  let lastAddTotal = 0;
-
-  applyAdd.addEventListener("click", async () => {
-    addMsg.innerHTML = "";
-    try {
-      const rows = parseBatchStickerLines(batchAdd.value);
-      lastAddTotal = totalBatchCount(rows);
-      for (const { ref, count } of rows) {
-        stickerPathFromRef(ref); // validate
-        await addSticker(ref, count);
-      }
-      addMsg.appendChild(el("div", { class: "msg-ok" }, `Added ${lastAddTotal} sticker instance(s).`));
-    } catch (e) {
-      addMsg.appendChild(errBox(e));
-    }
-  });
-
-  suggestPacksBtn.addEventListener("click", async () => {
-    addMsg.innerHTML = "";
-    if (lastAddTotal <= 0) {
-      addMsg.appendChild(el("div", { class: "banner-info" }, tr("Use Apply adds first, or enter a total manually via Overview → session.")));
-      return;
-    }
-    const delta = Math.ceil(lastAddTotal / STICKERS_PER_PACK);
-    try {
-      const m = await getMetrics();
-      const newPacks = m.session.packs_opened + delta;
-      await patchSession({ packs_opened: newPacks });
-      addMsg.appendChild(
-        el(
-          "div",
-          { class: "msg-ok" },
-          `packs_opened is now ${newPacks} (+${delta} from previous ${m.session.packs_opened}).`,
-        ),
-      );
-    } catch (e) {
-      addMsg.appendChild(errBox(e));
-    }
-  });
-
-  addCard.appendChild(el("label", { class: "field" }, tr("Batch (optional: REF x3)")));
-  addCard.appendChild(batchAdd);
-  attachStickerRefAutocomplete(batchAdd);
-  addCard.appendChild(addPreview);
-  addCard.appendChild(el("div", { class: "row" }, applyAdd, suggestPacksBtn));
-  addCard.appendChild(addMsg);
-
   const remCard = el("div", { class: "card" });
   remCard.appendChild(el("h3", {}, tr("Remove stickers")));
   const batchRem = el("textarea", { placeholder: tr("Same format as add"), "data-sticker-draft": "1" }) as HTMLTextAreaElement;
+  const batchRemWrap = wrapFieldWithCopyButton(batchRem);
   const remMsg = el("div");
   const applyRem = el("button", { class: "btn btn-primary", type: "button" }, tr("Apply removes"));
   applyRem.addEventListener("click", async () => {
@@ -1958,8 +1938,8 @@ function buildDesk(): HTMLElement {
     }
   });
   remCard.appendChild(el("label", { class: "field" }, tr("Batch")));
-  remCard.appendChild(batchRem);
   attachStickerRefAutocomplete(batchRem);
+  remCard.appendChild(batchRemWrap);
   remCard.appendChild(applyRem);
   remCard.appendChild(remMsg);
 
@@ -1996,14 +1976,12 @@ function buildDesk(): HTMLElement {
   singleCard.appendChild(singleMsg);
 
   section.addEventListener(PANINI_CLEAR_STICKER_DRAFTS, () => {
-    clearPackDrafts();
+    clearAddDrafts();
+    clearValidateDrafts();
     lookupResultHost.replaceChildren();
     lookupErr.replaceChildren();
-    addPreview.textContent = "";
-    addMsg.replaceChildren();
     remMsg.replaceChildren();
     singleMsg.replaceChildren();
-    lastAddTotal = 0;
   });
 
   openDeskLookupFromLists = async (ref: string) => {
@@ -2014,7 +1992,7 @@ function buildDesk(): HTMLElement {
     await runLookup();
   };
 
-  section.append(lookupCard, addCard, remCard, singleCard);
+  section.append(lookupCard, remCard, singleCard, validateRoot);
   return section;
 }
 
@@ -2026,23 +2004,41 @@ function packStickerListsEqual(a: string[], b: string[]): boolean {
   return true;
 }
 
-/** Pack open flow (check → register → undo). Embedded in Add stickers; was a separate nav view. */
-function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void } {
-  const packRoot = el("div", { class: "desk-pack-host" });
+/** Flatten batch textarea (supports `REF x3`) into one ref per sticker for check/open. */
+function parseAddStickerInput(text: string): string[] {
+  const rows = parseBatchStickerLines(text);
+  const out: string[] = [];
+  for (const { ref, count } of rows) {
+    stickerPathFromRef(ref);
+    const c = canonicalRef(ref);
+    for (let i = 0; i < count; i++) out.push(c);
+  }
+  return out;
+}
+
+/** Preview then add stickers; optional pack session + undo when counting as packs. */
+function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => void } {
+  const addRoot = el("div", { class: "desk-pack-host" });
   const card = el("div", { class: "card" });
-  card.appendChild(el("h3", { style: "margin-top:0" }, tr("Open a pack")));
+  card.appendChild(el("h3", { style: "margin-top:0" }, tr("Add stickers")));
   card.appendChild(
     el(
       "p",
       { class: "muted", style: "margin:0 0 0.75rem;font-size:0.9rem;line-height:1.45" },
-      "Use Check pack to see new album slots vs duplicates/spares (sorted by printed page). Register only when it looks right. Undo matches the last registration until you edit this list or reload — same idea as Trade.",
+      tr(
+        "Preview shows new album slots vs spares (by printed page). Add only when it looks right. Undo is available after a pack-style add until you edit this list.",
+      ),
     ),
   );
 
   const ta = el("textarea", {
-    placeholder: trf("One ref per line (often {n}; fewer or more is ok)", { n: String(STICKERS_PER_PACK) }),
+    placeholder: `MEX:5\n00\nFWC 14\nMEX: 1, 2, 3\nMEX:5 x3`,
     "data-sticker-draft": "1",
   }) as HTMLTextAreaElement;
+  const taWrap = wrapFieldWithCopyButton(ta);
+
+  const countAsPackId = "add-count-as-pack";
+  const countAsPackCb = el("input", { type: "checkbox", id: countAsPackId }) as HTMLInputElement;
 
   const editNominalId = "pack-edit-nominal";
   const perPack = el("input", {
@@ -2066,7 +2062,7 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
   nominalRow.appendChild(editNominalCb);
   nominalRow.appendChild(el("label", { for: editNominalId, style: "font-size:0.9rem" }, tr("Allow editing nominal size")));
 
-  type PackValidated = { stickers: string[]; perPack: number; check: PackCheckResponse };
+  type PackValidated = { stickers: string[]; perPack: number; countAsPack: boolean; check: PackCheckResponse };
   let lastValidated: PackValidated | null = null;
   let pendingUndo: { stickers: string[]; packs_opened_delta: number } | null = null;
 
@@ -2075,11 +2071,11 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
     hidden: true,
     style: "margin:0.35rem 0 0;font-size:0.82rem",
   });
-  staleHint.textContent = "List or nominal size changed — run Check pack again before registering.";
+  staleHint.textContent = tr("List changed — run Preview again before adding.");
 
   const previewHost = el("div", { class: "pack-preview-host" });
-  const checkBtn = el("button", { class: "btn", type: "button" }, tr("Check pack"));
-  const regBtn = el("button", { class: "btn btn-primary", type: "button", disabled: true }, tr("Register pack"));
+  const checkBtn = el("button", { class: "btn", type: "button" }, tr("Preview"));
+  const regBtn = el("button", { class: "btn btn-primary", type: "button", disabled: true }, tr("Add to album"));
   const resultCard = el("div", { class: "card pack-result-card" });
   resultCard.style.display = "none";
 
@@ -2102,6 +2098,11 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
     }
   });
   perPack.addEventListener("input", () => invalidatePackValidation());
+  countAsPackCb.addEventListener("change", () => {
+    nominalRow.style.display = countAsPackCb.checked ? "" : "none";
+    invalidatePackValidation();
+  });
+  nominalRow.style.display = "none";
 
   function formatPackCheckRowNewSlot(r: PackCheckRow): string {
     const grp = r.album_index_group != null && r.album_index_group !== "" ? `Gr. ${r.album_index_group} · ` : "";
@@ -2134,7 +2135,7 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
     return col;
   }
 
-  function renderPackCheckPreview(c: PackCheckResponse): void {
+  function renderPackCheckPreview(c: PackCheckResponse, countAsPack: boolean): void {
     previewHost.replaceChildren();
     for (const w of c.warnings) {
       previewHost.appendChild(el("div", { class: "banner-info" }, w));
@@ -2145,13 +2146,10 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
         el("div", { class: "banner-info" }, `Repeated lines in this list (each line adds one copy): ${parts.join(", ")}.`),
       );
     }
-    previewHost.appendChild(
-      el(
-        "p",
-        { class: "muted", style: "margin:0.5rem 0;font-size:0.9rem" },
-        `${c.sticker_count} sticker(s). Session packs_opened += ${c.packs_opened_delta} (nominal ${c.per_pack} per pack, rounded).`,
-      ),
-    );
+    const summary = countAsPack
+      ? `${c.sticker_count} sticker(s). Session packs_opened += ${c.packs_opened_delta} (nominal ${c.per_pack} per pack, rounded).`
+      : `${c.sticker_count} sticker(s). ${c.new_to_album.length} new slot(s) · ${c.would_duplicate.length} spare/duplicate line(s). Packs opened not updated.`;
+    previewHost.appendChild(el("p", { class: "muted", style: "margin:0.5rem 0;font-size:0.9rem" }, summary));
     const grid = el("div", { class: "trade-result-grid" });
     grid.appendChild(
       appendPackCheckColumn(
@@ -2183,11 +2181,12 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
     previewHost.replaceChildren();
     staleHint.hidden = true;
     try {
-      const stickers = parseRefLines(ta.value);
-      const pp = getPackPerPack();
+      const stickers = parseAddStickerInput(ta.value);
+      const countAsPack = countAsPackCb.checked;
+      const pp = countAsPack ? getPackPerPack() : STICKERS_PER_PACK;
       const c = await checkPack(stickers, pp);
-      lastValidated = { stickers, perPack: pp, check: c };
-      renderPackCheckPreview(c);
+      lastValidated = { stickers, perPack: pp, countAsPack, check: c };
+      renderPackCheckPreview(c, countAsPack);
       regBtn.disabled = false;
     } catch (e) {
       lastValidated = null;
@@ -2199,70 +2198,94 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
   regBtn.addEventListener("click", async () => {
     let stickers: string[];
     try {
-      stickers = parseRefLines(ta.value);
+      stickers = parseAddStickerInput(ta.value);
     } catch (e) {
       resultCard.style.display = "block";
       resultCard.replaceChildren(errBox(e));
       return;
     }
-    const pp = getPackPerPack();
-    if (!lastValidated || !packStickerListsEqual(stickers, lastValidated.stickers) || pp !== lastValidated.perPack) {
+    const countAsPack = countAsPackCb.checked;
+    const pp = countAsPack ? getPackPerPack() : STICKERS_PER_PACK;
+    if (
+      !lastValidated ||
+      !packStickerListsEqual(stickers, lastValidated.stickers) ||
+      pp !== lastValidated.perPack ||
+      countAsPack !== lastValidated.countAsPack
+    ) {
       resultCard.style.display = "block";
       resultCard.replaceChildren(
-        el("div", { class: "msg-error" }, tr("Run Check pack again — the list or nominal per-pack no longer matches the preview.")),
+        el("div", { class: "msg-error" }, tr("Run Preview again — the list no longer matches the preview.")),
       );
       regBtn.disabled = true;
       return;
     }
     try {
-      const r = await openPack(stickers, pp);
-      pendingUndo = { stickers: [...stickers], packs_opened_delta: r.packs_opened_delta };
-      ta.value = "";
-      invalidatePackValidation();
-      previewHost.replaceChildren();
-      staleHint.hidden = true;
+      if (countAsPack) {
+        const r = await openPack(stickers, pp);
+        pendingUndo = { stickers: [...stickers], packs_opened_delta: r.packs_opened_delta };
+        ta.value = "";
+        invalidatePackValidation();
+        previewHost.replaceChildren();
+        staleHint.hidden = true;
 
-      resultCard.style.display = "block";
-      resultCard.replaceChildren();
-      resultCard.appendChild(el("h3", {}, tr("Pack registered")));
-      resultCard.appendChild(
-        el(
-          "p",
-          { class: "muted", style: "margin:0 0 0.65rem" },
-          `${r.sticker_count} stickers · packs_opened +${r.packs_opened_delta} · ${r.added_as_new.length} new slot(s) · ${r.added_as_duplicate.length} spare/duplicate line(s).`,
-        ),
-      );
-      for (const w of r.warnings) {
-        resultCard.appendChild(el("div", { class: "banner-info" }, w));
-      }
-      if (r.in_pack_duplicates.length > 0) {
-        const parts = r.in_pack_duplicates.map((d) => `${d.ref} ×${d.occurrences}`);
+        resultCard.style.display = "block";
+        resultCard.replaceChildren();
+        resultCard.appendChild(el("h3", {}, tr("Stickers added")));
         resultCard.appendChild(
-          el("div", { class: "banner-info" }, `In-pack repeats: ${parts.join(", ")}.`),
+          el(
+            "p",
+            { class: "muted", style: "margin:0 0 0.65rem" },
+            `${r.sticker_count} stickers · packs_opened +${r.packs_opened_delta} · ${r.added_as_new.length} new slot(s) · ${r.added_as_duplicate.length} spare/duplicate line(s).`,
+          ),
+        );
+        for (const w of r.warnings) {
+          resultCard.appendChild(el("div", { class: "banner-info" }, w));
+        }
+        if (r.in_pack_duplicates.length > 0) {
+          const parts = r.in_pack_duplicates.map((d) => `${d.ref} ×${d.occurrences}`);
+          resultCard.appendChild(el("div", { class: "banner-info" }, `In-pack repeats: ${parts.join(", ")}.`));
+        }
+        const undoRow = el("div", { class: "trade-result-actions" });
+        const undoBtn = el("button", { class: "btn", type: "button" }, tr("Undo this add"));
+        undoBtn.addEventListener("click", async () => {
+          if (!pendingUndo) return;
+          undoBtn.disabled = true;
+          try {
+            await undoPackOpen(pendingUndo.stickers, pendingUndo.packs_opened_delta);
+            pendingUndo = null;
+            resultCard.replaceChildren();
+            resultCard.appendChild(el("h3", {}, tr("Add undone")));
+            resultCard.appendChild(
+              el("p", { class: "muted" }, tr("Inventory and packs_opened were restored. Paste the list again if you still want to add it.")),
+            );
+            void overviewPage.reload();
+            void loadTradePreviewData();
+          } catch (e) {
+            undoBtn.disabled = false;
+            resultCard.appendChild(errBox(e));
+          }
+        });
+        undoRow.appendChild(undoBtn);
+        resultCard.appendChild(undoRow);
+      } else {
+        const rows = parseBatchStickerLines(ta.value);
+        for (const { ref, count } of rows) {
+          await addSticker(ref, count);
+        }
+        const total = totalBatchCount(rows);
+        ta.value = "";
+        invalidatePackValidation();
+        previewHost.replaceChildren();
+        staleHint.hidden = true;
+        pendingUndo = null;
+
+        resultCard.style.display = "block";
+        resultCard.replaceChildren();
+        resultCard.appendChild(el("h3", {}, tr("Stickers added")));
+        resultCard.appendChild(
+          el("p", { class: "muted", style: "margin:0 0 0.65rem" }, trf("Added {n} sticker instance(s).", { n: String(total) })),
         );
       }
-      const undoRow = el("div", { class: "trade-result-actions" });
-      const undoBtn = el("button", { class: "btn", type: "button" }, tr("Undo this pack"));
-      undoBtn.addEventListener("click", async () => {
-        if (!pendingUndo) return;
-        undoBtn.disabled = true;
-        try {
-          await undoPackOpen(pendingUndo.stickers, pendingUndo.packs_opened_delta);
-          pendingUndo = null;
-          resultCard.replaceChildren();
-          resultCard.appendChild(el("h3", {}, tr("Pack undone")));
-          resultCard.appendChild(
-            el("p", { class: "muted" }, tr("Inventory and packs_opened were restored. Paste the list again if you still want to register it.")),
-          );
-          void overviewPage.reload();
-          void loadTradePreviewData();
-        } catch (e) {
-          undoBtn.disabled = false;
-          resultCard.appendChild(errBox(e));
-        }
-      });
-      undoRow.appendChild(undoBtn);
-      resultCard.appendChild(undoRow);
       void overviewPage.reload();
       void loadTradePreviewData();
     } catch (e) {
@@ -2274,17 +2297,25 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
   const btnRow = el("div", { class: "row", style: "gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0" });
   btnRow.append(checkBtn, regBtn);
 
-  card.appendChild(el("label", { class: "field" }, tr("Stickers in this pack (one ref per line)")));
-  card.appendChild(ta);
+  const countRow = el("div", {
+    class: "row",
+    style: "flex-wrap:wrap;align-items:center;gap:0.5rem;margin-bottom:0.5rem",
+  });
+  countRow.appendChild(countAsPackCb);
+  countRow.appendChild(el("label", { for: countAsPackId, style: "font-size:0.9rem" }, tr("Count toward packs opened")));
+
+  card.appendChild(el("label", { class: "field" }, tr("Sticker refs")));
   attachStickerRefAutocomplete(ta);
+  card.appendChild(taWrap);
+  card.appendChild(countRow);
   card.appendChild(nominalRow);
   card.appendChild(btnRow);
   card.appendChild(staleHint);
   card.appendChild(previewHost);
 
-  packRoot.append(card, resultCard);
+  addRoot.append(card, resultCard);
 
-  function clearPackDrafts(): void {
+  function clearAddDrafts(): void {
     invalidatePackValidation();
     previewHost.replaceChildren();
     staleHint.hidden = true;
@@ -2293,7 +2324,348 @@ function buildPackPanel(): { packRoot: HTMLElement; clearPackDrafts: () => void 
     pendingUndo = null;
   }
 
-  return { packRoot, clearPackDrafts };
+  return { addRoot, clearAddDrafts };
+}
+
+type ValidateListEntry = {
+  ref: string;
+  listCount: number;
+  detail: StickerDetail;
+};
+
+type ValidateListSort = "album" | "alpha";
+
+function hintsFromAlbumDetails(rows: StickerDetail[]): Map<string, AlbumOrderHint> {
+  const m = new Map<string, AlbumOrderHint>();
+  for (const r of rows) {
+    m.set(canonicalRef(r.ref), {
+      category_code: r.category_code,
+      slot_code: r.slot_code,
+      album_printed_page: r.album_printed_page,
+    });
+  }
+  return m;
+}
+
+function sortValidateEntries(
+  entries: ValidateListEntry[],
+  mode: ValidateListSort,
+  hints: Map<string, AlbumOrderHint>,
+): ValidateListEntry[] {
+  const cmp =
+    mode === "album"
+      ? (a: ValidateListEntry, b: ValidateListEntry) => compareRefsByAlbumOrder(a.ref, b.ref, hints)
+      : (a: ValidateListEntry, b: ValidateListEntry) => compareRefsAlphabetically(a.ref, b.ref);
+  return [...entries].sort(cmp);
+}
+
+function validateListCopyLines(entries: ValidateListEntry[], mode: ValidateListSort, hints: Map<string, AlbumOrderHint>): string[] {
+  const sorted = sortValidateEntries(entries, mode, hints);
+  const lines: string[] = [];
+  for (const e of sorted) {
+    const label = albumStickerRefLabel(e.detail);
+    for (let i = 0; i < e.listCount; i++) lines.push(label);
+  }
+  return lines;
+}
+
+function validateListReportLines(entries: ValidateListEntry[], mode: ValidateListSort, hints: Map<string, AlbumOrderHint>): string[] {
+  const sorted = sortValidateEntries(entries, mode, hints);
+  return sorted.map((e) => {
+    const label = albumStickerRefLabel(e.detail);
+    const status = formatLookupStatusLabel(e.detail.status);
+    const type = stickerTypeShortLabel(e.detail.category_code, e.detail.role);
+    const page =
+      typeof e.detail.album_printed_page === "number" && e.detail.album_printed_page >= 0
+        ? String(e.detail.album_printed_page)
+        : "—";
+    const grp =
+      typeof e.detail.album_index_group === "string" && e.detail.album_index_group.trim()
+        ? e.detail.album_index_group.trim()
+        : "";
+    const grpPart = grp ? ` · ${tr("Group")} ${grp}` : "";
+    const inList = e.listCount > 1 ? ` · ×${e.listCount} ${tr("in list")}` : "";
+    return `${label} · ${status} · ${type} · ${tr("Page")} ${page}${grpPart} · ${tr("Qty")} ${e.detail.qty}${inList}`;
+  });
+}
+
+/** Check a pasted list against the album (status, type, page) without changing inventory. */
+function buildValidateListPanel(): { validateRoot: HTMLElement; clearValidateDrafts: () => void } {
+  const validateRoot = el("div", { class: "desk-validate-host" });
+  const card = el("div", { class: "card" });
+  card.appendChild(el("h3", { style: "margin-top:0" }, tr("Validate list")));
+  card.appendChild(
+    el(
+      "p",
+      { class: "muted", style: "margin:0 0 0.75rem;font-size:0.9rem;line-height:1.45" },
+      tr("Paste refs to see how they match your album: missing, in album, or spare. Does not add or remove stickers."),
+    ),
+  );
+
+  const ta = el("textarea", {
+    placeholder: `MEX:5\n00\nMEX: 1, 2, 3\nMEX:5 x2`,
+    rows: "6",
+    "data-sticker-draft": "1",
+  }) as HTMLTextAreaElement;
+  const taWrap = wrapFieldWithCopyButton(ta);
+  attachStickerRefAutocomplete(ta);
+
+  const sortAlbumId = "validate-sort-album";
+  const sortAlphaId = "validate-sort-alpha";
+  const sortAlbumRb = el("input", { type: "radio", name: "validate-sort", id: sortAlbumId, checked: true }) as HTMLInputElement;
+  const sortAlphaRb = el("input", { type: "radio", name: "validate-sort", id: sortAlphaId }) as HTMLInputElement;
+
+  const sortRow = el("div", { class: "validate-sort-row row", style: "flex-wrap:wrap;gap:0.75rem;align-items:center;margin:0.5rem 0" });
+  sortRow.appendChild(el("span", { class: "muted", style: "font-size:0.85rem" }, tr("Sort:")));
+  sortRow.appendChild(sortAlbumRb);
+  sortRow.appendChild(el("label", { for: sortAlbumId, style: "font-size:0.9rem" }, tr("Album order")));
+  sortRow.appendChild(sortAlphaRb);
+  sortRow.appendChild(el("label", { for: sortAlphaId, style: "font-size:0.9rem" }, tr("A–Z")));
+
+  const summaryHost = el("div", { class: "validate-summary-host" });
+  const errHost = el("div");
+  const tableHost = el("div", { class: "validate-table-scroll" });
+  const actionsRow = el("div", { class: "row validate-actions-row", style: "flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem" });
+  const copyRefsBtn = el("button", { class: "btn", type: "button", disabled: true }, tr("Copy refs (sorted)"));
+  const copyReportBtn = el("button", { class: "btn", type: "button", disabled: true }, tr("Copy report (sorted)"));
+  actionsRow.append(copyRefsBtn, copyReportBtn);
+
+  let lastEntries: ValidateListEntry[] | null = null;
+  let lastHints: Map<string, AlbumOrderHint> = new Map();
+  let lastSort: ValidateListSort = "album";
+
+  function currentSort(): ValidateListSort {
+    return sortAlphaRb.checked ? "alpha" : "album";
+  }
+
+  function setCopyButtonsEnabled(on: boolean): void {
+    copyRefsBtn.disabled = !on;
+    copyReportBtn.disabled = !on;
+  }
+
+  function renderSummary(entries: ValidateListEntry[], totalInstances: number, parseErrors: string[]): void {
+    summaryHost.replaceChildren();
+    const unique = entries.length;
+    let missing = 0;
+    let inAlbum = 0;
+    let spare = 0;
+    for (const e of entries) {
+      if (e.detail.status === "missing") missing += e.listCount;
+      else if (e.detail.status === "duplicate") spare += e.listCount;
+      else inAlbum += e.listCount;
+    }
+    const summary = el("div", { class: "validate-summary" });
+    summary.appendChild(
+      el(
+        "p",
+        { class: "validate-summary-lede", style: "margin:0 0 0.5rem;font-size:0.95rem" },
+        trf("{total} sticker(s) in list · {unique} unique ref(s)", {
+          total: String(totalInstances),
+          unique: String(unique),
+        }),
+      ),
+    );
+    const chips = el("div", { class: "validate-summary-chips row", style: "flex-wrap:wrap;gap:0.4rem" });
+    if (missing > 0) {
+      chips.appendChild(
+        el("span", { class: "lookup-badge lookup-badge--missing" }, trf("{n} missing", { n: String(missing) })),
+      );
+    }
+    if (inAlbum > 0) {
+      chips.appendChild(
+        el("span", { class: "lookup-badge lookup-badge--ok" }, trf("{n} in album", { n: String(inAlbum) })),
+      );
+    }
+    if (spare > 0) {
+      chips.appendChild(
+        el("span", { class: "lookup-badge lookup-badge--dup" }, trf("{n} spare", { n: String(spare) })),
+      );
+    }
+    summary.appendChild(chips);
+    if (parseErrors.length > 0) {
+      summary.appendChild(
+        el(
+          "p",
+          { class: "muted", style: "margin:0.5rem 0 0;font-size:0.82rem" },
+          trf("{n} line(s) could not be parsed.", { n: String(parseErrors.length) }),
+        ),
+      );
+    }
+    summaryHost.appendChild(summary);
+  }
+
+  function renderTable(entries: ValidateListEntry[], mode: ValidateListSort, hints: Map<string, AlbumOrderHint>): void {
+    tableHost.replaceChildren();
+    if (entries.length === 0) return;
+    const sorted = sortValidateEntries(entries, mode, hints);
+    const table = el("table", { class: "data validate-list-table" });
+    const thead = el("thead");
+    const hr = el("tr");
+    for (const h of [tr("Ref"), tr("In list"), tr("Status"), tr("Type"), tr("Group"), tr("Page"), tr("Qty"), tr("Spare")]) {
+      hr.appendChild(el("th", {}, h));
+    }
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    const tbody = el("tbody");
+    for (const e of sorted) {
+      const trRow = el("tr");
+      const label = albumStickerRefLabel(e.detail);
+      const tdRef = el("td", { class: "validate-td-ref" });
+      tdRef.appendChild(el("span", { class: listStickerRoleRefClass(e.detail.role) }, label));
+      trRow.appendChild(tdRef);
+      trRow.appendChild(el("td", { class: "ref" }, e.listCount > 1 ? `×${e.listCount}` : "1"));
+      const tdSt = el("td");
+      tdSt.appendChild(
+        el("span", { class: lookupStatusBadgeClass(e.detail.status) }, formatLookupStatusLabel(e.detail.status)),
+      );
+      trRow.appendChild(tdSt);
+      trRow.appendChild(el("td", { class: "ref" }, tr(stickerTypeShortLabel(e.detail.category_code, e.detail.role))));
+      const g =
+        typeof e.detail.album_index_group === "string" && e.detail.album_index_group.trim()
+          ? e.detail.album_index_group.trim()
+          : "—";
+      trRow.appendChild(el("td", { class: "ref" }, g));
+      const pageStr =
+        typeof e.detail.album_printed_page === "number" && e.detail.album_printed_page >= 0
+          ? String(e.detail.album_printed_page)
+          : "—";
+      trRow.appendChild(el("td", { class: "ref" }, pageStr));
+      trRow.appendChild(el("td", { class: "ref" }, String(e.detail.qty)));
+      trRow.appendChild(el("td", { class: "ref" }, String(e.detail.spare_copies)));
+      tbody.appendChild(trRow);
+    }
+    table.appendChild(tbody);
+    tableHost.appendChild(table);
+  }
+
+  function rerenderFromCache(): void {
+    if (!lastEntries) return;
+    lastSort = currentSort();
+    renderTable(lastEntries, lastSort, lastHints);
+  }
+
+  sortAlbumRb.addEventListener("change", () => {
+    if (sortAlbumRb.checked) rerenderFromCache();
+  });
+  sortAlphaRb.addEventListener("change", () => {
+    if (sortAlphaRb.checked) rerenderFromCache();
+  });
+
+  copyRefsBtn.addEventListener("click", async () => {
+    if (!lastEntries) return;
+    try {
+      await copyTextToClipboard(validateListCopyLines(lastEntries, currentSort(), lastHints).join("\n"));
+      copyRefsBtn.textContent = tr("Copied!");
+      setTimeout(() => {
+        copyRefsBtn.textContent = tr("Copy refs (sorted)");
+      }, 1500);
+    } catch {
+      copyRefsBtn.textContent = tr("Copy failed");
+    }
+  });
+
+  copyReportBtn.addEventListener("click", async () => {
+    if (!lastEntries) return;
+    try {
+      await copyTextToClipboard(validateListReportLines(lastEntries, currentSort(), lastHints).join("\n"));
+      copyReportBtn.textContent = tr("Copied!");
+      setTimeout(() => {
+        copyReportBtn.textContent = tr("Copy report (sorted)");
+      }, 1500);
+    } catch {
+      copyReportBtn.textContent = tr("Copy failed");
+    }
+  });
+
+  const validateBtn = el("button", { class: "btn btn-primary", type: "button" }, tr("Validate"));
+  validateBtn.addEventListener("click", async () => {
+    errHost.replaceChildren();
+    summaryHost.replaceChildren();
+    tableHost.replaceChildren();
+    setCopyButtonsEnabled(false);
+    lastEntries = null;
+
+    const parseErrors: string[] = [];
+    const countByRef = new Map<string, number>();
+    try {
+      const rows = parseBatchStickerLines(ta.value);
+      for (const { ref, count } of rows) {
+        stickerPathFromRef(ref);
+        const c = canonicalRef(ref);
+        countByRef.set(c, (countByRef.get(c) ?? 0) + count);
+      }
+    } catch (e) {
+      parseErrors.push(e instanceof Error ? e.message : String(e));
+    }
+
+    if (countByRef.size === 0 && parseErrors.length === 0) {
+      errHost.appendChild(el("div", { class: "msg-error" }, tr("Enter at least one sticker ref.")));
+      return;
+    }
+
+    let albumByCanon: Map<string, StickerDetail>;
+    try {
+      const album = await getAlbumTable();
+      albumByCanon = new Map(album.map((r) => [canonicalRef(r.ref), r]));
+      lastHints = hintsFromAlbumDetails(album);
+    } catch (e) {
+      errHost.appendChild(errBox(e));
+      return;
+    }
+
+    const entries: ValidateListEntry[] = [];
+    for (const [ref, listCount] of countByRef) {
+      const detail = albumByCanon.get(ref);
+      if (!detail) {
+        parseErrors.push(`${ref}: ${tr("Unknown sticker ref.")}`);
+        continue;
+      }
+      entries.push({ ref, listCount, detail });
+    }
+
+    const totalInstances = [...countByRef.values()].reduce((a, b) => a + b, 0);
+    lastEntries = entries;
+    lastSort = currentSort();
+
+    if (parseErrors.length > 0) {
+      errHost.appendChild(
+        el(
+          "div",
+          { class: "banner-info", style: "font-size:0.82rem;white-space:pre-wrap;margin-bottom:0.5rem" },
+          parseErrors.slice(0, 20).join("\n") + (parseErrors.length > 20 ? "\n…" : ""),
+        ),
+      );
+    }
+
+    if (entries.length === 0) {
+      errHost.appendChild(el("div", { class: "msg-error" }, tr("No valid refs to show.")));
+      return;
+    }
+
+    renderSummary(entries, totalInstances, parseErrors);
+    renderTable(entries, lastSort, lastHints);
+    setCopyButtonsEnabled(true);
+  });
+
+  card.appendChild(el("label", { class: "field" }, tr("Sticker refs")));
+  card.appendChild(taWrap);
+  card.appendChild(validateBtn);
+  card.appendChild(sortRow);
+  card.appendChild(summaryHost);
+  card.appendChild(errHost);
+  card.appendChild(tableHost);
+  card.appendChild(actionsRow);
+  validateRoot.appendChild(card);
+
+  function clearValidateDrafts(): void {
+    summaryHost.replaceChildren();
+    errHost.replaceChildren();
+    tableHost.replaceChildren();
+    setCopyButtonsEnabled(false);
+    lastEntries = null;
+  }
+
+  return { validateRoot, clearValidateDrafts };
 }
 
 function formatPreviewRefList(refs: string[], max = 20): string {
@@ -2341,11 +2713,7 @@ function formatRefsAsCompactLines(refs: string[]): string {
     if (!by.has(cat)) by.set(cat, []);
     by.get(cat)!.push(slot);
   }
-  const cats = [...by.keys()].sort((a, b) => {
-    if (a === "FWC") return -1;
-    if (b === "FWC") return 1;
-    return a.localeCompare(b);
-  });
+  const cats = sortTeamCodes([...by.keys()]);
   const lines: string[] = [];
   for (const cat of cats) {
     const slots = by.get(cat)!.sort((x, y) => x - y);
@@ -2376,8 +2744,9 @@ function fairTradePairedLists(
   dupByCanon: Map<string, ListStickerRow>,
   missingByCanon: Map<string, ListStickerRow>,
 ): { give: string[]; take: string[]; leftoverGive: string[]; leftoverTake: string[] } {
-  const gCanon = [...new Set(giveRefs.map((r) => canonicalRef(r)))].sort();
-  const tCanon = [...new Set(takeRefs.map((r) => canonicalRef(r)))].sort();
+  const hints = albumHintsFromRows(dupByCanon, missingByCanon);
+  const gCanon = sortRefsByAlbumOrder([...new Set(giveRefs.map((r) => canonicalRef(r)))], hints);
+  const tCanon = sortRefsByAlbumOrder([...new Set(takeRefs.map((r) => canonicalRef(r)))], hints);
 
   const giveQueues: Record<TradePairBucket, string[]> = { fwc: [], team_photo: [], shield: [], player: [] };
   const takeQueues: Record<TradePairBucket, string[]> = { fwc: [], team_photo: [], shield: [], player: [] };
@@ -2391,18 +2760,19 @@ function fairTradePairedLists(
     if (row) takeQueues[tradePairBucket(row)].push(ref);
   }
 
-  const giveOut: string[] = [];
-  const takeOut: string[] = [];
+  const pairs: { g: string; t: string }[] = [];
   for (const b of TRADE_PAIR_ORDER) {
     const g = giveQueues[b];
     const t = takeQueues[b];
     const n = Math.min(g.length, t.length);
     for (let i = 0; i < n; i++) {
-      giveOut.push(g[i]!);
-      takeOut.push(t[i]!);
+      pairs.push({ g: g[i]!, t: t[i]! });
     }
   }
+  pairs.sort((a, b) => compareRefsByAlbumOrder(a.g, b.g, hints));
 
+  const giveOut = pairs.map((p) => p.g);
+  const takeOut = pairs.map((p) => p.t);
   const pairedGive = new Set(giveOut);
   const pairedTake = new Set(takeOut);
   const leftoverGive = gCanon.filter((r) => !pairedGive.has(r));
@@ -2422,6 +2792,10 @@ function buildPackOutlook(): HTMLElement {
   intro.textContent = tr(
     "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. Two knobs: how many people you trade with (market reach), and what share of your duplicate copies you successfully swap for missing ones. Each duplicate is one independent try (inventory + new pulls; idealized fair swaps). Rough simulation, not real Panini odds.",
   );
+  const introRateNote = el("p", {
+    class: "muted pack-outlook-intro-rate",
+    style: "margin:-0.5rem 0 1rem;font-size:0.85rem;line-height:1.45;max-width:52rem",
+  });
 
   const rowTop = el("div", { class: "pack-outlook-top", style: "display:flex;flex-wrap:wrap;gap:1.25rem;align-items:flex-start;margin-bottom:1rem" });
   const ringWrap = el("div", { style: "flex:0 0 auto" });
@@ -2436,17 +2810,18 @@ function buildPackOutlook(): HTMLElement {
   const sliderCard = el("div", { class: "card" });
   sliderCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Duplicate trade rate")));
   const sliderRow = el("div", { class: "pack-outlook-slider-row", style: "display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap" });
+  const DEFAULT_TRADE_RATE_PCT = 30;
   const range = el("input", {
     type: "range",
     min: "0",
     max: "100",
-    value: "30",
+    value: String(DEFAULT_TRADE_RATE_PCT),
     class: "pack-outlook-range",
     "aria-label": tr(
       "Share of duplicate stickers successfully traded for missing ones you still need",
     ),
   }) as HTMLInputElement;
-  const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, tr("30%"));
+  const pctLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, `${DEFAULT_TRADE_RATE_PCT}%`);
   sliderRow.appendChild(range);
   sliderRow.appendChild(pctLabel);
   sliderCard.appendChild(sliderRow);
@@ -2505,6 +2880,7 @@ function buildPackOutlook(): HTMLElement {
   rowTop.appendChild(ringWrap);
   rowTop.appendChild(controlsWrap);
   section.appendChild(intro);
+  section.appendChild(introRateNote);
   section.appendChild(rowTop);
 
   const status = el("p", {
@@ -2528,6 +2904,36 @@ function buildPackOutlook(): HTMLElement {
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let seq = 0;
+  let tradeSliderUserSet = false;
+
+  function syncIntroRateNote(rate: number | null): void {
+    if (rate == null) {
+      introRateNote.textContent = tr(
+        "Your session duplicate trade rate: not available yet (no spares and no duplicates traded out). Slider defaults to 30%.",
+      );
+      return;
+    }
+    const pct = Math.round(rate * 100);
+    introRateNote.textContent = trf(
+      "Your session duplicate trade rate: {pct}% (traded out ÷ traded out + spares still held). Slider defaults to this.",
+      { pct: String(pct) },
+    );
+  }
+
+  async function applySessionTradeRateDefault(): Promise<void> {
+    try {
+      const m = await getMetrics();
+      const rate = m.session.duplicate_trade_rate ?? null;
+      syncIntroRateNote(rate);
+      if (!tradeSliderUserSet) {
+        const pct = rate != null ? Math.round(rate * 100) : DEFAULT_TRADE_RATE_PCT;
+        range.value = String(Math.min(100, Math.max(0, pct)));
+        syncControlHints();
+      }
+    } catch {
+      syncIntroRateNote(null);
+    }
+  }
 
   function packOutlookDisclaimer(complete: boolean): string {
     return complete
@@ -2656,6 +3062,7 @@ function buildPackOutlook(): HTMLElement {
   }
 
   range.addEventListener("input", () => {
+    tradeSliderUserSet = true;
     syncControlHints();
     scheduleLoad();
   });
@@ -2665,9 +3072,13 @@ function buildPackOutlook(): HTMLElement {
     scheduleLoad();
   });
 
-  packOutlookPage.reload = loadProjection;
+  packOutlookPage.reload = async () => {
+    tradeSliderUserSet = false;
+    await applySessionTradeRateDefault();
+    await loadProjection();
+  };
 
-  void loadProjection();
+  void packOutlookPage.reload();
   return section;
 }
 
@@ -2761,8 +3172,11 @@ function buildCrosscheck(): HTMLElement {
       return;
     }
     const { refs, errors } = parseTheirRefPaste(taNeed.value);
-    const hits = [...new Set(refs.map((r) => canonicalRef(r)))].filter((c) => missingSet!.has(c));
-    hits.sort();
+    const hints = albumHintsFromRows(dupByCanon, missingByCanon);
+    const hits = sortRefsByAlbumOrder(
+      [...new Set(refs.map((r) => canonicalRef(r)))].filter((c) => missingSet!.has(c)),
+      hints,
+    );
     outNeedPre.textContent =
       hits.length === 0 ? "(none — no overlap with your missing list.)" : formatRefsAsCompactLines(hits);
     lastNeedHits = [...hits];
@@ -2778,9 +3192,10 @@ function buildCrosscheck(): HTMLElement {
       );
     }
   });
+  const taNeedWrap = wrapFieldWithCopyButton(taNeed);
   cardNeed.appendChild(el("label", { class: "field" }, tr("Their list")));
-  cardNeed.appendChild(taNeed);
   attachStickerRefAutocomplete(taNeed);
+  cardNeed.appendChild(taNeedWrap);
   cardNeed.appendChild(btnNeed);
   cardNeed.appendChild(el("label", { class: "field" }, tr("You need from them (compact)")));
   cardNeed.appendChild(outNeedPre);
@@ -2815,8 +3230,11 @@ function buildCrosscheck(): HTMLElement {
       return;
     }
     const { refs, errors } = parseTheirRefPaste(taGive.value);
-    const hits = [...new Set(refs.map((r) => canonicalRef(r)))].filter((c) => dupGiveSet!.has(c));
-    hits.sort();
+    const hints = albumHintsFromRows(dupByCanon, missingByCanon);
+    const hits = sortRefsByAlbumOrder(
+      [...new Set(refs.map((r) => canonicalRef(r)))].filter((c) => dupGiveSet!.has(c)),
+      hints,
+    );
     outGivePre.textContent =
       hits.length === 0 ? "(none — no overlap with stickers you have as spares.)" : formatRefsAsCompactLines(hits);
     lastGiveHits = [...hits];
@@ -2832,9 +3250,10 @@ function buildCrosscheck(): HTMLElement {
       );
     }
   });
+  const taGiveWrap = wrapFieldWithCopyButton(taGive);
   cardGive.appendChild(el("label", { class: "field" }, tr("Their missing")));
-  cardGive.appendChild(taGive);
   attachStickerRefAutocomplete(taGive);
+  cardGive.appendChild(taGiveWrap);
   cardGive.appendChild(btnGive);
   cardGive.appendChild(el("label", { class: "field" }, tr("You can give (compact)")));
   cardGive.appendChild(outGivePre);
@@ -2880,7 +3299,7 @@ function buildCrosscheck(): HTMLElement {
       setTradePrefillBanner(
         "Fair pairing found no same-type overlaps — use Send ALL to Trade or adjust the pasted lists.",
       );
-      applyTradePrefill(give, take, give.length !== take.length);
+      applyTradePrefill(give, take, give.length !== take.length, albumHintsFromRows(dupByCanon, missingByCanon));
       return;
     }
     const extra: string[] = [];
@@ -2891,7 +3310,7 @@ function buildCrosscheck(): HTMLElement {
         ? `Fair pairs: ${give.length} ↔ ${take.length}. Not auto-paired: ${extra.join(" · ")} — originals still on Crosscheck.`
         : `Fair pairs: ${give.length} ↔ ${take.length} (FWC↔FWC, team photo↔team photo, shield↔shield, player↔player).`,
     );
-    applyTradePrefill(give, take, false);
+    applyTradePrefill(give, take, false, albumHintsFromRows(dupByCanon, missingByCanon));
   });
   btnSendAll.addEventListener("click", () => {
     if (!needCompared || !giveCompared || lastNeedHits === null || lastGiveHits === null) return;
@@ -2901,7 +3320,7 @@ function buildCrosscheck(): HTMLElement {
         ? `Prefilled ${lastGiveHits.length} you give ↔ ${lastNeedHits.length} you receive — uneven counts; “Allow uneven” is checked. Customize on Trade before executing.`
         : `Prefilled ${lastGiveHits.length} ↔ ${lastNeedHits.length}. Customize on Trade before executing.`,
     );
-    applyTradePrefill(lastGiveHits, lastNeedHits, uneven);
+    applyTradePrefill(lastGiveHits, lastNeedHits, uneven, albumHintsFromRows(dupByCanon, missingByCanon));
   });
   cardTradeJump.appendChild(el("div", { class: "row", style: "flex-wrap:wrap;gap:0.5rem" }, btnSuggest, btnSendAll));
 
@@ -2952,6 +3371,8 @@ function buildTrade(): HTMLElement {
   }) as HTMLTextAreaElement;
   attachStickerRefAutocomplete(giveTa);
   attachStickerRefAutocomplete(takeTa);
+  const giveWrap = wrapFieldWithCopyButton(giveTa);
+  const takeWrap = wrapFieldWithCopyButton(takeTa);
   const strictCb = el("input", { type: "checkbox", id: "trade-strict" }) as HTMLInputElement;
   const unevenCb = el("input", { type: "checkbox", id: "trade-uneven" }) as HTMLInputElement;
   const countBadge = el("span", { class: "badge" }, "0 ↔ 0");
@@ -3257,10 +3678,10 @@ function buildTrade(): HTMLElement {
 
   const grid = el("div", { class: "trade-grid" });
   grid.appendChild(
-    el("div", { class: "card" }, el("h3", {}, tr("You give")), giveTa, countBadge),
+    el("div", { class: "card" }, el("h3", {}, tr("You give")), giveWrap, countBadge),
   );
   grid.appendChild(
-    el("div", { class: "card" }, el("h3", {}, tr("You receive")), takeTa),
+    el("div", { class: "card" }, el("h3", {}, tr("You receive")), takeWrap),
   );
 
   section.appendChild(grid);

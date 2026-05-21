@@ -34,6 +34,8 @@ export interface SessionSnapshot {
   packs_opened: number;
   traded_out_count: number;
   traded_in_count: number;
+  /** Observed traded_out / (traded_out + spare_copies); omitted on import/export. */
+  duplicate_trade_rate?: number | null;
 }
 
 export interface PaniniSnapshot {

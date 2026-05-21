@@ -318,6 +318,90 @@ h3 {
   cursor: not-allowed;
 }
 
+.field-copy-wrap {
+  position: relative;
+  display: block;
+}
+
+.field-copy-wrap > textarea,
+.field-copy-wrap > input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 2.25rem;
+}
+
+.field-copy-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.field-copy-wrap:hover .field-copy-btn,
+.field-copy-wrap:focus-within .field-copy-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.field-copy-btn--ok {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.field-copy-btn--err {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+@media (hover: none) {
+  .field-copy-btn {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+}
+
+.validate-table-scroll {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+  max-height: min(28rem, 55vh);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.validate-list-table {
+  width: 100%;
+  margin: 0;
+}
+
+.validate-list-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface2);
+}
+
+.validate-summary-chips .lookup-badge {
+  font-size: 0.82rem;
+}
+
+.validate-sort-row label {
+  cursor: pointer;
+}
+
 label.field {
   display: block;
   margin-bottom: 0.35rem;

@@ -6,6 +6,8 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   Account: "Cuenta",
   Add: "Agregar",
   "Add stickers": "Agregar láminas",
+  "Add to album": "Agregar al álbum",
+  "Added {n} sticker instance(s).": "Se agregaron {n} lámina(s).",
   "Batch add (any refs)": "Agregar en bloque (cualquier ref.)",
   "Album / paste line": "Línea del álbum / para pegar",
   "Album complete on unique stickers — no more packs needed in this model.":
@@ -29,7 +31,9 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Copy app ref": "Copiar referencia de la aplicación",
   "Copy dups": "Copiar repetidas",
   "Copy missing": "Copiar faltantes",
+  Copy: "Copiar",
   Count: "Cantidad",
+  "Count toward packs opened": "Contar como sobres abiertos",
   Crosscheck: "Comparar listas",
   Details: "Detalles",
   "Download snapshot JSON": "Descargar respaldo JSON",
@@ -48,6 +52,11 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. Two knobs: how many people you trade with (market reach), and what share of your duplicate copies you successfully swap for missing ones. Each duplicate is one independent try (inventory + new pulls; idealized fair swaps). Rough simulation, not real Panini odds.":
     "Simula abrir más sobres desde el estado actual de tu álbum. Cada sobre agrega láminas al azar de todo el álbum. Dos controles: con cuántas personas cambias (alcance del mercado) y qué porcentaje de tus repetidas logras cambiar por faltantes. Cada repetida es un intento independiente (inventario + las nuevas; cambio justo idealizado). Simulación aproximada, no probabilidades reales de Panini.",
   "Duplicate trade rate": "Porcentaje de repetidas cambiadas",
+  "Traded out ÷ (traded out + spares still held)": "Entregadas ÷ (entregadas + repetidas que aún tienes)",
+  "Your session duplicate trade rate: not available yet (no spares and no duplicates traded out). Slider defaults to 30%.":
+    "Tu tasa de cambio de repetidas en la sesión: aún no disponible (sin repetidas ni entregadas en cambios). El control queda en 30% por defecto.",
+  "Your session duplicate trade rate: {pct}% (traded out ÷ traded out + spares still held). Slider defaults to this.":
+    "Tu tasa de cambio de repetidas en la sesión: {pct}% (entregadas ÷ entregadas + repetidas que aún tienes). El control usa este valor por defecto.",
   "Share of duplicate stickers successfully traded for missing ones you still need":
     "Porcentaje de repetidas que logras cambiar por faltantes",
   "{pct}% of duplicate copies you close when a match exists. {perPack} stickers per pack — same as the Pack tab.":
@@ -88,6 +97,11 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Into your album": "Entran al álbum",
   "Inventory and packs_opened were restored. Paste the list again if you still want to register it.":
     "Se restauró el inventario y los sobres abiertos. Pega otra vez la lista si aún quieres anotarla.",
+  "Inventory and packs_opened were restored. Paste the list again if you still want to add it.":
+    "Se restauró el inventario y los sobres abiertos. Pega otra vez la lista si aún quieres agregarla.",
+  "List changed — run Preview again before adding.":
+    "La lista cambió — vuelve a ver la vista previa antes de agregar.",
+  "Add undone": "Agregado deshecho",
   Lists: "Listas",
   "Lists not loaded.": "No se pudieron cargar las listas.",
   "Loading album data for preview…": "Cargando el álbum para la vista previa…",
@@ -96,6 +110,25 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Log out": "Salir",
   "Look up": "Buscar",
   Lookup: "Consulta",
+  "Validate list": "Validar lista",
+  Validate: "Validar",
+  "Paste refs to see how they match your album: missing, in album, or spare. Does not add or remove stickers.":
+    "Pega referencias para ver cómo coinciden con tu álbum: faltantes, en el álbum o repetidas. No agrega ni quita láminas.",
+  "Sort:": "Orden:",
+  "Album order": "Orden del álbum",
+  "A–Z": "A–Z",
+  "Copy refs (sorted)": "Copiar referencias (ordenadas)",
+  "Copy report (sorted)": "Copiar informe (ordenado)",
+  "{total} sticker(s) in list · {unique} unique ref(s)": "{total} lámina(s) en la lista · {unique} ref. única(s)",
+  "{n} missing": "{n} faltante(s)",
+  "{n} in album": "{n} en el álbum",
+  "{n} spare": "{n} repetida(s)",
+  "{n} line(s) could not be parsed.": "No se pudieron interpretar {n} línea(s).",
+  "In list": "En la lista",
+  "in list": "en la lista",
+  "Enter at least one sticker ref.": "Escribe al menos una referencia.",
+  "No valid refs to show.": "No hay referencias válidas para mostrar.",
+  "Unknown sticker ref.": "Referencia desconocida.",
   "Most duplicated team": "Selección con más repetidas",
   "No analytics yet — add some stickers first.":
     "Todavía no hay estadísticas: agrega láminas primero.",
@@ -129,6 +162,8 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Returned / removed": "Devueltas / quitadas",
   "Run Check pack again — the list or nominal per-pack no longer matches the preview.":
     "Vuelve a revisar el sobre: la lista o cuántas vienen por sobre ya no coincide con la vista previa.",
+  "Run Preview again — the list no longer matches the preview.":
+    "Vuelve a ver la vista previa: la lista ya no coincide.",
   Save: "Guardar",
   "Send ALL to Trade": "Enviar TODO a Intercambio",
   "Send to Trade": "Enviar a Intercambio",
@@ -152,7 +187,13 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
     "Añade las láminas que tienes: abre un sobre (vista previa y registrar), pega un lote o añade una ref. cada vez. Formato: MEX:5, 00, FWC 14 o MEX: 1, 2, 3.",
   "Open a pack": "Abrir un sobre",
   "Sticker ref": "Referencia de la lámina",
+  "Sticker refs": "Referencias de láminas",
+  "Stickers added": "Láminas agregadas",
   "Stickers in this pack (one ref per line)": "Láminas de este sobre (una referencia por línea)",
+  "Paste sticker refs below, Preview to see new vs duplicate, then Add to album. Optional: count toward packs opened when you opened physical packs. Ref format: MEX:5, 00, FWC 14, MEX: 1, 2, 3, MEX:5 x3.":
+    "Pega referencias abajo, Vista previa para ver nuevas vs repetidas, luego Agregar al álbum. Opcional: contar como sobres abiertos si abriste sobres físicos. Formato: MEX:5, 00, FWC 14, MEX: 1, 2, 3, MEX:5 x3.",
+  "Preview shows new album slots vs spares (by printed page). Add only when it looks right. Undo is available after a pack-style add until you edit this list.":
+    "La vista previa muestra espacios nuevos vs repetidas (por página impresa). Agrega solo cuando se vea bien. Deshacer está disponible tras un agregado tipo sobre hasta que edites esta lista.",
   "Strict: only trade duplicates (qty ≥ 2)": "Estricto: solo cambiar repetidas (cantidad ≥ 2)",
   "Suggest trade (fair pairs)": "Sugerir cambio (pares parejos)",
   "Tap a row or look up a ref.": "Toca una fila o busca una referencia.",
@@ -171,6 +212,7 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Traded out": "Entregadas en el cambio",
   Types: "Tipos",
   "Undo this pack": "Deshacer este sobre",
+  "Undo this add": "Deshacer este agregado",
   "Undo this trade": "Deshacer este cambio",
   "Use Apply adds first, or enter a total manually via Overview → session.":
     "Primero usa Agregar en bloque, o pon el total a mano en Resumen → sesión.",

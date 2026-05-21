@@ -67,3 +67,16 @@ def set_session_stats(
         (p, o, i),
     )
     return get_session_stats(conn)
+
+
+def session_duplicate_trade_rate(traded_out: int, spare_copies: int) -> float | None:
+    """
+    Observed share of duplicate copies traded away vs still held as spares.
+
+    ``traded_out / (traded_out + spare_copies)``; None when there are no duplicates
+    in that pool (no spares and nothing traded out).
+    """
+    pool = int(traded_out) + int(spare_copies)
+    if pool <= 0:
+        return None
+    return round(int(traded_out) / pool, 4)

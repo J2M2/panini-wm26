@@ -27,7 +27,7 @@ from panini_service.album_pages import (  # noqa: E402
     printed_album_page,
 )
 from panini_service.refs import format_sticker_ref  # noqa: E402
-from panini_service.session_store import get_session_stats  # noqa: E402
+from panini_service.session_store import get_session_stats, session_duplicate_trade_rate  # noqa: E402
 
 
 def _album_field(category_code: str, slot_code: str) -> dict[str, str]:
@@ -186,18 +186,21 @@ def inventory_metrics(conn: sqlite3.Connection) -> dict[str, Any]:
     filled = int(row["unique_slots_filled"] or 0)
     pct = 100.0 * filled / album_slots if album_slots else 0.0
     session = get_session_stats(conn)
+    spare = int(row["spare_copies"] or 0)
+    dup_rate = session_duplicate_trade_rate(session.traded_out_count, spare)
     return {
         "album_unique_slots": album_slots,
         "total_physical_stickers": int(row["total_physical"] or 0),
         "unique_slots_filled": filled,
         "unique_slots_missing": int(row["unique_slots_missing"] or 0),
         "pct_complete_unique": round(pct, 2),
-        "spare_copies": int(row["spare_copies"] or 0),
+        "spare_copies": spare,
         "slots_with_duplicates": int(row["slots_with_duplicates"] or 0),
         "session": {
             "packs_opened": session.packs_opened,
             "traded_out_count": session.traded_out_count,
             "traded_in_count": session.traded_in_count,
+            "duplicate_trade_rate": dup_rate,
         },
     }
 

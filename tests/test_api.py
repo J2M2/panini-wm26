@@ -32,6 +32,7 @@ def test_metrics(client):
     data = r.json()
     assert "album_unique_slots" in data
     assert "session" in data
+    assert "duplicate_trade_rate" in data["session"]
 
 
 def test_lists_compact(client):
