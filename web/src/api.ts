@@ -132,10 +132,11 @@ export function getAnalyticsTeams(): Promise<{ teams: TeamAnalyticsRow[] }> {
 
 export function getPackOutlook(
   tradeRepeatP: number,
-  opts?: { perPack?: number; trials?: number },
+  opts?: { tradingPartners?: number; perPack?: number; trials?: number },
 ): Promise<PackOutlookResponse> {
   const q = new URLSearchParams();
   q.set("trade_repeat_p", String(tradeRepeatP));
+  if (opts?.tradingPartners !== undefined) q.set("trading_partners", String(opts.tradingPartners));
   if (opts?.perPack !== undefined) q.set("per_pack", String(opts.perPack));
   if (opts?.trials !== undefined) q.set("trials", String(opts.trials));
   return apiGetJson(`/analytics/pack-outlook?${q.toString()}`);

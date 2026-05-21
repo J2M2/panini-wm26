@@ -2420,7 +2420,7 @@ function buildPackOutlook(): HTMLElement {
     style: "margin:0 0 1rem;font-size:0.88rem;line-height:1.45;max-width:52rem",
   });
   intro.textContent = tr(
-    "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. The slider is the share of duplicate stickers you successfully trade for ones you still need — each duplicate is an independent try (starting repeats included; idealized — you always find a match). Higher values finish the album sooner. Rough simulation, not real Panini odds.",
+    "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. Two knobs: how many people you trade with (market reach), and what share of your duplicate copies you successfully swap for missing ones. Each duplicate is one independent try (inventory + new pulls; idealized fair swaps). Rough simulation, not real Panini odds.",
   );
 
   const rowTop = el("div", { class: "pack-outlook-top", style: "display:flex;flex-wrap:wrap;gap:1.25rem;align-items:flex-start;margin-bottom:1rem" });
@@ -2428,7 +2428,12 @@ function buildPackOutlook(): HTMLElement {
   const ringHost = el("div", { id: "pack-outlook-ring" });
   ringWrap.appendChild(ringHost);
 
-  const sliderCard = el("div", { class: "card", style: "flex:1 1 18rem;min-width:min(100%,16rem)" });
+  const controlsWrap = el("div", {
+    class: "pack-outlook-controls",
+    style: "flex:1 1 18rem;min-width:min(100%,16rem);display:flex;flex-direction:column;gap:1rem",
+  });
+
+  const sliderCard = el("div", { class: "card" });
   sliderCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Duplicate trade rate")));
   const sliderRow = el("div", { class: "pack-outlook-slider-row", style: "display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap" });
   const range = el("input", {
@@ -2451,18 +2456,54 @@ function buildPackOutlook(): HTMLElement {
   }) as HTMLParagraphElement;
   sliderCard.appendChild(tradeRepeatHint);
 
-  function syncTradeRepeatHint(): void {
+  const networkCard = el("div", { class: "card" });
+  networkCard.appendChild(el("h3", { style: "margin-top:0" }, tr("Trading network")));
+  const networkRow = el("div", { class: "pack-outlook-slider-row", style: "display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap" });
+  const partnersRange = el("input", {
+    type: "range",
+    min: "0",
+    max: "20",
+    value: "5",
+    class: "pack-outlook-range",
+    "aria-label": tr("Number of people you regularly trade stickers with"),
+  }) as HTMLInputElement;
+  const partnersLabel = el("span", { class: "ref", style: "min-width:4.5rem" }, "5");
+  networkRow.appendChild(partnersRange);
+  networkRow.appendChild(partnersLabel);
+  networkCard.appendChild(networkRow);
+  const networkHint = el("p", {
+    class: "muted",
+    style: "margin:0.5rem 0 0;font-size:0.82rem;line-height:1.45",
+  }) as HTMLParagraphElement;
+  networkCard.appendChild(networkHint);
+
+  function networkReachPct(partners: number): number {
+    if (partners <= 0) return 0;
+    return Math.round((1 - Math.exp(-partners / 5)) * 100);
+  }
+
+  function syncControlHints(): void {
     const v = range.value;
+    const partners = Number(partnersRange.value);
+    const reach = networkReachPct(partners);
+    const eff = Math.round((Number(v) / 100) * (reach / 100) * 100);
     pctLabel.textContent = `${v}%`;
+    partnersLabel.textContent = String(partners);
     tradeRepeatHint.textContent = trf(
-      "{pct}% of duplicates successfully traded (inventory + new pulls). {perPack} stickers per pack — same as the Pack tab.",
+      "{pct}% of duplicate copies you close when a match exists. {perPack} stickers per pack — same as the Pack tab.",
       { pct: v, perPack: String(STICKERS_PER_PACK) },
     );
+    networkHint.textContent = trf(
+      "{partners} trading contacts (~{reach}% market reach). Effective conversion ≈ {eff}% per duplicate.",
+      { partners: String(partners), reach: String(reach), eff: String(eff) },
+    );
   }
-  syncTradeRepeatHint();
+  syncControlHints();
 
+  controlsWrap.appendChild(sliderCard);
+  controlsWrap.appendChild(networkCard);
   rowTop.appendChild(ringWrap);
-  rowTop.appendChild(sliderCard);
+  rowTop.appendChild(controlsWrap);
   section.appendChild(intro);
   section.appendChild(rowTop);
 
@@ -2492,7 +2533,7 @@ function buildPackOutlook(): HTMLElement {
     return complete
       ? tr("Toy uniform-pack model only; real Panini distribution and trading differ.")
       : tr(
-          "Toy model: random stickers per pack; the slider is the share of duplicates successfully traded for missing slots. Not spending or completion advice — ballpark only.",
+          "Toy model: random stickers per pack; duplicate success rate × trading network reach. Not spending or completion advice — ballpark only.",
         );
   }
 
@@ -2572,16 +2613,21 @@ function buildPackOutlook(): HTMLElement {
   async function loadProjection(): Promise<void> {
     const mySeq = ++seq;
     const tradeP = Number(range.value) / 100;
-    syncTradeRepeatHint();
+    const partners = Number(partnersRange.value);
+    syncControlHints();
     status.textContent = tr("Running simulation…");
     statsBody.replaceChildren();
     try {
-      const d = await getPackOutlook(tradeP, { perPack: STICKERS_PER_PACK });
+      const d = await getPackOutlook(tradeP, { tradingPartners: partners, perPack: STICKERS_PER_PACK });
       if (mySeq !== seq) return;
       const detail =
-        d.trade_repeat_p === 0
+        d.trade_repeat_p === 0 || d.trading_partners === 0
           ? tr("packs only")
-          : trf("{pct}% of duplicates traded", { pct: String(Math.round(d.trade_repeat_p * 100)) });
+          : trf("{pct}% duplicate success × {partners} contacts (~{reach}% reach)", {
+              pct: String(Math.round(d.trade_repeat_p * 100)),
+              partners: String(d.trading_partners),
+              reach: String(Math.round(d.network_reach * 100)),
+            });
       status.textContent =
         d.trials_used > 0
           ? trf("Based on {trials} simulations ({detail}).", {
@@ -2610,7 +2656,12 @@ function buildPackOutlook(): HTMLElement {
   }
 
   range.addEventListener("input", () => {
-    syncTradeRepeatHint();
+    syncControlHints();
+    scheduleLoad();
+  });
+
+  partnersRange.addEventListener("input", () => {
+    syncControlHints();
     scheduleLoad();
   });
 

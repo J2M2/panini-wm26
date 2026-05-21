@@ -45,13 +45,18 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   Group: "Grupo",
   Type: "Tipo",
   "Album completion estimate": "Proyección para completar el álbum",
-  "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. The slider is the share of duplicate stickers you successfully trade for ones you still need — each duplicate is an independent try (starting repeats included; idealized — you always find a match). Higher values finish the album sooner. Rough simulation, not real Panini odds.":
-    "Simula abrir más sobres desde el estado actual de tu álbum. Cada sobre agrega láminas al azar de todo el álbum. El control es qué porcentaje de repetidas logras cambiar por faltantes — cada repetida es un intento independiente (incluye las que ya tienes; cambio ideal — siempre encuentras con quién cambiar). A mayor valor, el álbum se completa antes. Simulación aproximada, no probabilidades reales de Panini.",
+  "Simulates opening more packs from your current album. Each pack adds random stickers from across the full album. Two knobs: how many people you trade with (market reach), and what share of your duplicate copies you successfully swap for missing ones. Each duplicate is one independent try (inventory + new pulls; idealized fair swaps). Rough simulation, not real Panini odds.":
+    "Simula abrir más sobres desde el estado actual de tu álbum. Cada sobre agrega láminas al azar de todo el álbum. Dos controles: con cuántas personas cambias (alcance del mercado) y qué porcentaje de tus repetidas logras cambiar por faltantes. Cada repetida es un intento independiente (inventario + las nuevas; cambio justo idealizado). Simulación aproximada, no probabilidades reales de Panini.",
   "Duplicate trade rate": "Porcentaje de repetidas cambiadas",
   "Share of duplicate stickers successfully traded for missing ones you still need":
     "Porcentaje de repetidas que logras cambiar por faltantes",
-  "{pct}% of duplicates successfully traded (inventory + new pulls). {perPack} stickers per pack — same as the Pack tab.":
-    "{pct}% de repetidas cambiadas con éxito (inventario + las nuevas). {perPack} láminas por sobre — igual que en la pestaña Sobre.",
+  "{pct}% of duplicate copies you close when a match exists. {perPack} stickers per pack — same as the Pack tab.":
+    "{pct}% de repetidas que cierras cuando hay match. {perPack} láminas por sobre — igual que en la pestaña Sobre.",
+  "Trading network": "Red de cambio",
+  "Number of people you regularly trade stickers with":
+    "Con cuántas personas cambias láminas habitualmente",
+  "{partners} trading contacts (~{reach}% market reach). Effective conversion ≈ {eff}% per duplicate.":
+    "{partners} contactos de cambio (~{reach}% de alcance). Conversión efectiva ≈ {eff}% por repetida.",
   "Estimate from here": "Estimación desde aquí",
   "unique stickers": "láminas únicas",
   "Session packs opened: {packs}. Spare copies in inventory: {spares}.":
@@ -68,10 +73,11 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
     "Sobres abiertos en la sesión: {n} — la simulación parte de tus faltantes actuales, no vuelve a abrir los sobres ya contados.",
   "Toy uniform-pack model only; real Panini distribution and trading differ.":
     "Solo un modelo simplificado; la distribución real de Panini y tus cambios con otros coleccionistas son distintos.",
-  "Toy model: random stickers per pack; the slider is the share of duplicates successfully traded for missing slots. Not spending or completion advice — ballpark only.":
-    "Modelo simplificado: láminas al azar por sobre; el control es qué porcentaje de repetidas logras cambiar por faltantes. No es consejo de cuánto gastar ni cuándo completar — solo una referencia aproximada.",
+  "Toy model: random stickers per pack; duplicate success rate × trading network reach. Not spending or completion advice — ballpark only.":
+    "Modelo simplificado: láminas al azar por sobre; tasa de cambio exitoso × alcance de tu red. No es consejo de cuánto gastar ni cuándo completar — solo una referencia aproximada.",
   "packs only": "solo sobres",
-  "{pct}% of duplicates traded": "{pct}% de repetidas cambiadas",
+  "{pct}% duplicate success × {partners} contacts (~{reach}% reach)":
+    "{pct}% de cambios exitosos × {partners} contactos (~{reach}% de alcance)",
   "Based on {trials} simulations ({detail}).": "Con {trials} simulaciones ({detail}).",
   "Album already complete on unique stickers.": "Álbum ya completo en láminas únicas.",
   "Some trials exceeded max_packs ({max}); increase the cap or lower trials — results may be biased low.":

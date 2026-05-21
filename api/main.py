@@ -307,6 +307,14 @@ def get_pack_outlook(
             "Each duplicate — starting inventory or from a pack — is an independent idealized trade try."
         ),
     ),
+    trading_partners: int = Query(
+        5,
+        ge=0,
+        le=50,
+        description=(
+            "How many people you trade with. Scales market reach (0 = no trades even if success rate > 0)."
+        ),
+    ),
     per_pack: int = Query(7, ge=1, le=50),
     trials: int = Query(1200, ge=50, le=10_000),
     seed: int | None = Query(None, description="Optional RNG seed for reproducible runs"),
@@ -316,6 +324,7 @@ def get_pack_outlook(
     return pack_outlook_projection(
         conn,
         trade_repeat_p=trade_repeat_p,
+        trading_partners=trading_partners,
         per_pack=per_pack,
         trials=trials,
         seed=seed,

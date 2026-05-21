@@ -156,6 +156,9 @@ export interface PackOutlookResponse {
   session_packs_opened: number;
   per_pack: number;
   trade_repeat_p: number;
+  trading_partners: number;
+  network_reach: number;
+  effective_trade_p: number;
   trials_requested: number;
   trials_used: number;
   p50_packs: number;
