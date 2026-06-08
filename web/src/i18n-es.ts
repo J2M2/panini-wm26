@@ -194,6 +194,21 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
     "Pega referencias abajo, Vista previa para ver nuevas vs repetidas, luego Agregar al álbum. Opcional: contar como sobres abiertos si abriste sobres físicos. Formato: MEX:5, 00, FWC 14, MEX: 1, 2, 3, MEX:5 x3.",
   "Preview shows new album slots vs spares (by printed page). Add only when it looks right. Undo is available after a pack-style add until you edit this list.":
     "La vista previa muestra espacios nuevos vs repetidas (por página impresa). Agrega solo cuando se vea bien. Deshacer está disponible tras un agregado tipo sobre hasta que edites esta lista.",
+  "In paste order:": "En el orden pegado:",
+  "In receive order:": "En el orden recibido:",
+  "{given} given · {total} received: {newCount} new to album · {spareCount} spares.":
+    "{given} entregadas · {total} recibidas: {newCount} nuevas en el álbum · {spareCount} repetidas.",
+  "New to album": "Nueva en el álbum",
+  "Adds spare": "Agrega repetida",
+  "Goes to album (empty slot)": "Va al álbum (espacio vacío)",
+  "Adds spare / duplicate": "Agrega repetida / duplicado",
+  "None — every line is already in the album at least once.":
+    "Ninguna — todas las líneas ya están en el álbum al menos una vez.",
+  "None — every line fills a missing slot.": "Ninguna — todas las líneas llenan un espacio faltante.",
+  "{total} sticker(s): {newCount} new to album · {spareCount} spares. Session packs_opened += {packDelta} (nominal {perPack}/pack, rounded).":
+    "{total} lámina(s): {newCount} nuevas en el álbum · {spareCount} repetidas. Sobres abiertos de la sesión += {packDelta} ({perPack} por sobre nominal, redondeado).",
+  "{total} sticker(s): {newCount} new to album · {spareCount} spares. Packs opened not updated.":
+    "{total} lámina(s): {newCount} nuevas en el álbum · {spareCount} repetidas. Sobres abiertos no se actualizan.",
   "Strict: only trade duplicates (qty ≥ 2)": "Estricto: solo cambiar repetidas (cantidad ≥ 2)",
   "Suggest trade (fair pairs)": "Sugerir cambio (pares parejos)",
   "Tap a row or look up a ref.": "Toca una fila o busca una referencia.",
@@ -224,6 +239,22 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   spares: "repetidas",
 
   /* Added for strings we wrap outside the automated el() pass */
+  "Most spares": "Más repetidas",
+  "Expand list": "Expandir lista",
+  "Compact list": "Lista compacta",
+  "{n} with spares": "{n} con repetidas",
+  "No duplicates yet.": "Aún no hay repetidas.",
+  COMPLETE: "COMPLETO",
+  "Every unique slot — filled.": "Cada espacio único — lleno.",
+  "The album is yours.": "El álbum es tuyo.",
+  "All {total} stickers accounted for. The hunt ends here — for now.":
+    "Las {total} láminas están. La cacería termina aquí — por ahora.",
+  "From the first rip of cellophane to the last handshake swap: done.":
+    "Del primer sobre abierto al último cambio de mano: listo.",
+  "Unique slots": "Espacios únicos",
+  "Spares left": "Repetidas que quedan",
+  "Back to the desk": "Volver al escritorio",
+  "Close celebration": "Cerrar celebración",
   "Could not load lists.": "No se pudieron cargar las listas.",
   "Could not render duplicates.": "No se pudieron mostrar las repetidas.",
   "Logged out — new guest album.": "Saliste — álbum de invitado nuevo.",

@@ -61,6 +61,14 @@ function suggestionsForTeams(teams: string[], prefix: string): string[] {
   return teams.filter((t) => t.startsWith(p)).slice(0, 48);
 }
 
+function listsEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+function isAutocompleteNavKey(key: string): boolean {
+  return key === "ArrowUp" || key === "ArrowDown" || key === "Enter" || key === "Tab" || key === "Escape";
+}
+
 function positionPopup(anchor: HTMLElement, popup: HTMLElement): void {
   const r = anchor.getBoundingClientRect();
   popup.style.position = "fixed";
@@ -145,8 +153,21 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
       close();
       return;
     }
+    const sameSuggestions =
+      lastState?.prefix === st.prefix &&
+      lastState?.tokenStart === st.tokenStart &&
+      listsEqual(list, lastSuggestions);
+
     lastState = st;
     lastSuggestions = list;
+
+    if (sameSuggestions && popup.style.display === "block") {
+      selIdx = Math.min(selIdx, list.length - 1);
+      positionPopup(el, popup);
+      highlight();
+      return;
+    }
+
     selIdx = 0;
     popup.replaceChildren();
     for (const team of list) {
@@ -155,6 +176,13 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
       b.className = "sticker-ref-ac__item";
       b.setAttribute("role", "option");
       b.textContent = team;
+      b.addEventListener("mouseenter", () => {
+        const idx = lastSuggestions.indexOf(team);
+        if (idx >= 0) {
+          selIdx = idx;
+          highlight();
+        }
+      });
       b.addEventListener("mousedown", (ev) => {
         ev.preventDefault();
         lastState = st;
@@ -208,7 +236,10 @@ export function attachStickerRefAutocomplete(el: HTMLInputElement | HTMLTextArea
 
   el.addEventListener("input", () => void openOrUpdate());
   el.addEventListener("click", () => void openOrUpdate());
-  el.addEventListener("keyup", () => void openOrUpdate());
+  el.addEventListener("keyup", (ev) => {
+    if (isAutocompleteNavKey((ev as KeyboardEvent).key)) return;
+    void openOrUpdate();
+  });
   el.addEventListener("keydown", onKeyDown);
   el.addEventListener("blur", () => window.setTimeout(close, 180));
 }

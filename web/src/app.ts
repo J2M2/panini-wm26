@@ -146,12 +146,22 @@ function clearStickerDraftsForView(route: string): void {
 
 /** Canonical missing refs (qty === 0). */
 let tradeMissingRefs: Set<string> | null = null;
+/** Album index hints for missing refs (used in trade outcome summary). */
+type TradeAlbumHint = {
+  category_code: string;
+  album_printed_page?: number;
+  album_index_group?: string | null;
+};
+let tradeMissingHints: Map<string, TradeAlbumHint> | null = null;
 /** Canonical ref → qty/spares for stickers with qty > 1. */
 let tradeDupMap: Map<string, { qty: number; spare: number }> | null = null;
 /** Set when missing/duplicate list fetch fails — preview cannot run until fixed. */
 let tradePreviewLoadError: string | null = null;
 
 let tradeDupRows: ListStickerRow[] = [];
+type TradeDupSortMode = "spares" | "album";
+let tradeDupSortMode: TradeDupSortMode = "spares";
+let tradeDupExpanded = false;
 
 /** Full team analytics view: refetch when navigating to Analytics. */
 const analyticsPage = {
@@ -178,6 +188,19 @@ async function loadTradePreviewData(): Promise<void> {
   try {
     const [missing, dups] = await Promise.all([getMissingList(), getDuplicatesList()]);
     tradeMissingRefs = new Set(missing.map((r) => canonicalRef(r.ref)));
+    tradeMissingHints = new Map(
+      missing.map((r) => {
+        const c = canonicalRef(r.ref);
+        return [
+          c,
+          {
+            category_code: r.category_code,
+            album_printed_page: r.album_printed_page,
+            album_index_group: r.album_index_group,
+          },
+        ];
+      }),
+    );
     tradeDupRows = dups;
     tradeDupMap = new Map(
       dups.map((r) => {
@@ -190,6 +213,7 @@ async function loadTradePreviewData(): Promise<void> {
     document.getElementById("trade-give")?.dispatchEvent(new Event("input"));
   } catch (e) {
     tradeMissingRefs = null;
+    tradeMissingHints = null;
     tradeDupMap = null;
     tradeDupRows = [];
     tradePreviewLoadError = e instanceof Error ? e.message : String(e);
@@ -199,18 +223,74 @@ async function loadTradePreviewData(): Promise<void> {
   }
 }
 
+function dupRowAlbumHint(r: ListStickerRow): AlbumOrderHint {
+  return {
+    category_code: r.category_code,
+    slot_code: r.slot_code,
+    album_printed_page: r.album_printed_page,
+  };
+}
+
+function sortedTradeDupRows(rows: ListStickerRow[], mode: TradeDupSortMode): ListStickerRow[] {
+  const copy = [...rows];
+  const hints = new Map(copy.map((r) => [canonicalRef(r.ref), dupRowAlbumHint(r)]));
+  if (mode === "spares") {
+    copy.sort((a, b) => {
+      const sa = a.spare_copies ?? Math.max(0, a.qty - 1);
+      const sb = b.spare_copies ?? Math.max(0, b.qty - 1);
+      if (sb !== sa) return sb - sa;
+      return compareRefsByAlbumOrder(a.ref, b.ref, hints);
+    });
+  } else {
+    copy.sort((a, b) => compareRefsByAlbumOrder(a.ref, b.ref, hints));
+  }
+  return copy;
+}
+
+function syncTradeDupPickerChrome(): void {
+  document.querySelectorAll<HTMLButtonElement>(".trade-dup-sort-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.sort === tradeDupSortMode);
+  });
+  const picker = document.getElementById("trade-dup-picker");
+  picker?.classList.toggle("trade-dup-picker--expanded", tradeDupExpanded);
+  const expandBtn = document.getElementById("trade-dup-expand");
+  if (expandBtn) {
+    expandBtn.textContent = tradeDupExpanded ? tr("Compact list") : tr("Expand list");
+  }
+  const countEl = document.getElementById("trade-dup-count");
+  if (countEl) {
+    countEl.textContent = trf("{n} with spares", { n: String(tradeDupRows.length) });
+  }
+}
+
 function renderTradeDupPicker(): void {
   const box = document.getElementById("trade-dup-picker");
   if (!box) return;
   try {
     box.innerHTML = "";
-    const tbl = el("table", { class: "data" });
-    const thead = el("thead", {}, el("tr", {}, el("th", {}, tr("ref")), el("th", {}, tr("spares"))));
+    if (tradeDupRows.length === 0) {
+      box.appendChild(el("p", { class: "muted", style: "margin:0;font-size:0.88rem" }, tr("No duplicates yet.")));
+      syncTradeDupPickerChrome();
+      return;
+    }
+    const sorted = sortedTradeDupRows(tradeDupRows, tradeDupSortMode);
+    const showPage = tradeDupSortMode === "album";
+    const tbl = el("table", { class: "data trade-dup-table" });
+    const headCells = [tr("ref"), tr("spares")];
+    if (showPage) headCells.push(tr("Page"));
+    const thead = el("thead", {}, el("tr", {}, ...headCells.map((label) => el("th", {}, label))));
     const tbody = el("tbody");
-    for (const r of tradeDupRows.slice(0, 80)) {
-      const row = el("tr", { style: "cursor:pointer" });
+    for (const r of sorted) {
+      const row = el("tr", { class: "trade-dup-row" });
       row.appendChild(el("td", { class: "ref" }, r.ref));
       row.appendChild(el("td", {}, String(r.spare_copies ?? r.qty - 1)));
+      if (showPage) {
+        const page =
+          typeof r.album_printed_page === "number" && r.album_printed_page >= 0
+            ? String(r.album_printed_page)
+            : "—";
+        row.appendChild(el("td", { class: "muted" }, page));
+      }
       row.title = tr("Click to append to Give");
       row.addEventListener("click", () => {
         const ta = document.getElementById("trade-give") as HTMLTextAreaElement | null;
@@ -224,11 +304,7 @@ function renderTradeDupPicker(): void {
     }
     tbl.append(thead, tbody);
     box.appendChild(tbl);
-    if (tradeDupRows.length > 80) {
-      box.appendChild(
-        el("p", { style: "font-size:0.85rem;color:var(--muted)" }, trf("Showing 80 of {n}. See Lists for full table.", { n: String(tradeDupRows.length) })),
-      );
-    }
+    syncTradeDupPickerChrome();
   } catch {
     box.textContent = tr("Could not render duplicates.");
   }
@@ -616,23 +692,146 @@ function _rec(x: unknown): Record<string, unknown> | null {
   return typeof x === "object" && x !== null && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
 }
 
+/** Display % from slot counts — never shows 100% until every unique slot is filled. */
+function albumProgressDisplay(filled: number, total: number): {
+  labelPct: number;
+  barPct: number;
+  isComplete: boolean;
+} {
+  if (total <= 0) return { labelPct: 0, barPct: 0, isComplete: false };
+  const isComplete = filled >= total;
+  if (isComplete) return { labelPct: 100, barPct: 100, isComplete: true };
+  const exact = (100 * filled) / total;
+  return { labelPct: Math.floor(exact), barPct: exact, isComplete: false };
+}
+
+let prevUniqueSlotsMissing: number | null = null;
+
+function maybeCelebrateAlbumComplete(m: InventoryMetrics): void {
+  const missing = m.unique_slots_missing;
+  const complete = missing === 0 && m.album_unique_slots > 0 && m.unique_slots_filled >= m.album_unique_slots;
+  if (prevUniqueSlotsMissing !== null && prevUniqueSlotsMissing > 0 && complete) {
+    showAlbumCompleteCelebration(m);
+  }
+  prevUniqueSlotsMissing = missing;
+}
+
+function spawnCelebrationConfetti(host: HTMLElement, count: number): void {
+  const colors = ["#6cb4ee", "#e8c170", "#7bc96f", "#f4a8c8", "#ffffff", "#4a8fc4", "#ffd700"];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement("div");
+    p.className = "album-celebration__confetti";
+    p.style.setProperty("--x", `${Math.random() * 100}%`);
+    p.style.setProperty("--delay", `${Math.random() * 0.9}s`);
+    p.style.setProperty("--dur", `${2.4 + Math.random() * 2.2}s`);
+    p.style.setProperty("--rot", `${Math.random() * 720 - 360}deg`);
+    p.style.setProperty("--drift", `${(Math.random() - 0.5) * 120}px`);
+    p.style.background = colors[i % colors.length]!;
+    host.appendChild(p);
+  }
+}
+
+function showAlbumCompleteCelebration(m: InventoryMetrics): void {
+  if (document.querySelector(".album-celebration")) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const overlay = el("div", {
+    class: "album-celebration",
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "album-celebration-title",
+  });
+  const backdrop = el("button", {
+    class: "album-celebration__backdrop",
+    type: "button",
+    "aria-label": tr("Close celebration"),
+  });
+  const confettiHost = el("div", { class: "album-celebration__confetti-host", "aria-hidden": "true" });
+  if (!reduceMotion) spawnCelebrationConfetti(confettiHost, 96);
+
+  const card = el("div", { class: "album-celebration__card" });
+  const seal = el("div", { class: "album-celebration__seal" }, tr("COMPLETE"));
+  const trophy = el("div", { class: "album-celebration__trophy", "aria-hidden": "true" }, "🏆");
+  const eyebrow = el("p", { class: "album-celebration__eyebrow" }, tr("Every unique slot — filled."));
+  const title = el("h2", { id: "album-celebration-title", class: "album-celebration__title" }, tr("The album is yours."));
+  const lede = el(
+    "p",
+    { class: "album-celebration__lede" },
+    trf("All {total} stickers accounted for. The hunt ends here — for now.", { total: String(m.album_unique_slots) }),
+  );
+  const quote = el(
+    "blockquote",
+    { class: "album-celebration__quote" },
+    tr("From the first rip of cellophane to the last handshake swap: done."),
+  );
+
+  const stats = el("div", { class: "album-celebration__stats" });
+  const statItems: [string, string][] = [
+    [tr("Unique slots"), String(m.unique_slots_filled)],
+    [tr("Spares left"), String(m.spare_copies)],
+    [tr("Packs opened"), String(m.session.packs_opened)],
+    [tr("Traded out"), String(m.session.traded_out_count)],
+  ];
+  for (const [label, val] of statItems) {
+    const chip = el("div", { class: "album-celebration__stat" });
+    chip.appendChild(el("span", { class: "album-celebration__stat-val" }, val));
+    chip.appendChild(el("span", { class: "album-celebration__stat-label" }, label));
+    stats.appendChild(chip);
+  }
+
+  const actions = el("div", { class: "album-celebration__actions" });
+  const dismiss = el("button", { class: "btn btn-primary album-celebration__dismiss", type: "button" }, tr("Back to the desk"));
+  actions.appendChild(dismiss);
+
+  card.append(seal, trophy, eyebrow, title, lede, quote, stats, actions);
+  overlay.append(backdrop, confettiHost, card);
+  document.body.appendChild(overlay);
+  document.body.classList.add("album-celebration-open");
+
+  const close = (): void => {
+    overlay.classList.add("album-celebration--closing");
+    window.setTimeout(() => {
+      overlay.remove();
+      document.body.classList.remove("album-celebration-open");
+    }, reduceMotion ? 120 : 420);
+  };
+
+  backdrop.addEventListener("click", close);
+  dismiss.addEventListener("click", close);
+  overlay.addEventListener("keydown", (ev) => {
+    if ((ev as KeyboardEvent).key === "Escape") close();
+  });
+  window.setTimeout(() => dismiss.focus(), reduceMotion ? 0 : 480);
+}
+
 function analyticsPctRing(pct: number, innerLabel?: string): HTMLElement {
   const p = Math.min(100, Math.max(0, pct));
   const outer = el("div", { class: "pct-ring-outer" });
   outer.style.setProperty("--pct", String(p));
   const inner = el("div", { class: "pct-ring-inner" });
-  inner.appendChild(el("span", { class: "pct-ring-val" }, `${Math.round(p)}%`));
+  inner.appendChild(el("span", { class: "pct-ring-val" }, `${Math.floor(p)}%`));
+  if (innerLabel) inner.appendChild(el("span", { class: "pct-ring-sub" }, innerLabel));
+  outer.appendChild(inner);
+  return outer;
+}
+
+function analyticsPctRingFromSlots(filled: number, total: number, innerLabel?: string): HTMLElement {
+  const { labelPct, barPct } = albumProgressDisplay(filled, total);
+  const outer = el("div", { class: "pct-ring-outer" });
+  outer.style.setProperty("--pct", String(barPct));
+  const inner = el("div", { class: "pct-ring-inner" });
+  inner.appendChild(el("span", { class: "pct-ring-val" }, `${labelPct}%`));
   if (innerLabel) inner.appendChild(el("span", { class: "pct-ring-sub" }, innerLabel));
   outer.appendChild(inner);
   return outer;
 }
 
 /** Large % + progress bar for unique-slot completion (Overview). */
-function collectionProgressBlock(pct: number, filled: number, total: number): HTMLElement {
-  const p = Math.min(100, Math.max(0, pct));
-  const wrap = el("div", { class: "collection-progress" });
+function collectionProgressBlock(filled: number, total: number): HTMLElement {
+  const { labelPct, barPct, isComplete } = albumProgressDisplay(filled, total);
+  const wrap = el("div", { class: `collection-progress${isComplete ? " collection-progress--complete" : ""}` });
   const head = el("div", { class: "collection-progress-head" });
-  head.appendChild(el("span", { class: "collection-progress-pct" }, `${Math.round(p)}%`));
+  head.appendChild(el("span", { class: "collection-progress-pct" }, `${labelPct}%`));
   head.appendChild(
     el("span", { class: "collection-progress-meta" }, trf("{filled} / {total} unique", { filled: String(filled), total: String(total) })),
   );
@@ -640,13 +839,13 @@ function collectionProgressBlock(pct: number, filled: number, total: number): HT
   const track = el("div", {
     class: "collection-progress-track",
     role: "progressbar",
-    "aria-valuenow": String(Math.round(p)),
+    "aria-valuenow": String(labelPct),
     "aria-valuemin": "0",
     "aria-valuemax": "100",
-    "aria-label": trf("Album {pct} percent complete", { pct: String(Math.round(p)) }),
+    "aria-label": trf("Album {pct} percent complete", { pct: String(labelPct) }),
   });
   const fill = el("div", { class: "collection-progress-fill" });
-  fill.style.width = `${p}%`;
+  fill.style.width = `${barPct}%`;
   track.appendChild(fill);
   wrap.appendChild(track);
   return wrap;
@@ -1306,12 +1505,11 @@ function buildOverview(): HTMLElement {
     }
 
     const m = mRes.value;
+    maybeCelebrateAlbumComplete(m);
     const emptyAlbum = m.unique_slots_filled === 0;
     metricsHost.innerHTML = "";
     metricsHost.appendChild(el("h3", {}, tr("Collection")));
-    metricsHost.appendChild(
-      collectionProgressBlock(m.pct_complete_unique, m.unique_slots_filled, m.album_unique_slots),
-    );
+    metricsHost.appendChild(collectionProgressBlock(m.unique_slots_filled, m.album_unique_slots));
     const g = el("div", { class: "grid-metrics" });
     const cells: [string, string][] = [
       [tr("Missing"), String(m.unique_slots_missing)],
@@ -1441,6 +1639,153 @@ function formatLookupStatusLabel(status: string): string {
 function formatSessionDuplicateTradeRate(rate: number | null | undefined): string {
   if (rate == null || Number.isNaN(rate)) return tr("—");
   return `${Math.round(rate * 100)}%`;
+}
+
+type StickerActionLine = {
+  ref: string;
+  isNew: boolean;
+  page: number;
+  group: string | null;
+  category_code: string;
+  qtyBefore?: number;
+};
+
+function countStickerActionLines(lines: StickerActionLine[]): { newCount: number; spareCount: number } {
+  let newCount = 0;
+  let spareCount = 0;
+  for (const ln of lines) {
+    if (ln.isNew) newCount++;
+    else spareCount++;
+  }
+  return { newCount, spareCount };
+}
+
+function formatStickerRowNewSlot(ln: StickerActionLine): string {
+  const grp = ln.group != null && ln.group !== "" ? `Gr. ${ln.group} · ` : "";
+  return ln.page >= 0 ? `${ln.ref} · ${grp}p.${ln.page}` : ln.ref;
+}
+
+function formatStickerRowDupSlot(ln: StickerActionLine): string {
+  const base = formatStickerRowNewSlot(ln);
+  return ln.qtyBefore != null ? `${base} (qty before ${ln.qtyBefore})` : base;
+}
+
+function appendStickerSummaryColumn(
+  title: string,
+  lines: StickerActionLine[],
+  emptyMsg: string,
+  colMod: string,
+  formatRow: (ln: StickerActionLine) => string,
+): HTMLElement {
+  const col = el("div", { class: `trade-result-col ${colMod}` });
+  col.appendChild(el("div", { class: "trade-result-col-title" }, title));
+  if (lines.length === 0) {
+    col.appendChild(el("p", { class: "trade-result-empty" }, emptyMsg));
+  } else {
+    const ul = el("ul", { class: "compact-list", style: "margin:0;padding-left:1.1rem;font-size:0.88rem" });
+    for (const ln of lines) {
+      ul.appendChild(el("li", {}, formatRow(ln)));
+    }
+    col.appendChild(ul);
+  }
+  return col;
+}
+
+function renderStickerOrderedList(lines: StickerActionLine[], title: string): HTMLElement {
+  const wrap = el("div");
+  wrap.appendChild(
+    el(
+      "div",
+      { class: "pack-preview-ordered-title muted", style: "font-size:0.82rem;margin-bottom:0.35rem" },
+      title,
+    ),
+  );
+  const ol = el("ol", { class: "pack-preview-ordered-list compact-list" });
+  for (const ln of lines) {
+    const grp = ln.group != null && ln.group !== "" ? ` · ${tr("Group")} ${ln.group}` : "";
+    const pageStr = ln.page >= 0 ? ` · ${tr("Page")} ${ln.page}` : "";
+    const typeLbl = stickerTypeShortLabel(ln.category_code, null);
+    const action = ln.isNew ? tr("New to album") : tr("Adds spare");
+    const badgeClass = ln.isNew ? "lookup-badge lookup-badge--ok" : "lookup-badge lookup-badge--dup";
+    const li = el("li", { class: "pack-preview-ordered-line" });
+    li.appendChild(el("span", { class: "ref pack-preview-ordered-ref" }, ln.ref));
+    li.appendChild(el("span", { class: badgeClass, style: "margin:0 0.35rem;font-size:0.78rem" }, action));
+    li.appendChild(el("span", { class: "muted", style: "font-size:0.82rem" }, `${typeLbl}${pageStr}${grp}`));
+    ol.appendChild(li);
+  }
+  wrap.appendChild(ol);
+  return wrap;
+}
+
+function renderStickerActionSummaryGrid(
+  host: HTMLElement,
+  lines: StickerActionLine[],
+  countsText: string,
+): void {
+  host.appendChild(
+    el("p", { class: "muted pack-preview-counts", style: "margin:0 0 0.65rem;font-size:0.9rem" }, countsText),
+  );
+  const grid = el("div", { class: "trade-result-grid" });
+  grid.appendChild(
+    appendStickerSummaryColumn(
+      tr("Goes to album (empty slot)"),
+      lines.filter((ln) => ln.isNew),
+      tr("None — every line is already in the album at least once."),
+      "trade-result-col--in",
+      formatStickerRowNewSlot,
+    ),
+  );
+  grid.appendChild(
+    appendStickerSummaryColumn(
+      tr("Adds spare / duplicate"),
+      lines.filter((ln) => !ln.isNew),
+      tr("None — every line fills a missing slot."),
+      "trade-result-col--out",
+      formatStickerRowDupSlot,
+    ),
+  );
+  host.appendChild(grid);
+}
+
+function buildTradeAlbumHintMap(): Map<string, TradeAlbumHint> {
+  const hints = new Map<string, TradeAlbumHint>();
+  if (tradeMissingHints) {
+    for (const [k, v] of tradeMissingHints) hints.set(k, v);
+  }
+  for (const r of tradeDupRows) {
+    const c = canonicalRef(r.ref);
+    if (!hints.has(c)) {
+      hints.set(c, {
+        category_code: r.category_code,
+        album_printed_page: r.album_printed_page,
+        album_index_group: r.album_index_group,
+      });
+    }
+  }
+  return hints;
+}
+
+function buildOrderedTradeReceiveLines(
+  forwardTake: string[],
+  received: TradeResponse["received"],
+  hints: Map<string, TradeAlbumHint>,
+): StickerActionLine[] {
+  const lines: StickerActionLine[] = [];
+  for (let i = 0; i < forwardTake.length; i++) {
+    const rec = received[i];
+    if (!rec) continue;
+    const c = canonicalRef(forwardTake[i]!);
+    const hint = hints.get(c);
+    lines.push({
+      ref: c,
+      isNew: rec.qty_before === 0,
+      qtyBefore: rec.qty_before,
+      page: hint?.album_printed_page ?? -1,
+      group: hint?.album_index_group ?? null,
+      category_code: hint?.category_code ?? c.split(":")[0] ?? "",
+    });
+  }
+  return lines;
 }
 
 /** Compact album lines: `Group:` when applicable, `Page:`, always `Type:`. */
@@ -2038,7 +2383,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
   const taWrap = wrapFieldWithCopyButton(ta);
 
   const countAsPackId = "add-count-as-pack";
-  const countAsPackCb = el("input", { type: "checkbox", id: countAsPackId }) as HTMLInputElement;
+  const countAsPackCb = el("input", { type: "checkbox", id: countAsPackId, checked: true }) as HTMLInputElement;
 
   const editNominalId = "pack-edit-nominal";
   const perPack = el("input", {
@@ -2102,16 +2447,64 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
     nominalRow.style.display = countAsPackCb.checked ? "" : "none";
     invalidatePackValidation();
   });
-  nominalRow.style.display = "none";
+  nominalRow.style.display = "";
 
-  function formatPackCheckRowNewSlot(r: PackCheckRow): string {
-    const grp = r.album_index_group != null && r.album_index_group !== "" ? `Gr. ${r.album_index_group} · ` : "";
-    return `${r.ref} · ${grp}p.${r.album_printed_page}`;
+  type PackPreviewLine = StickerActionLine;
+
+  function buildOrderedPackPreviewLines(stickers: string[], check: PackCheckResponse): PackPreviewLine[] {
+    const newByRef = new Map(check.new_to_album.map((r) => [canonicalRef(r.ref), r]));
+    const dupByRef = new Map(check.would_duplicate.map((r) => [canonicalRef(r.ref), r]));
+    const sim = new Map<string, number>();
+    const lines: PackPreviewLine[] = [];
+    for (const raw of stickers) {
+      const c = canonicalRef(raw);
+      if (!sim.has(c)) {
+        const neu = newByRef.get(c);
+        const dup = dupByRef.get(c);
+        sim.set(c, neu ? neu.qty_before : dup ? dup.qty_before : 0);
+      }
+      const before = sim.get(c)!;
+      const isNew = before === 0;
+      const meta = newByRef.get(c) ?? dupByRef.get(c);
+      lines.push({
+        ref: c,
+        isNew,
+        page: meta?.album_printed_page ?? -1,
+        group: meta?.album_index_group ?? null,
+        category_code: meta?.category_code ?? c.split(":")[0] ?? "",
+      });
+      sim.set(c, before + 1);
+    }
+    return lines;
   }
 
-  function formatPackCheckRowDupSlot(r: PackCheckRow): string {
-    const grp = r.album_index_group != null && r.album_index_group !== "" ? `Gr. ${r.album_index_group} · ` : "";
-    return `${r.ref} · ${grp}p.${r.album_printed_page} (qty before ${r.qty_before})`;
+  function countPackPreviewActions(lines: PackPreviewLine[]): { newCount: number; spareCount: number } {
+    return countStickerActionLines(lines);
+  }
+
+  function formatPackPreviewCountsText(
+    c: PackCheckResponse,
+    lines: PackPreviewLine[],
+    countAsPack: boolean,
+  ): string {
+    const { newCount, spareCount } = countPackPreviewActions(lines);
+    if (countAsPack) {
+      return trf(
+        "{total} sticker(s): {newCount} new to album · {spareCount} spares. Session packs_opened += {packDelta} (nominal {perPack}/pack, rounded).",
+        {
+          total: String(c.sticker_count),
+          newCount: String(newCount),
+          spareCount: String(spareCount),
+          packDelta: String(c.packs_opened_delta),
+          perPack: String(c.per_pack),
+        },
+      );
+    }
+    return trf("{total} sticker(s): {newCount} new to album · {spareCount} spares. Packs opened not updated.", {
+      total: String(c.sticker_count),
+      newCount: String(newCount),
+      spareCount: String(spareCount),
+    });
   }
 
   function appendPackCheckColumn(
@@ -2119,23 +2512,26 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
     rows: PackCheckRow[],
     emptyMsg: string,
     colMod: string,
-    formatRow: (r: PackCheckRow) => string,
+    asNew: boolean,
   ): HTMLElement {
-    const col = el("div", { class: `trade-result-col ${colMod}` });
-    col.appendChild(el("div", { class: "trade-result-col-title" }, title));
-    if (rows.length === 0) {
-      col.appendChild(el("p", { class: "trade-result-empty" }, emptyMsg));
-    } else {
-      const ul = el("ul", { class: "compact-list", style: "margin:0;padding-left:1.1rem;font-size:0.88rem" });
-      for (const r of rows) {
-        ul.appendChild(el("li", {}, formatRow(r)));
-      }
-      col.appendChild(ul);
-    }
-    return col;
+    const lines: StickerActionLine[] = rows.map((r) => ({
+      ref: r.ref,
+      isNew: asNew,
+      page: r.album_printed_page,
+      group: r.album_index_group,
+      category_code: r.category_code,
+      qtyBefore: r.qty_before,
+    }));
+    return appendStickerSummaryColumn(
+      title,
+      lines,
+      emptyMsg,
+      colMod,
+      asNew ? formatStickerRowNewSlot : formatStickerRowDupSlot,
+    );
   }
 
-  function renderPackCheckPreview(c: PackCheckResponse, countAsPack: boolean): void {
+  function renderPackCheckPreviewOrdered(stickers: string[], c: PackCheckResponse, countAsPack: boolean): void {
     previewHost.replaceChildren();
     for (const w of c.warnings) {
       previewHost.appendChild(el("div", { class: "banner-info" }, w));
@@ -2146,30 +2542,45 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
         el("div", { class: "banner-info" }, `Repeated lines in this list (each line adds one copy): ${parts.join(", ")}.`),
       );
     }
-    const summary = countAsPack
-      ? `${c.sticker_count} sticker(s). Session packs_opened += ${c.packs_opened_delta} (nominal ${c.per_pack} per pack, rounded).`
-      : `${c.sticker_count} sticker(s). ${c.new_to_album.length} new slot(s) · ${c.would_duplicate.length} spare/duplicate line(s). Packs opened not updated.`;
-    previewHost.appendChild(el("p", { class: "muted", style: "margin:0.5rem 0;font-size:0.9rem" }, summary));
+    const lines = buildOrderedPackPreviewLines(stickers, c);
+    previewHost.appendChild(
+      el(
+        "p",
+        { class: "muted pack-preview-counts", style: "margin:0.5rem 0;font-size:0.9rem" },
+        formatPackPreviewCountsText(c, lines, countAsPack),
+      ),
+    );
+    previewHost.appendChild(renderStickerOrderedList(lines, tr("In paste order:")));
+  }
+
+  function renderPackCheckSummaryGrid(host: HTMLElement, c: PackCheckResponse, lines: PackPreviewLine[]): void {
+    host.appendChild(
+      el(
+        "p",
+        { class: "muted pack-preview-counts", style: "margin:0 0 0.65rem;font-size:0.9rem" },
+        formatPackPreviewCountsText(c, lines, countAsPackCb.checked),
+      ),
+    );
     const grid = el("div", { class: "trade-result-grid" });
     grid.appendChild(
       appendPackCheckColumn(
-        "Goes to album (empty slot)",
+        tr("Goes to album (empty slot)"),
         c.new_to_album,
-        "None — every line is already in the album at least once.",
+        tr("None — every line is already in the album at least once."),
         "trade-result-col--in",
-        formatPackCheckRowNewSlot,
+        true,
       ),
     );
     grid.appendChild(
       appendPackCheckColumn(
-        "Adds spare / duplicate",
+        tr("Adds spare / duplicate"),
         c.would_duplicate,
-        "None — every line fills a missing slot.",
+        tr("None — every line fills a missing slot."),
         "trade-result-col--out",
-        formatPackCheckRowDupSlot,
+        false,
       ),
     );
-    previewHost.appendChild(grid);
+    host.appendChild(grid);
   }
 
   ta.addEventListener("input", () => {
@@ -2186,7 +2597,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
       const pp = countAsPack ? getPackPerPack() : STICKERS_PER_PACK;
       const c = await checkPack(stickers, pp);
       lastValidated = { stickers, perPack: pp, countAsPack, check: c };
-      renderPackCheckPreview(c, countAsPack);
+      renderPackCheckPreviewOrdered(stickers, c, countAsPack);
       regBtn.disabled = false;
     } catch (e) {
       lastValidated = null;
@@ -2219,6 +2630,8 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
       regBtn.disabled = true;
       return;
     }
+    const appliedCheck = lastValidated.check;
+    const appliedLines = buildOrderedPackPreviewLines(stickers, appliedCheck);
     try {
       if (countAsPack) {
         const r = await openPack(stickers, pp);
@@ -2231,13 +2644,6 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
         resultCard.style.display = "block";
         resultCard.replaceChildren();
         resultCard.appendChild(el("h3", {}, tr("Stickers added")));
-        resultCard.appendChild(
-          el(
-            "p",
-            { class: "muted", style: "margin:0 0 0.65rem" },
-            `${r.sticker_count} stickers · packs_opened +${r.packs_opened_delta} · ${r.added_as_new.length} new slot(s) · ${r.added_as_duplicate.length} spare/duplicate line(s).`,
-          ),
-        );
         for (const w of r.warnings) {
           resultCard.appendChild(el("div", { class: "banner-info" }, w));
         }
@@ -2245,6 +2651,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
           const parts = r.in_pack_duplicates.map((d) => `${d.ref} ×${d.occurrences}`);
           resultCard.appendChild(el("div", { class: "banner-info" }, `In-pack repeats: ${parts.join(", ")}.`));
         }
+        renderPackCheckSummaryGrid(resultCard, appliedCheck, appliedLines);
         const undoRow = el("div", { class: "trade-result-actions" });
         const undoBtn = el("button", { class: "btn", type: "button" }, tr("Undo this add"));
         undoBtn.addEventListener("click", async () => {
@@ -2272,7 +2679,6 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
         for (const { ref, count } of rows) {
           await addSticker(ref, count);
         }
-        const total = totalBatchCount(rows);
         ta.value = "";
         invalidatePackValidation();
         previewHost.replaceChildren();
@@ -2282,9 +2688,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
         resultCard.style.display = "block";
         resultCard.replaceChildren();
         resultCard.appendChild(el("h3", {}, tr("Stickers added")));
-        resultCard.appendChild(
-          el("p", { class: "muted", style: "margin:0 0 0.65rem" }, trf("Added {n} sticker instance(s).", { n: String(total) })),
-        );
+        renderPackCheckSummaryGrid(resultCard, appliedCheck, appliedLines);
       }
       void overviewPage.reload();
       void loadTradePreviewData();
@@ -2944,7 +3348,13 @@ function buildPackOutlook(): HTMLElement {
   }
 
   function renderFromData(d: PackOutlookResponse): void {
-    ringHost.replaceChildren(analyticsPctRing(d.pct_complete_unique, tr("unique stickers")));
+    ringHost.replaceChildren(
+      analyticsPctRingFromSlots(
+        d.album_unique_slots - d.unique_slots_missing,
+        d.album_unique_slots,
+        tr("unique stickers"),
+      ),
+    );
     const miss = d.unique_slots_missing;
     if (miss <= 0) {
       statsBody.replaceChildren(
@@ -2998,13 +3408,15 @@ function buildPackOutlook(): HTMLElement {
     const warn = d.truncated_note
       ? el("p", { class: "msg-error", style: "margin:0.55rem 0 0;font-size:0.88rem" }, trApiNote(d.truncated_note))
       : null;
+    const filled = d.album_unique_slots - miss;
+    const { labelPct } = albumProgressDisplay(filled, d.album_unique_slots);
     statsBody.replaceChildren(
       el(
         "p",
         { style: "margin:0" },
         trf("You have {pct}% of unique stickers ({filled} / {total}). Still missing {miss}.", {
-          pct: String(Math.round(d.pct_complete_unique)),
-          filled: String(d.album_unique_slots - miss),
+          pct: String(labelPct),
+          filled: String(filled),
           total: String(d.album_unique_slots),
           miss: String(miss),
         }),
@@ -3429,34 +3841,46 @@ function buildTrade(): HTMLElement {
     tradeResultCard.appendChild(grid);
   }
 
-  function renderTradeOutcome(r: TradeResponse, forwardGive: string[], forwardTake: string[]): void {
+  function renderTradeOutcome(
+    r: TradeResponse,
+    forwardGive: string[],
+    forwardTake: string[],
+    hints: Map<string, TradeAlbumHint>,
+  ): void {
     pendingUndo = { give: [...forwardGive], take: [...forwardTake] };
     tradeResultCard.style.display = "block";
     tradeResultCard.replaceChildren();
     tradeResultCard.appendChild(el("h3", {}, tr("Trade recorded")));
-    tradeResultCard.appendChild(
-      el(
-        "p",
-        { class: "trade-result-lede muted" },
-        "Text boxes cleared. Undo puts inventory and session trade counters back the way they were, until you change these lists again.",
-      ),
-    );
-
-    const grid = el("div", { class: "trade-result-grid" });
-    const colOut = el("div", { class: "trade-result-col trade-result-col--out" });
-    colOut.appendChild(el("div", { class: "trade-result-col-title" }, tr("Out of your album")));
-    colOut.appendChild(renderRefChips(r.gave));
-    const colIn = el("div", { class: "trade-result-col trade-result-col--in" });
-    colIn.appendChild(el("div", { class: "trade-result-col-title" }, tr("Into your album")));
-    colIn.appendChild(renderRefChips(r.received));
-    grid.append(colOut, colIn);
-    tradeResultCard.appendChild(grid);
 
     if (r.warnings.length > 0) {
-      const wbox = el("div", { class: "banner-info trade-result-warn" });
-      wbox.appendChild(el("strong", {}, tr("Notes — ")));
-      wbox.appendChild(document.createTextNode(r.warnings.join(" · ")));
-      tradeResultCard.appendChild(wbox);
+      for (const w of r.warnings) {
+        tradeResultCard.appendChild(el("div", { class: "banner-info" }, w));
+      }
+    }
+
+    const receiveLines = buildOrderedTradeReceiveLines(forwardTake, r.received, hints);
+    const { newCount, spareCount } = countStickerActionLines(receiveLines);
+    const countsText = trf("{given} given · {total} received: {newCount} new to album · {spareCount} spares.", {
+      given: String(forwardGive.length),
+      total: String(receiveLines.length),
+      newCount: String(newCount),
+      spareCount: String(spareCount),
+    });
+
+    if (receiveLines.length > 0) {
+      renderStickerActionSummaryGrid(tradeResultCard, receiveLines, countsText);
+      tradeResultCard.appendChild(renderStickerOrderedList(receiveLines, tr("In receive order:")));
+    } else {
+      tradeResultCard.appendChild(
+        el("p", { class: "muted pack-preview-counts", style: "margin:0 0 0.65rem;font-size:0.9rem" }, countsText),
+      );
+    }
+
+    if (forwardGive.length > 0) {
+      const giveWrap = el("div", { style: "margin-top:0.75rem" });
+      giveWrap.appendChild(el("div", { class: "trade-result-col-title" }, tr("Out of your album")));
+      giveWrap.appendChild(renderRefChips(r.gave));
+      tradeResultCard.appendChild(giveWrap);
     }
 
     const undoRow = el("div", { class: "trade-result-actions" });
@@ -3468,6 +3892,7 @@ function buildTrade(): HTMLElement {
         const ur = await undoTrade(pendingUndo.give, pendingUndo.take);
         pendingUndo = null;
         renderUndoOutcome(ur);
+        void overviewPage.reload();
         await loadTradePreviewData();
         updateTradePreview();
       } catch (e) {
@@ -3664,10 +4089,12 @@ function buildTrade(): HTMLElement {
     try {
       const give = parseRefLines(giveTa.value);
       const take = parseRefLines(takeTa.value);
+      const hintsSnap = buildTradeAlbumHintMap();
       const r = await executeTrade(give, take, strictCb.checked, unevenCb.checked);
       giveTa.value = "";
       takeTa.value = "";
-      renderTradeOutcome(r, give, take);
+      renderTradeOutcome(r, give, take, hintsSnap);
+      void overviewPage.reload();
       await loadTradePreviewData();
       updateTradePreview();
     } catch (e) {
@@ -3697,8 +4124,44 @@ function buildTrade(): HTMLElement {
   section.appendChild(tradeResultCard);
 
   const dupCard = el("div", { class: "card" });
-  dupCard.appendChild(el("h3", {}, tr("Duplicates (click row to add to Give)")));
-  const dupPicker = el("div", { id: "trade-dup-picker", class: "compact-list" });
+  const dupHead = el("div", { class: "trade-dup-head" });
+  dupHead.appendChild(el("h3", {}, tr("Duplicates (click row to add to Give)")));
+  dupHead.appendChild(el("span", { id: "trade-dup-count", class: "muted trade-dup-count" }, "—"));
+  dupCard.appendChild(dupHead);
+  const dupToolbar = el("div", { class: "trade-dup-toolbar row" });
+  const sortLabel = el("span", { class: "muted", style: "font-size:0.85rem" }, tr("Sort:"));
+  const dupSortSpares = el(
+    "button",
+    { class: "btn btn-ghost btn-compact trade-dup-sort-btn", type: "button", "data-sort": "spares" },
+    tr("Most spares"),
+  );
+  const dupSortAlbum = el(
+    "button",
+    { class: "btn btn-ghost btn-compact trade-dup-sort-btn", type: "button", "data-sort": "album" },
+    tr("Album order"),
+  );
+  dupSortSpares.addEventListener("click", () => {
+    if (tradeDupSortMode === "spares") return;
+    tradeDupSortMode = "spares";
+    renderTradeDupPicker();
+  });
+  dupSortAlbum.addEventListener("click", () => {
+    if (tradeDupSortMode === "album") return;
+    tradeDupSortMode = "album";
+    renderTradeDupPicker();
+  });
+  const dupExpandBtn = el("button", {
+    class: "btn btn-ghost btn-compact",
+    type: "button",
+    id: "trade-dup-expand",
+  }, tr("Expand list"));
+  dupExpandBtn.addEventListener("click", () => {
+    tradeDupExpanded = !tradeDupExpanded;
+    syncTradeDupPickerChrome();
+  });
+  dupToolbar.append(sortLabel, dupSortSpares, dupSortAlbum, dupExpandBtn);
+  dupCard.appendChild(dupToolbar);
+  const dupPicker = el("div", { id: "trade-dup-picker", class: "trade-dup-picker" });
   dupCard.appendChild(dupPicker);
   section.appendChild(dupCard);
 
