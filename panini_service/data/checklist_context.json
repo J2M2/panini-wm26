@@ -1,0 +1,3927 @@
+{
+  "schema_version": 1,
+  "source": "laststicker.com/cards/panini_world_cup_2026/checklist",
+  "edition": "Panini FIFA World Cup 2026 - Standard Edition",
+  "by_ref": {
+    "FWC:20": {
+      "name": "Panini Logo",
+      "team": "We Are Panini"
+    },
+    "FWC:1": {
+      "name": "Official Emblem1",
+      "team": "FIFA World Cup 2026"
+    },
+    "FWC:2": {
+      "name": "Official Emblem2",
+      "team": "FIFA World Cup 2026"
+    },
+    "FWC:3": {
+      "name": "Official Mascots",
+      "team": "FIFA World Cup 2026"
+    },
+    "FWC:4": {
+      "name": "Official Slogan",
+      "team": "FIFA World Cup 2026"
+    },
+    "FWC:5": {
+      "name": "Official Ball",
+      "team": "FIFA World Cup 2026"
+    },
+    "FWC:6": {
+      "name": "Canada",
+      "team": "Host Countries and Cities"
+    },
+    "FWC:7": {
+      "name": "Mexico",
+      "team": "Host Countries and Cities"
+    },
+    "FWC:8": {
+      "name": "USA",
+      "team": "Host Countries and Cities"
+    },
+    "MEX:1": {
+      "name": "Emblem",
+      "team": "Mexico"
+    },
+    "MEX:2": {
+      "name": "Luis Malagón",
+      "team": "Mexico"
+    },
+    "MEX:3": {
+      "name": "Johan Vasquez",
+      "team": "Mexico"
+    },
+    "MEX:4": {
+      "name": "Jorge Sánchez",
+      "team": "Mexico"
+    },
+    "MEX:5": {
+      "name": "Cesar Montes",
+      "team": "Mexico"
+    },
+    "MEX:6": {
+      "name": "Jesus Gallardo",
+      "team": "Mexico"
+    },
+    "MEX:7": {
+      "name": "Israel Reyes",
+      "team": "Mexico"
+    },
+    "MEX:8": {
+      "name": "Diego Lainez",
+      "team": "Mexico"
+    },
+    "MEX:9": {
+      "name": "Carlos Rodriguez",
+      "team": "Mexico"
+    },
+    "MEX:10": {
+      "name": "Edson Alvarez",
+      "team": "Mexico"
+    },
+    "MEX:11": {
+      "name": "Orbelin Pineda",
+      "team": "Mexico"
+    },
+    "MEX:12": {
+      "name": "Marcel Ruiz",
+      "team": "Mexico"
+    },
+    "MEX:13": {
+      "name": "Team Photo",
+      "team": "Mexico"
+    },
+    "MEX:14": {
+      "name": "Érick Sánchez",
+      "team": "Mexico"
+    },
+    "MEX:15": {
+      "name": "Hirving Lozano",
+      "team": "Mexico"
+    },
+    "MEX:16": {
+      "name": "Santiago Giménez",
+      "team": "Mexico"
+    },
+    "MEX:17": {
+      "name": "Raúl Jiménez",
+      "team": "Mexico"
+    },
+    "MEX:18": {
+      "name": "Alexis Vega",
+      "team": "Mexico"
+    },
+    "MEX:19": {
+      "name": "Roberto Alvarado",
+      "team": "Mexico"
+    },
+    "MEX:20": {
+      "name": "Cesar Huerta",
+      "team": "Mexico"
+    },
+    "RSA:1": {
+      "name": "Emblem",
+      "team": "South Africa"
+    },
+    "RSA:2": {
+      "name": "Ronwen Williams",
+      "team": "South Africa"
+    },
+    "RSA:3": {
+      "name": "Sipho Chaine",
+      "team": "South Africa"
+    },
+    "RSA:4": {
+      "name": "Aubrey Modiba",
+      "team": "South Africa"
+    },
+    "RSA:5": {
+      "name": "Samukele Kabini",
+      "team": "South Africa"
+    },
+    "RSA:6": {
+      "name": "Mbekezeli Mbokazi",
+      "team": "South Africa"
+    },
+    "RSA:7": {
+      "name": "Khulumani Ndamane",
+      "team": "South Africa"
+    },
+    "RSA:8": {
+      "name": "Siyabonga Ngezana",
+      "team": "South Africa"
+    },
+    "RSA:9": {
+      "name": "Khuliso Mudau",
+      "team": "South Africa"
+    },
+    "RSA:10": {
+      "name": "Nkosinathi Sibisi",
+      "team": "South Africa"
+    },
+    "RSA:11": {
+      "name": "Teboho Mokoena",
+      "team": "South Africa"
+    },
+    "RSA:12": {
+      "name": "Thalente Mbatha",
+      "team": "South Africa"
+    },
+    "RSA:13": {
+      "name": "Team Photo",
+      "team": "South Africa"
+    },
+    "RSA:14": {
+      "name": "Bathusi Aubaas",
+      "team": "South Africa"
+    },
+    "RSA:15": {
+      "name": "Yaya Sithole",
+      "team": "South Africa"
+    },
+    "RSA:16": {
+      "name": "Sipho Mbule",
+      "team": "South Africa"
+    },
+    "RSA:17": {
+      "name": "Lyle Foster",
+      "team": "South Africa"
+    },
+    "RSA:18": {
+      "name": "Iqraam Rayners",
+      "team": "South Africa"
+    },
+    "RSA:19": {
+      "name": "Mohau Nkota",
+      "team": "South Africa"
+    },
+    "RSA:20": {
+      "name": "Oswin Appollis",
+      "team": "South Africa"
+    },
+    "KOR:1": {
+      "name": "Emblem",
+      "team": "South Korea"
+    },
+    "KOR:2": {
+      "name": "Hyeon-woo Jo",
+      "team": "South Korea"
+    },
+    "KOR:3": {
+      "name": "Seung-Gyu Kim",
+      "team": "South Korea"
+    },
+    "KOR:4": {
+      "name": "Min-jae Kim",
+      "team": "South Korea"
+    },
+    "KOR:5": {
+      "name": "Yu-min Cho",
+      "team": "South Korea"
+    },
+    "KOR:6": {
+      "name": "Young-woo Seol",
+      "team": "South Korea"
+    },
+    "KOR:7": {
+      "name": "Han-beom Lee",
+      "team": "South Korea"
+    },
+    "KOR:8": {
+      "name": "Tae-seok Lee",
+      "team": "South Korea"
+    },
+    "KOR:9": {
+      "name": "Myung-jae Lee",
+      "team": "South Korea"
+    },
+    "KOR:10": {
+      "name": "Jae-sung Lee",
+      "team": "South Korea"
+    },
+    "KOR:11": {
+      "name": "In-beom Hwang",
+      "team": "South Korea"
+    },
+    "KOR:12": {
+      "name": "Kang-in Lee",
+      "team": "South Korea"
+    },
+    "KOR:13": {
+      "name": "Team Photo",
+      "team": "South Korea"
+    },
+    "KOR:14": {
+      "name": "Seung-ho Paik",
+      "team": "South Korea"
+    },
+    "KOR:15": {
+      "name": "Jens Castrop",
+      "team": "South Korea"
+    },
+    "KOR:16": {
+      "name": "Dongg-yeong Lee",
+      "team": "South Korea"
+    },
+    "KOR:17": {
+      "name": "Gue-sung Cho",
+      "team": "South Korea"
+    },
+    "KOR:18": {
+      "name": "Heung-min Son",
+      "team": "South Korea"
+    },
+    "KOR:19": {
+      "name": "Hee-chan Hwang",
+      "team": "South Korea"
+    },
+    "KOR:20": {
+      "name": "Hyeon-Gyu Oh",
+      "team": "South Korea"
+    },
+    "CZE:1": {
+      "name": "Emblem",
+      "team": "Czechia"
+    },
+    "CZE:2": {
+      "name": "Matej Kovar",
+      "team": "Czechia"
+    },
+    "CZE:3": {
+      "name": "Jindrich Stanek",
+      "team": "Czechia"
+    },
+    "CZE:4": {
+      "name": "Ladislav Krejci",
+      "team": "Czechia"
+    },
+    "CZE:5": {
+      "name": "Vladimir Coufal",
+      "team": "Czechia"
+    },
+    "CZE:6": {
+      "name": "Jaroslav Zeleny",
+      "team": "Czechia"
+    },
+    "CZE:7": {
+      "name": "Tomas Holes",
+      "team": "Czechia"
+    },
+    "CZE:8": {
+      "name": "David Zima",
+      "team": "Czechia"
+    },
+    "CZE:9": {
+      "name": "Michal Sadilek",
+      "team": "Czechia"
+    },
+    "CZE:10": {
+      "name": "Lukas Provod",
+      "team": "Czechia"
+    },
+    "CZE:11": {
+      "name": "Lukas Cerv",
+      "team": "Czechia"
+    },
+    "CZE:12": {
+      "name": "Tomas Soucek",
+      "team": "Czechia"
+    },
+    "CZE:13": {
+      "name": "Team Photo",
+      "team": "Czechia"
+    },
+    "CZE:14": {
+      "name": "Pavel Sulc",
+      "team": "Czechia"
+    },
+    "CZE:15": {
+      "name": "Matej Vydra",
+      "team": "Czechia"
+    },
+    "CZE:16": {
+      "name": "Vasil Kusej",
+      "team": "Czechia"
+    },
+    "CZE:17": {
+      "name": "Tomas Chory",
+      "team": "Czechia"
+    },
+    "CZE:18": {
+      "name": "Vaclav Cerny",
+      "team": "Czechia"
+    },
+    "CZE:19": {
+      "name": "Adam Hlozek",
+      "team": "Czechia"
+    },
+    "CZE:20": {
+      "name": "Patrik Schick",
+      "team": "Czechia"
+    },
+    "CAN:1": {
+      "name": "Emblem",
+      "team": "Canada"
+    },
+    "CAN:2": {
+      "name": "Dayne St.Clair",
+      "team": "Canada"
+    },
+    "CAN:3": {
+      "name": "Alphonso Davies",
+      "team": "Canada"
+    },
+    "CAN:4": {
+      "name": "Alistair Johnston",
+      "team": "Canada"
+    },
+    "CAN:5": {
+      "name": "Samuel Adekugbe",
+      "team": "Canada"
+    },
+    "CAN:6": {
+      "name": "Richie Laryea",
+      "team": "Canada"
+    },
+    "CAN:7": {
+      "name": "Derek Cornelius",
+      "team": "Canada"
+    },
+    "CAN:8": {
+      "name": "Moïse Bombito",
+      "team": "Canada"
+    },
+    "CAN:9": {
+      "name": "Kamal Miller",
+      "team": "Canada"
+    },
+    "CAN:10": {
+      "name": "Stephen Eustáquio",
+      "team": "Canada"
+    },
+    "CAN:11": {
+      "name": "Ismaël Koné",
+      "team": "Canada"
+    },
+    "CAN:12": {
+      "name": "Jonathan Osorio",
+      "team": "Canada"
+    },
+    "CAN:13": {
+      "name": "Team Photo",
+      "team": "Canada"
+    },
+    "CAN:14": {
+      "name": "Jacob Shaffelburg",
+      "team": "Canada"
+    },
+    "CAN:15": {
+      "name": "Mathieu Choinière",
+      "team": "Canada"
+    },
+    "CAN:16": {
+      "name": "Niko Sigur",
+      "team": "Canada"
+    },
+    "CAN:17": {
+      "name": "Tajon Buchanan",
+      "team": "Canada"
+    },
+    "CAN:18": {
+      "name": "Liam Millar",
+      "team": "Canada"
+    },
+    "CAN:19": {
+      "name": "Cyle Larin",
+      "team": "Canada"
+    },
+    "CAN:20": {
+      "name": "Jonathan David",
+      "team": "Canada"
+    },
+    "BIH:1": {
+      "name": "Emblem",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:2": {
+      "name": "Nikola Vasilj",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:3": {
+      "name": "Amer Dedic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:4": {
+      "name": "Sead Kolasinac",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:5": {
+      "name": "Tarik Muharemovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:6": {
+      "name": "Nihad Mujakic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:7": {
+      "name": "Nikola Katic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:8": {
+      "name": "Amir Hadziahmetovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:9": {
+      "name": "Benjamin Tahirovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:10": {
+      "name": "Armin Gigovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:11": {
+      "name": "Ivan Sunjic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:12": {
+      "name": "Ivan Basic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:13": {
+      "name": "Team Photo",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:14": {
+      "name": "Dzenis Burnic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:15": {
+      "name": "Esmir Bajraktarevic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:16": {
+      "name": "Amar Memic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:17": {
+      "name": "Ermedin Demirovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:18": {
+      "name": "Edin Dzeko",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:19": {
+      "name": "Samed Bazdar",
+      "team": "Bosnia and Herzegovina"
+    },
+    "BIH:20": {
+      "name": "Haris Tabakovic",
+      "team": "Bosnia and Herzegovina"
+    },
+    "QAT:1": {
+      "name": "Emblem",
+      "team": "Qatar"
+    },
+    "QAT:2": {
+      "name": "Meshaal Barsham",
+      "team": "Qatar"
+    },
+    "QAT:3": {
+      "name": "Sultan Albrake",
+      "team": "Qatar"
+    },
+    "QAT:4": {
+      "name": "Lucas Mendes",
+      "team": "Qatar"
+    },
+    "QAT:5": {
+      "name": "Homam Ahmed",
+      "team": "Qatar"
+    },
+    "QAT:6": {
+      "name": "Boualem Khoukhi",
+      "team": "Qatar"
+    },
+    "QAT:7": {
+      "name": "Pedro Miguel",
+      "team": "Qatar"
+    },
+    "QAT:8": {
+      "name": "Tarek Salman",
+      "team": "Qatar"
+    },
+    "QAT:9": {
+      "name": "Mohamed Al-Mannai",
+      "team": "Qatar"
+    },
+    "QAT:10": {
+      "name": "Karim Boudiaf",
+      "team": "Qatar"
+    },
+    "QAT:11": {
+      "name": "Assim Madibo",
+      "team": "Qatar"
+    },
+    "QAT:12": {
+      "name": "Ahmed Fatehi",
+      "team": "Qatar"
+    },
+    "QAT:13": {
+      "name": "Team Photo",
+      "team": "Qatar"
+    },
+    "QAT:14": {
+      "name": "Mohammed Waad",
+      "team": "Qatar"
+    },
+    "QAT:15": {
+      "name": "Abdulaziz Hatem",
+      "team": "Qatar"
+    },
+    "QAT:16": {
+      "name": "Hassan Al-Haydos",
+      "team": "Qatar"
+    },
+    "QAT:17": {
+      "name": "Edmilson Junior",
+      "team": "Qatar"
+    },
+    "QAT:18": {
+      "name": "Akram Hassan Afif",
+      "team": "Qatar"
+    },
+    "QAT:19": {
+      "name": "Ahmed Al Ganehi",
+      "team": "Qatar"
+    },
+    "QAT:20": {
+      "name": "Almoez Ali",
+      "team": "Qatar"
+    },
+    "SUI:1": {
+      "name": "Emblem",
+      "team": "Switzerland"
+    },
+    "SUI:2": {
+      "name": "Gregor Kobel",
+      "team": "Switzerland"
+    },
+    "SUI:3": {
+      "name": "Yvon Mvogo",
+      "team": "Switzerland"
+    },
+    "SUI:4": {
+      "name": "Manuel Akanji",
+      "team": "Switzerland"
+    },
+    "SUI:5": {
+      "name": "Ricardo Rodriguez",
+      "team": "Switzerland"
+    },
+    "SUI:6": {
+      "name": "Nico Elvedi",
+      "team": "Switzerland"
+    },
+    "SUI:7": {
+      "name": "Aurèle Amenda",
+      "team": "Switzerland"
+    },
+    "SUI:8": {
+      "name": "Silvan Widmer",
+      "team": "Switzerland"
+    },
+    "SUI:9": {
+      "name": "Granit Xhaka",
+      "team": "Switzerland"
+    },
+    "SUI:10": {
+      "name": "Denis Zakaria",
+      "team": "Switzerland"
+    },
+    "SUI:11": {
+      "name": "Remo Freuler",
+      "team": "Switzerland"
+    },
+    "SUI:12": {
+      "name": "Fabian Rieder",
+      "team": "Switzerland"
+    },
+    "SUI:13": {
+      "name": "Team Photo",
+      "team": "Switzerland"
+    },
+    "SUI:14": {
+      "name": "Ardon Jashari",
+      "team": "Switzerland"
+    },
+    "SUI:15": {
+      "name": "Johan Manzambi",
+      "team": "Switzerland"
+    },
+    "SUI:16": {
+      "name": "Michel Aebischer",
+      "team": "Switzerland"
+    },
+    "SUI:17": {
+      "name": "Breel Embolo",
+      "team": "Switzerland"
+    },
+    "SUI:18": {
+      "name": "Ruben Vargas",
+      "team": "Switzerland"
+    },
+    "SUI:19": {
+      "name": "Dan Ndoye",
+      "team": "Switzerland"
+    },
+    "SUI:20": {
+      "name": "Zeki Amdouni",
+      "team": "Switzerland"
+    },
+    "BRA:1": {
+      "name": "Emblem",
+      "team": "Brazil"
+    },
+    "BRA:2": {
+      "name": "Alisson",
+      "team": "Brazil"
+    },
+    "BRA:3": {
+      "name": "Bento",
+      "team": "Brazil"
+    },
+    "BRA:4": {
+      "name": "Marquinhos",
+      "team": "Brazil"
+    },
+    "BRA:5": {
+      "name": "Éder Militão",
+      "team": "Brazil"
+    },
+    "BRA:6": {
+      "name": "Gabriel Magalhães",
+      "team": "Brazil"
+    },
+    "BRA:7": {
+      "name": "Danilo",
+      "team": "Brazil"
+    },
+    "BRA:8": {
+      "name": "Wesley",
+      "team": "Brazil"
+    },
+    "BRA:9": {
+      "name": "Lucas Paquetá",
+      "team": "Brazil"
+    },
+    "BRA:10": {
+      "name": "Casemiro",
+      "team": "Brazil"
+    },
+    "BRA:11": {
+      "name": "Bruno Guimarães",
+      "team": "Brazil"
+    },
+    "BRA:12": {
+      "name": "Luiz Henrique",
+      "team": "Brazil"
+    },
+    "BRA:13": {
+      "name": "Team Photo",
+      "team": "Brazil"
+    },
+    "BRA:14": {
+      "name": "Vinicius Júnior",
+      "team": "Brazil"
+    },
+    "BRA:15": {
+      "name": "Rodrygo",
+      "team": "Brazil"
+    },
+    "BRA:16": {
+      "name": "João Pedro",
+      "team": "Brazil"
+    },
+    "BRA:17": {
+      "name": "Matheus Cunha",
+      "team": "Brazil"
+    },
+    "BRA:18": {
+      "name": "Gabriel Martinelli",
+      "team": "Brazil"
+    },
+    "BRA:19": {
+      "name": "Raphinha",
+      "team": "Brazil"
+    },
+    "BRA:20": {
+      "name": "Estévão",
+      "team": "Brazil"
+    },
+    "MAR:1": {
+      "name": "Emblem",
+      "team": "Morocco"
+    },
+    "MAR:2": {
+      "name": "Yassine Bounou",
+      "team": "Morocco"
+    },
+    "MAR:3": {
+      "name": "Munir El Kajoui",
+      "team": "Morocco"
+    },
+    "MAR:4": {
+      "name": "Achraf Hakimi",
+      "team": "Morocco"
+    },
+    "MAR:5": {
+      "name": "Noussair Mazraoui",
+      "team": "Morocco"
+    },
+    "MAR:6": {
+      "name": "Nayef Aguerd",
+      "team": "Morocco"
+    },
+    "MAR:7": {
+      "name": "Romain Saïss",
+      "team": "Morocco"
+    },
+    "MAR:8": {
+      "name": "Jawad El Yamiq",
+      "team": "Morocco"
+    },
+    "MAR:9": {
+      "name": "Adam Masina",
+      "team": "Morocco"
+    },
+    "MAR:10": {
+      "name": "Sofyan Amrabat",
+      "team": "Morocco"
+    },
+    "MAR:11": {
+      "name": "Azzedine Ounahi",
+      "team": "Morocco"
+    },
+    "MAR:12": {
+      "name": "Eliesse Ben Seghir",
+      "team": "Morocco"
+    },
+    "MAR:13": {
+      "name": "Team Photo",
+      "team": "Morocco"
+    },
+    "MAR:14": {
+      "name": "Bilal El Khannouss",
+      "team": "Morocco"
+    },
+    "MAR:15": {
+      "name": "Ismael Saibari",
+      "team": "Morocco"
+    },
+    "MAR:16": {
+      "name": "Youssef En-Nesyri",
+      "team": "Morocco"
+    },
+    "MAR:17": {
+      "name": "Abde Ezzalzouli",
+      "team": "Morocco"
+    },
+    "MAR:18": {
+      "name": "Soufiane Rahimi",
+      "team": "Morocco"
+    },
+    "MAR:19": {
+      "name": "Brahim Diaz",
+      "team": "Morocco"
+    },
+    "MAR:20": {
+      "name": "Ayoub El Kaabi",
+      "team": "Morocco"
+    },
+    "HAI:1": {
+      "name": "Emblem",
+      "team": "Haiti"
+    },
+    "HAI:2": {
+      "name": "Johny Placide",
+      "team": "Haiti"
+    },
+    "HAI:3": {
+      "name": "Carlens Arcus",
+      "team": "Haiti"
+    },
+    "HAI:4": {
+      "name": "Martin Expérience",
+      "team": "Haiti"
+    },
+    "HAI:5": {
+      "name": "Jean-Kevin Duverne",
+      "team": "Haiti"
+    },
+    "HAI:6": {
+      "name": "Ricardo Adé",
+      "team": "Haiti"
+    },
+    "HAI:7": {
+      "name": "Duke Lacroix",
+      "team": "Haiti"
+    },
+    "HAI:8": {
+      "name": "Garven Metusala",
+      "team": "Haiti"
+    },
+    "HAI:9": {
+      "name": "Hannes Delcroix",
+      "team": "Haiti"
+    },
+    "HAI:10": {
+      "name": "Leverton Pierre",
+      "team": "Haiti"
+    },
+    "HAI:11": {
+      "name": "Danley Jean Jacques",
+      "team": "Haiti"
+    },
+    "HAI:12": {
+      "name": "Jean-Ricner Bellegarde",
+      "team": "Haiti"
+    },
+    "HAI:13": {
+      "name": "Team Photo",
+      "team": "Haiti"
+    },
+    "HAI:14": {
+      "name": "Christopher Attys",
+      "team": "Haiti"
+    },
+    "HAI:15": {
+      "name": "Derrick Etienne Jr",
+      "team": "Haiti"
+    },
+    "HAI:16": {
+      "name": "Josue Casimir",
+      "team": "Haiti"
+    },
+    "HAI:17": {
+      "name": "Ruben Providence",
+      "team": "Haiti"
+    },
+    "HAI:18": {
+      "name": "Duckens Nazon",
+      "team": "Haiti"
+    },
+    "HAI:19": {
+      "name": "Louicius Deedson",
+      "team": "Haiti"
+    },
+    "HAI:20": {
+      "name": "Frantzdy Pierrot",
+      "team": "Haiti"
+    },
+    "SCO:1": {
+      "name": "Emblem",
+      "team": "Scotland"
+    },
+    "SCO:2": {
+      "name": "Angus Gunn",
+      "team": "Scotland"
+    },
+    "SCO:3": {
+      "name": "Jack Hendry",
+      "team": "Scotland"
+    },
+    "SCO:4": {
+      "name": "Kieran Tierney",
+      "team": "Scotland"
+    },
+    "SCO:5": {
+      "name": "Aaron Hickey",
+      "team": "Scotland"
+    },
+    "SCO:6": {
+      "name": "Andrew Robertson",
+      "team": "Scotland"
+    },
+    "SCO:7": {
+      "name": "Scott McKenna",
+      "team": "Scotland"
+    },
+    "SCO:8": {
+      "name": "John Souttar",
+      "team": "Scotland"
+    },
+    "SCO:9": {
+      "name": "Anthony Ralston",
+      "team": "Scotland"
+    },
+    "SCO:10": {
+      "name": "Grant Hanley",
+      "team": "Scotland"
+    },
+    "SCO:11": {
+      "name": "Scott McTominay",
+      "team": "Scotland"
+    },
+    "SCO:12": {
+      "name": "Billy Gilmour",
+      "team": "Scotland"
+    },
+    "SCO:13": {
+      "name": "Team Photo",
+      "team": "Scotland"
+    },
+    "SCO:14": {
+      "name": "Lewis Ferguson",
+      "team": "Scotland"
+    },
+    "SCO:15": {
+      "name": "Ryan Christie",
+      "team": "Scotland"
+    },
+    "SCO:16": {
+      "name": "Kenny McLean",
+      "team": "Scotland"
+    },
+    "SCO:17": {
+      "name": "John McGinn",
+      "team": "Scotland"
+    },
+    "SCO:18": {
+      "name": "Lyndon Dykes",
+      "team": "Scotland"
+    },
+    "SCO:19": {
+      "name": "Che Adams",
+      "team": "Scotland"
+    },
+    "SCO:20": {
+      "name": "Ben Gannon-Doak",
+      "team": "Scotland"
+    },
+    "USA:1": {
+      "name": "Emblem",
+      "team": "USA"
+    },
+    "USA:2": {
+      "name": "Matt Freese",
+      "team": "USA"
+    },
+    "USA:3": {
+      "name": "Chris Richards",
+      "team": "USA"
+    },
+    "USA:4": {
+      "name": "Tim Ream",
+      "team": "USA"
+    },
+    "USA:5": {
+      "name": "Mark McKenzie",
+      "team": "USA"
+    },
+    "USA:6": {
+      "name": "Alex Freeman",
+      "team": "USA"
+    },
+    "USA:7": {
+      "name": "Antonee Robinson",
+      "team": "USA"
+    },
+    "USA:8": {
+      "name": "Tyler Adams",
+      "team": "USA"
+    },
+    "USA:9": {
+      "name": "Tanner Tessmann",
+      "team": "USA"
+    },
+    "USA:10": {
+      "name": "Weston McKenny",
+      "team": "USA"
+    },
+    "USA:11": {
+      "name": "Christian Roldan",
+      "team": "USA"
+    },
+    "USA:12": {
+      "name": "Timothy Weah",
+      "team": "USA"
+    },
+    "USA:13": {
+      "name": "Team Photo",
+      "team": "USA"
+    },
+    "USA:14": {
+      "name": "Diego Luna",
+      "team": "USA"
+    },
+    "USA:15": {
+      "name": "Malik Tillman",
+      "team": "USA"
+    },
+    "USA:16": {
+      "name": "Christian Pulisic",
+      "team": "USA"
+    },
+    "USA:17": {
+      "name": "Brenden Aaronson",
+      "team": "USA"
+    },
+    "USA:18": {
+      "name": "Ricardo Pepi",
+      "team": "USA"
+    },
+    "USA:19": {
+      "name": "Haji Wright",
+      "team": "USA"
+    },
+    "USA:20": {
+      "name": "Folarin Balogun",
+      "team": "USA"
+    },
+    "PAR:1": {
+      "name": "Emblem",
+      "team": "Paraguay"
+    },
+    "PAR:2": {
+      "name": "Roberto Fernandez",
+      "team": "Paraguay"
+    },
+    "PAR:3": {
+      "name": "Orlando Gill",
+      "team": "Paraguay"
+    },
+    "PAR:4": {
+      "name": "Gustavo Gomez",
+      "team": "Paraguay"
+    },
+    "PAR:5": {
+      "name": "Fabián Balbuena",
+      "team": "Paraguay"
+    },
+    "PAR:6": {
+      "name": "Juan José Cáceres",
+      "team": "Paraguay"
+    },
+    "PAR:7": {
+      "name": "Omar Alderete",
+      "team": "Paraguay"
+    },
+    "PAR:8": {
+      "name": "Junior Alonso",
+      "team": "Paraguay"
+    },
+    "PAR:9": {
+      "name": "Mathías Villasanti",
+      "team": "Paraguay"
+    },
+    "PAR:10": {
+      "name": "Diego Gomez",
+      "team": "Paraguay"
+    },
+    "PAR:11": {
+      "name": "Damián Bobadilla",
+      "team": "Paraguay"
+    },
+    "PAR:12": {
+      "name": "Andres Cubas",
+      "team": "Paraguay"
+    },
+    "PAR:13": {
+      "name": "Team Photo",
+      "team": "Paraguay"
+    },
+    "PAR:14": {
+      "name": "Matias Galarza Fonda",
+      "team": "Paraguay"
+    },
+    "PAR:15": {
+      "name": "Julio Enciso",
+      "team": "Paraguay"
+    },
+    "PAR:16": {
+      "name": "Alejandro Romero Gamarra",
+      "team": "Paraguay"
+    },
+    "PAR:17": {
+      "name": "Miguel Almirón",
+      "team": "Paraguay"
+    },
+    "PAR:18": {
+      "name": "Ramon Sosa",
+      "team": "Paraguay"
+    },
+    "PAR:19": {
+      "name": "Angel Romero",
+      "team": "Paraguay"
+    },
+    "PAR:20": {
+      "name": "Antonio Sanabria",
+      "team": "Paraguay"
+    },
+    "AUS:1": {
+      "name": "Emblem",
+      "team": "Australia"
+    },
+    "AUS:2": {
+      "name": "Mathew Ryan",
+      "team": "Australia"
+    },
+    "AUS:3": {
+      "name": "Joe Gauci",
+      "team": "Australia"
+    },
+    "AUS:4": {
+      "name": "Harry Souttar",
+      "team": "Australia"
+    },
+    "AUS:5": {
+      "name": "Alessandro Circati",
+      "team": "Australia"
+    },
+    "AUS:6": {
+      "name": "Jordan Bos",
+      "team": "Australia"
+    },
+    "AUS:7": {
+      "name": "Aziz Behich",
+      "team": "Australia"
+    },
+    "AUS:8": {
+      "name": "Cameron Burgess",
+      "team": "Australia"
+    },
+    "AUS:9": {
+      "name": "Lewis Miller",
+      "team": "Australia"
+    },
+    "AUS:10": {
+      "name": "Milos Degenek",
+      "team": "Australia"
+    },
+    "AUS:11": {
+      "name": "Jackson Irvine",
+      "team": "Australia"
+    },
+    "AUS:12": {
+      "name": "Riley McGree",
+      "team": "Australia"
+    },
+    "AUS:13": {
+      "name": "Team Photo",
+      "team": "Australia"
+    },
+    "AUS:14": {
+      "name": "Aiden O'Neill",
+      "team": "Australia"
+    },
+    "AUS:15": {
+      "name": "Connor Metcalfe",
+      "team": "Australia"
+    },
+    "AUS:16": {
+      "name": "Patrick Yazbek",
+      "team": "Australia"
+    },
+    "AUS:17": {
+      "name": "Craig Goodwin",
+      "team": "Australia"
+    },
+    "AUS:18": {
+      "name": "Kusini Yengi",
+      "team": "Australia"
+    },
+    "AUS:19": {
+      "name": "Nestory Irankunda",
+      "team": "Australia"
+    },
+    "AUS:20": {
+      "name": "Mohamed Touré",
+      "team": "Australia"
+    },
+    "TUR:1": {
+      "name": "Emblem",
+      "team": "Türkiye"
+    },
+    "TUR:2": {
+      "name": "Ugurcan Cakir",
+      "team": "Türkiye"
+    },
+    "TUR:3": {
+      "name": "Mert Muldur",
+      "team": "Türkiye"
+    },
+    "TUR:4": {
+      "name": "Zeki Celik",
+      "team": "Türkiye"
+    },
+    "TUR:5": {
+      "name": "Abdulkerim Bardakci",
+      "team": "Türkiye"
+    },
+    "TUR:6": {
+      "name": "Caglar Soyuncu",
+      "team": "Türkiye"
+    },
+    "TUR:7": {
+      "name": "Merih Demiral",
+      "team": "Türkiye"
+    },
+    "TUR:8": {
+      "name": "Ferdi Kadioglu",
+      "team": "Türkiye"
+    },
+    "TUR:9": {
+      "name": "Kaan Ayhan",
+      "team": "Türkiye"
+    },
+    "TUR:10": {
+      "name": "Ismail Yuksek",
+      "team": "Türkiye"
+    },
+    "TUR:11": {
+      "name": "Hakan Calhanoglu",
+      "team": "Türkiye"
+    },
+    "TUR:12": {
+      "name": "Orkun Kokcu",
+      "team": "Türkiye"
+    },
+    "TUR:13": {
+      "name": "Team Photo",
+      "team": "Türkiye"
+    },
+    "TUR:14": {
+      "name": "Arda Guler",
+      "team": "Türkiye"
+    },
+    "TUR:15": {
+      "name": "Irfan Can Kahveci",
+      "team": "Türkiye"
+    },
+    "TUR:16": {
+      "name": "Yunus Akgun",
+      "team": "Türkiye"
+    },
+    "TUR:17": {
+      "name": "Can Uzun",
+      "team": "Türkiye"
+    },
+    "TUR:18": {
+      "name": "Baris Alper Yilmaz",
+      "team": "Türkiye"
+    },
+    "TUR:19": {
+      "name": "Kerem Akturkoglu",
+      "team": "Türkiye"
+    },
+    "TUR:20": {
+      "name": "Kenan Yildiz",
+      "team": "Türkiye"
+    },
+    "GER:1": {
+      "name": "Emblem",
+      "team": "Germany"
+    },
+    "GER:2": {
+      "name": "Marc-André ter Stegen",
+      "team": "Germany"
+    },
+    "GER:3": {
+      "name": "Jonathan Tah",
+      "team": "Germany"
+    },
+    "GER:4": {
+      "name": "David Raum",
+      "team": "Germany"
+    },
+    "GER:5": {
+      "name": "Nico Schlotterbeck",
+      "team": "Germany"
+    },
+    "GER:6": {
+      "name": "Antonio Rüdiger",
+      "team": "Germany"
+    },
+    "GER:7": {
+      "name": "Waldemar Anton",
+      "team": "Germany"
+    },
+    "GER:8": {
+      "name": "Ridle Baku",
+      "team": "Germany"
+    },
+    "GER:9": {
+      "name": "Maximilian Mittelstadt",
+      "team": "Germany"
+    },
+    "GER:10": {
+      "name": "Joshua Kimmich",
+      "team": "Germany"
+    },
+    "GER:11": {
+      "name": "Florian Wirtz",
+      "team": "Germany"
+    },
+    "GER:12": {
+      "name": "Felix Nmecha",
+      "team": "Germany"
+    },
+    "GER:13": {
+      "name": "Team Photo",
+      "team": "Germany"
+    },
+    "GER:14": {
+      "name": "Leon Goretzka",
+      "team": "Germany"
+    },
+    "GER:15": {
+      "name": "Jamal Musiala",
+      "team": "Germany"
+    },
+    "GER:16": {
+      "name": "Serge Gnabry",
+      "team": "Germany"
+    },
+    "GER:17": {
+      "name": "Kai Havertz",
+      "team": "Germany"
+    },
+    "GER:18": {
+      "name": "Leroy Sane",
+      "team": "Germany"
+    },
+    "GER:19": {
+      "name": "Karim Adeyemi",
+      "team": "Germany"
+    },
+    "GER:20": {
+      "name": "Nick Woltemade",
+      "team": "Germany"
+    },
+    "CUW:1": {
+      "name": "Emblem",
+      "team": "Curaçao"
+    },
+    "CUW:2": {
+      "name": "Eloy Room",
+      "team": "Curaçao"
+    },
+    "CUW:3": {
+      "name": "Armando Obispo",
+      "team": "Curaçao"
+    },
+    "CUW:4": {
+      "name": "Sherel Floranus",
+      "team": "Curaçao"
+    },
+    "CUW:5": {
+      "name": "Jurien Gaari",
+      "team": "Curaçao"
+    },
+    "CUW:6": {
+      "name": "Joshua Brenet",
+      "team": "Curaçao"
+    },
+    "CUW:7": {
+      "name": "Roshon Van Eijma",
+      "team": "Curaçao"
+    },
+    "CUW:8": {
+      "name": "Shurandy Sambo",
+      "team": "Curaçao"
+    },
+    "CUW:9": {
+      "name": "Livano Comenencia",
+      "team": "Curaçao"
+    },
+    "CUW:10": {
+      "name": "Godfried Roemeratoe",
+      "team": "Curaçao"
+    },
+    "CUW:11": {
+      "name": "Juninho Bacuna",
+      "team": "Curaçao"
+    },
+    "CUW:12": {
+      "name": "Leandro Bacuna",
+      "team": "Curaçao"
+    },
+    "CUW:13": {
+      "name": "Team Photo",
+      "team": "Curaçao"
+    },
+    "CUW:14": {
+      "name": "Tahith Chong",
+      "team": "Curaçao"
+    },
+    "CUW:15": {
+      "name": "Kenji Gorre",
+      "team": "Curaçao"
+    },
+    "CUW:16": {
+      "name": "Jearl Margaritha",
+      "team": "Curaçao"
+    },
+    "CUW:17": {
+      "name": "Jurgen Locadia",
+      "team": "Curaçao"
+    },
+    "CUW:18": {
+      "name": "Jeremy Antonisse",
+      "team": "Curaçao"
+    },
+    "CUW:19": {
+      "name": "Gervane Kastaneer",
+      "team": "Curaçao"
+    },
+    "CUW:20": {
+      "name": "Sontje Hansen",
+      "team": "Curaçao"
+    },
+    "CIV:1": {
+      "name": "Emblem",
+      "team": "Ivory Coast"
+    },
+    "CIV:2": {
+      "name": "Yahia Fofana",
+      "team": "Ivory Coast"
+    },
+    "CIV:3": {
+      "name": "Ghislain Konan",
+      "team": "Ivory Coast"
+    },
+    "CIV:4": {
+      "name": "Wilfried Singo",
+      "team": "Ivory Coast"
+    },
+    "CIV:5": {
+      "name": "Odilon Kossounou",
+      "team": "Ivory Coast"
+    },
+    "CIV:6": {
+      "name": "Evan Ndicka",
+      "team": "Ivory Coast"
+    },
+    "CIV:7": {
+      "name": "Willy Boly",
+      "team": "Ivory Coast"
+    },
+    "CIV:8": {
+      "name": "Emmanuel Agbadou",
+      "team": "Ivory Coast"
+    },
+    "CIV:9": {
+      "name": "Ousmane Diomande",
+      "team": "Ivory Coast"
+    },
+    "CIV:10": {
+      "name": "Franck Kessie",
+      "team": "Ivory Coast"
+    },
+    "CIV:11": {
+      "name": "Seko Fofana",
+      "team": "Ivory Coast"
+    },
+    "CIV:12": {
+      "name": "Ibrahim Sangare",
+      "team": "Ivory Coast"
+    },
+    "CIV:13": {
+      "name": "Team Photo",
+      "team": "Ivory Coast"
+    },
+    "CIV:14": {
+      "name": "Jean-Philippe Gbamin",
+      "team": "Ivory Coast"
+    },
+    "CIV:15": {
+      "name": "Amad Diallo",
+      "team": "Ivory Coast"
+    },
+    "CIV:16": {
+      "name": "Sébastien Haller",
+      "team": "Ivory Coast"
+    },
+    "CIV:17": {
+      "name": "Simon Adingra",
+      "team": "Ivory Coast"
+    },
+    "CIV:18": {
+      "name": "Yan Diomande",
+      "team": "Ivory Coast"
+    },
+    "CIV:19": {
+      "name": "Evann Guessand",
+      "team": "Ivory Coast"
+    },
+    "CIV:20": {
+      "name": "Oumar Diakite",
+      "team": "Ivory Coast"
+    },
+    "ECU:1": {
+      "name": "Emblem",
+      "team": "Ecuador"
+    },
+    "ECU:2": {
+      "name": "Hernán Galíndez",
+      "team": "Ecuador"
+    },
+    "ECU:3": {
+      "name": "Gonzalo Valle",
+      "team": "Ecuador"
+    },
+    "ECU:4": {
+      "name": "Piero Hincapié",
+      "team": "Ecuador"
+    },
+    "ECU:5": {
+      "name": "Pervis Estupiñán",
+      "team": "Ecuador"
+    },
+    "ECU:6": {
+      "name": "Willian Pacho",
+      "team": "Ecuador"
+    },
+    "ECU:7": {
+      "name": "Ángelo Preciado",
+      "team": "Ecuador"
+    },
+    "ECU:8": {
+      "name": "Joel Ordóñez",
+      "team": "Ecuador"
+    },
+    "ECU:9": {
+      "name": "Moises Caicedo",
+      "team": "Ecuador"
+    },
+    "ECU:10": {
+      "name": "Alan Franco",
+      "team": "Ecuador"
+    },
+    "ECU:11": {
+      "name": "Kendry Paez",
+      "team": "Ecuador"
+    },
+    "ECU:12": {
+      "name": "Pedro Vite",
+      "team": "Ecuador"
+    },
+    "ECU:13": {
+      "name": "Team Photo",
+      "team": "Ecuador"
+    },
+    "ECU:14": {
+      "name": "John Yeboah",
+      "team": "Ecuador"
+    },
+    "ECU:15": {
+      "name": "Leonardo Campana",
+      "team": "Ecuador"
+    },
+    "ECU:16": {
+      "name": "Gonzalo Plata",
+      "team": "Ecuador"
+    },
+    "ECU:17": {
+      "name": "Nilson Angulo",
+      "team": "Ecuador"
+    },
+    "ECU:18": {
+      "name": "Alan Minda",
+      "team": "Ecuador"
+    },
+    "ECU:19": {
+      "name": "Kevin Rodriguez",
+      "team": "Ecuador"
+    },
+    "ECU:20": {
+      "name": "Enner Valencia",
+      "team": "Ecuador"
+    },
+    "NED:1": {
+      "name": "Emblem",
+      "team": "Netherlands"
+    },
+    "NED:2": {
+      "name": "Bart Verbruggen",
+      "team": "Netherlands"
+    },
+    "NED:3": {
+      "name": "Virgil van Dijk",
+      "team": "Netherlands"
+    },
+    "NED:4": {
+      "name": "Micky van de Ven",
+      "team": "Netherlands"
+    },
+    "NED:5": {
+      "name": "Jurrien Timber",
+      "team": "Netherlands"
+    },
+    "NED:6": {
+      "name": "Denzel Dumfries",
+      "team": "Netherlands"
+    },
+    "NED:7": {
+      "name": "Nathan Aké",
+      "team": "Netherlands"
+    },
+    "NED:8": {
+      "name": "Jeremie Frimpong",
+      "team": "Netherlands"
+    },
+    "NED:9": {
+      "name": "Jan Paul van Hecke",
+      "team": "Netherlands"
+    },
+    "NED:10": {
+      "name": "Tijjani Reijnders",
+      "team": "Netherlands"
+    },
+    "NED:11": {
+      "name": "Ryan Gravenberch",
+      "team": "Netherlands"
+    },
+    "NED:12": {
+      "name": "Teun Koopmeiners",
+      "team": "Netherlands"
+    },
+    "NED:13": {
+      "name": "Team Photo",
+      "team": "Netherlands"
+    },
+    "NED:14": {
+      "name": "Frenkie de Jong",
+      "team": "Netherlands"
+    },
+    "NED:15": {
+      "name": "Xavi Simons",
+      "team": "Netherlands"
+    },
+    "NED:16": {
+      "name": "Justin Kluivert",
+      "team": "Netherlands"
+    },
+    "NED:17": {
+      "name": "Memphis Depay",
+      "team": "Netherlands"
+    },
+    "NED:18": {
+      "name": "Donyell Malen",
+      "team": "Netherlands"
+    },
+    "NED:19": {
+      "name": "Wout Weghorst",
+      "team": "Netherlands"
+    },
+    "NED:20": {
+      "name": "Cody Gakpo",
+      "team": "Netherlands"
+    },
+    "JPN:1": {
+      "name": "Emblem",
+      "team": "Japan"
+    },
+    "JPN:2": {
+      "name": "Zion Suzuki",
+      "team": "Japan"
+    },
+    "JPN:3": {
+      "name": "Henry Heroki Mochizuki",
+      "team": "Japan"
+    },
+    "JPN:4": {
+      "name": "Ayumu Seko",
+      "team": "Japan"
+    },
+    "JPN:5": {
+      "name": "Junnosuke Suzuki",
+      "team": "Japan"
+    },
+    "JPN:6": {
+      "name": "Shogo Taniguchi",
+      "team": "Japan"
+    },
+    "JPN:7": {
+      "name": "Tsuyoshi Watanabe",
+      "team": "Japan"
+    },
+    "JPN:8": {
+      "name": "Kaishu Sano",
+      "team": "Japan"
+    },
+    "JPN:9": {
+      "name": "Yuki Soma",
+      "team": "Japan"
+    },
+    "JPN:10": {
+      "name": "Ao Tanaka",
+      "team": "Japan"
+    },
+    "JPN:11": {
+      "name": "Daichi Kamada",
+      "team": "Japan"
+    },
+    "JPN:12": {
+      "name": "Takefusa Kubo",
+      "team": "Japan"
+    },
+    "JPN:13": {
+      "name": "Team Photo",
+      "team": "Japan"
+    },
+    "JPN:14": {
+      "name": "Ritsu Doan",
+      "team": "Japan"
+    },
+    "JPN:15": {
+      "name": "Keito Nakamura",
+      "team": "Japan"
+    },
+    "JPN:16": {
+      "name": "Takumi Minamino",
+      "team": "Japan"
+    },
+    "JPN:17": {
+      "name": "Shuto Machino",
+      "team": "Japan"
+    },
+    "JPN:18": {
+      "name": "Junya Ito",
+      "team": "Japan"
+    },
+    "JPN:19": {
+      "name": "Koki Ogawa",
+      "team": "Japan"
+    },
+    "JPN:20": {
+      "name": "Ayase Ueda",
+      "team": "Japan"
+    },
+    "SWE:1": {
+      "name": "Emblem",
+      "team": "Sweden"
+    },
+    "SWE:2": {
+      "name": "Victor Johansson",
+      "team": "Sweden"
+    },
+    "SWE:3": {
+      "name": "Isak Hien",
+      "team": "Sweden"
+    },
+    "SWE:4": {
+      "name": "Gabriel Gudmundsson",
+      "team": "Sweden"
+    },
+    "SWE:5": {
+      "name": "Emil Holm",
+      "team": "Sweden"
+    },
+    "SWE:6": {
+      "name": "Victor Nilsson Lindelöf",
+      "team": "Sweden"
+    },
+    "SWE:7": {
+      "name": "Gustaf Lagerbielke",
+      "team": "Sweden"
+    },
+    "SWE:8": {
+      "name": "Lucas Bergvall",
+      "team": "Sweden"
+    },
+    "SWE:9": {
+      "name": "Hugo Larsson",
+      "team": "Sweden"
+    },
+    "SWE:10": {
+      "name": "Jesper Karlström",
+      "team": "Sweden"
+    },
+    "SWE:11": {
+      "name": "Yasin Ayari",
+      "team": "Sweden"
+    },
+    "SWE:12": {
+      "name": "Mattias Svanberg",
+      "team": "Sweden"
+    },
+    "SWE:13": {
+      "name": "Team Photo",
+      "team": "Sweden"
+    },
+    "SWE:14": {
+      "name": "Daniel Svensson",
+      "team": "Sweden"
+    },
+    "SWE:15": {
+      "name": "Ken Sema",
+      "team": "Sweden"
+    },
+    "SWE:16": {
+      "name": "Roony Bardghji",
+      "team": "Sweden"
+    },
+    "SWE:17": {
+      "name": "Dejan Kulusevski",
+      "team": "Sweden"
+    },
+    "SWE:18": {
+      "name": "Anthony Elanga",
+      "team": "Sweden"
+    },
+    "SWE:19": {
+      "name": "Alexander Isak",
+      "team": "Sweden"
+    },
+    "SWE:20": {
+      "name": "Viktor Gyökeres",
+      "team": "Sweden"
+    },
+    "TUN:1": {
+      "name": "Emblem",
+      "team": "Tunisia"
+    },
+    "TUN:2": {
+      "name": "Bechir Ben Said",
+      "team": "Tunisia"
+    },
+    "TUN:3": {
+      "name": "Aymen Dahmen",
+      "team": "Tunisia"
+    },
+    "TUN:4": {
+      "name": "Yan Valery",
+      "team": "Tunisia"
+    },
+    "TUN:5": {
+      "name": "Montassar Talbi",
+      "team": "Tunisia"
+    },
+    "TUN:6": {
+      "name": "Yassine Meriah",
+      "team": "Tunisia"
+    },
+    "TUN:7": {
+      "name": "Ali Abdi",
+      "team": "Tunisia"
+    },
+    "TUN:8": {
+      "name": "Dylan Bronn",
+      "team": "Tunisia"
+    },
+    "TUN:9": {
+      "name": "Ellyes Skhiri",
+      "team": "Tunisia"
+    },
+    "TUN:10": {
+      "name": "Aissa Laidouni",
+      "team": "Tunisia"
+    },
+    "TUN:11": {
+      "name": "Ferjani Sassi",
+      "team": "Tunisia"
+    },
+    "TUN:12": {
+      "name": "Mohamed Ali Ben Romdhane",
+      "team": "Tunisia"
+    },
+    "TUN:13": {
+      "name": "Team Photo",
+      "team": "Tunisia"
+    },
+    "TUN:14": {
+      "name": "Hannibal Mejbri",
+      "team": "Tunisia"
+    },
+    "TUN:15": {
+      "name": "Elias Achouri",
+      "team": "Tunisia"
+    },
+    "TUN:16": {
+      "name": "Elias Saad",
+      "team": "Tunisia"
+    },
+    "TUN:17": {
+      "name": "Hazem Mastouri",
+      "team": "Tunisia"
+    },
+    "TUN:18": {
+      "name": "Ismael Gharbi",
+      "team": "Tunisia"
+    },
+    "TUN:19": {
+      "name": "Sayfallah Ltaief",
+      "team": "Tunisia"
+    },
+    "TUN:20": {
+      "name": "Naim Sliti",
+      "team": "Tunisia"
+    },
+    "BEL:1": {
+      "name": "Emblem",
+      "team": "Belgium"
+    },
+    "BEL:2": {
+      "name": "Thibaut Courtois",
+      "team": "Belgium"
+    },
+    "BEL:3": {
+      "name": "Arthur Theate",
+      "team": "Belgium"
+    },
+    "BEL:4": {
+      "name": "Timothy Castagne",
+      "team": "Belgium"
+    },
+    "BEL:5": {
+      "name": "Zeno Debast",
+      "team": "Belgium"
+    },
+    "BEL:6": {
+      "name": "Brandon Mechele",
+      "team": "Belgium"
+    },
+    "BEL:7": {
+      "name": "Maxim De Cuyper",
+      "team": "Belgium"
+    },
+    "BEL:8": {
+      "name": "Thomas Meunier",
+      "team": "Belgium"
+    },
+    "BEL:9": {
+      "name": "Youri Tielemans",
+      "team": "Belgium"
+    },
+    "BEL:10": {
+      "name": "Amadou Onana",
+      "team": "Belgium"
+    },
+    "BEL:11": {
+      "name": "Nicolas Raskin",
+      "team": "Belgium"
+    },
+    "BEL:12": {
+      "name": "Alexis Saelemaekers",
+      "team": "Belgium"
+    },
+    "BEL:13": {
+      "name": "Team Photo",
+      "team": "Belgium"
+    },
+    "BEL:14": {
+      "name": "Hans Vanaken",
+      "team": "Belgium"
+    },
+    "BEL:15": {
+      "name": "Kevin De Bruyne",
+      "team": "Belgium"
+    },
+    "BEL:16": {
+      "name": "Jérémy Doku",
+      "team": "Belgium"
+    },
+    "BEL:17": {
+      "name": "Charles De Ketelaere",
+      "team": "Belgium"
+    },
+    "BEL:18": {
+      "name": "Leandro Trossard",
+      "team": "Belgium"
+    },
+    "BEL:19": {
+      "name": "Loïs Openda",
+      "team": "Belgium"
+    },
+    "BEL:20": {
+      "name": "Romelu Lukaku",
+      "team": "Belgium"
+    },
+    "EGY:1": {
+      "name": "Emblem",
+      "team": "Egypt"
+    },
+    "EGY:2": {
+      "name": "Mohamed El Shenawy",
+      "team": "Egypt"
+    },
+    "EGY:3": {
+      "name": "Mohamed Hany",
+      "team": "Egypt"
+    },
+    "EGY:4": {
+      "name": "Mohamed Hamdy",
+      "team": "Egypt"
+    },
+    "EGY:5": {
+      "name": "Yasser Ibrahim",
+      "team": "Egypt"
+    },
+    "EGY:6": {
+      "name": "Khaled Sobhi",
+      "team": "Egypt"
+    },
+    "EGY:7": {
+      "name": "Ramy Rabia",
+      "team": "Egypt"
+    },
+    "EGY:8": {
+      "name": "Hossam Abdelmaguid",
+      "team": "Egypt"
+    },
+    "EGY:9": {
+      "name": "Ahmed Fatouh",
+      "team": "Egypt"
+    },
+    "EGY:10": {
+      "name": "Marwan Attia",
+      "team": "Egypt"
+    },
+    "EGY:11": {
+      "name": "Zizo",
+      "team": "Egypt"
+    },
+    "EGY:12": {
+      "name": "Hamdy Fathy",
+      "team": "Egypt"
+    },
+    "EGY:13": {
+      "name": "Team Photo",
+      "team": "Egypt"
+    },
+    "EGY:14": {
+      "name": "Mohamed Lasheen",
+      "team": "Egypt"
+    },
+    "EGY:15": {
+      "name": "Emam Ashour",
+      "team": "Egypt"
+    },
+    "EGY:16": {
+      "name": "Osama Faisal",
+      "team": "Egypt"
+    },
+    "EGY:17": {
+      "name": "Mohamed Salah",
+      "team": "Egypt"
+    },
+    "EGY:18": {
+      "name": "Mostafa Mohamed",
+      "team": "Egypt"
+    },
+    "EGY:19": {
+      "name": "Trezeguet",
+      "team": "Egypt"
+    },
+    "EGY:20": {
+      "name": "Omar Marmoush",
+      "team": "Egypt"
+    },
+    "IRN:1": {
+      "name": "Emblem",
+      "team": "Iran"
+    },
+    "IRN:2": {
+      "name": "Alireza Beiranvand",
+      "team": "Iran"
+    },
+    "IRN:3": {
+      "name": "Morteza Pouraliganji",
+      "team": "Iran"
+    },
+    "IRN:4": {
+      "name": "Ehsan Hajsafi",
+      "team": "Iran"
+    },
+    "IRN:5": {
+      "name": "Milad Mohammadi",
+      "team": "Iran"
+    },
+    "IRN:6": {
+      "name": "Shojae Khalilzadeh",
+      "team": "Iran"
+    },
+    "IRN:7": {
+      "name": "Ramin Rezaeian",
+      "team": "Iran"
+    },
+    "IRN:8": {
+      "name": "Hossein Kanaani",
+      "team": "Iran"
+    },
+    "IRN:9": {
+      "name": "Sadegh Moharrami",
+      "team": "Iran"
+    },
+    "IRN:10": {
+      "name": "Saleh Hardani",
+      "team": "Iran"
+    },
+    "IRN:11": {
+      "name": "Saeed Ezatolahi",
+      "team": "Iran"
+    },
+    "IRN:12": {
+      "name": "Saman Ghoddos",
+      "team": "Iran"
+    },
+    "IRN:13": {
+      "name": "Team Photo",
+      "team": "Iran"
+    },
+    "IRN:14": {
+      "name": "Omid Noorafkan",
+      "team": "Iran"
+    },
+    "IRN:15": {
+      "name": "Roozbeh Cheshmi",
+      "team": "Iran"
+    },
+    "IRN:16": {
+      "name": "Mohammad Mohebi",
+      "team": "Iran"
+    },
+    "IRN:17": {
+      "name": "Sardar Azmoun",
+      "team": "Iran"
+    },
+    "IRN:18": {
+      "name": "Mehdi Taremi",
+      "team": "Iran"
+    },
+    "IRN:19": {
+      "name": "Alireza Jahanbakhsh",
+      "team": "Iran"
+    },
+    "IRN:20": {
+      "name": "Ali Gholizadeh",
+      "team": "Iran"
+    },
+    "NZL:1": {
+      "name": "Emblem",
+      "team": "New Zealand"
+    },
+    "NZL:2": {
+      "name": "Max Crocombe",
+      "team": "New Zealand"
+    },
+    "NZL:3": {
+      "name": "Alex Paulsen",
+      "team": "New Zealand"
+    },
+    "NZL:4": {
+      "name": "Michael Boxall",
+      "team": "New Zealand"
+    },
+    "NZL:5": {
+      "name": "Liberato Cacace",
+      "team": "New Zealand"
+    },
+    "NZL:6": {
+      "name": "Tim Payne",
+      "team": "New Zealand"
+    },
+    "NZL:7": {
+      "name": "Tyler Bindon",
+      "team": "New Zealand"
+    },
+    "NZL:8": {
+      "name": "Francis de Vries",
+      "team": "New Zealand"
+    },
+    "NZL:9": {
+      "name": "Finn Surman",
+      "team": "New Zealand"
+    },
+    "NZL:10": {
+      "name": "Joe Bell",
+      "team": "New Zealand"
+    },
+    "NZL:11": {
+      "name": "Sarpreet Singh",
+      "team": "New Zealand"
+    },
+    "NZL:12": {
+      "name": "Ryan Thomas",
+      "team": "New Zealand"
+    },
+    "NZL:13": {
+      "name": "Team Photo",
+      "team": "New Zealand"
+    },
+    "NZL:14": {
+      "name": "Matthew Garbett",
+      "team": "New Zealand"
+    },
+    "NZL:15": {
+      "name": "Marko Stamenić",
+      "team": "New Zealand"
+    },
+    "NZL:16": {
+      "name": "Ben Old",
+      "team": "New Zealand"
+    },
+    "NZL:17": {
+      "name": "Chris Wood",
+      "team": "New Zealand"
+    },
+    "NZL:18": {
+      "name": "Elijah Just",
+      "team": "New Zealand"
+    },
+    "NZL:19": {
+      "name": "Callum McCowatt",
+      "team": "New Zealand"
+    },
+    "NZL:20": {
+      "name": "Kosta Barbarouses",
+      "team": "New Zealand"
+    },
+    "ESP:1": {
+      "name": "Emblem",
+      "team": "Spain"
+    },
+    "ESP:2": {
+      "name": "Unai Simon",
+      "team": "Spain"
+    },
+    "ESP:3": {
+      "name": "Robin Le Normand",
+      "team": "Spain"
+    },
+    "ESP:4": {
+      "name": "Aymeric Laporte",
+      "team": "Spain"
+    },
+    "ESP:5": {
+      "name": "Dean Huijsen",
+      "team": "Spain"
+    },
+    "ESP:6": {
+      "name": "Pedro Porro",
+      "team": "Spain"
+    },
+    "ESP:7": {
+      "name": "Dani Carvajal",
+      "team": "Spain"
+    },
+    "ESP:8": {
+      "name": "Marc Cucurella",
+      "team": "Spain"
+    },
+    "ESP:9": {
+      "name": "Martín Zubimendi",
+      "team": "Spain"
+    },
+    "ESP:10": {
+      "name": "Rodri",
+      "team": "Spain"
+    },
+    "ESP:11": {
+      "name": "Pedri",
+      "team": "Spain"
+    },
+    "ESP:12": {
+      "name": "Fabian Ruiz",
+      "team": "Spain"
+    },
+    "ESP:13": {
+      "name": "Team Photo",
+      "team": "Spain"
+    },
+    "ESP:14": {
+      "name": "Mikel Merino",
+      "team": "Spain"
+    },
+    "ESP:15": {
+      "name": "Lamine Yamal",
+      "team": "Spain"
+    },
+    "ESP:16": {
+      "name": "Dani Olmo",
+      "team": "Spain"
+    },
+    "ESP:17": {
+      "name": "Nico Williams",
+      "team": "Spain"
+    },
+    "ESP:18": {
+      "name": "Ferran Torres",
+      "team": "Spain"
+    },
+    "ESP:19": {
+      "name": "Álvaro Morata",
+      "team": "Spain"
+    },
+    "ESP:20": {
+      "name": "Mikel Oyarzabal",
+      "team": "Spain"
+    },
+    "CPV:1": {
+      "name": "Emblem",
+      "team": "Cape Verde"
+    },
+    "CPV:2": {
+      "name": "Vozinha",
+      "team": "Cape Verde"
+    },
+    "CPV:3": {
+      "name": "Logan Costa",
+      "team": "Cape Verde"
+    },
+    "CPV:4": {
+      "name": "Pico",
+      "team": "Cape Verde"
+    },
+    "CPV:5": {
+      "name": "Diney",
+      "team": "Cape Verde"
+    },
+    "CPV:6": {
+      "name": "Steven Moreira",
+      "team": "Cape Verde"
+    },
+    "CPV:7": {
+      "name": "Wagner Pina",
+      "team": "Cape Verde"
+    },
+    "CPV:8": {
+      "name": "Joao Paulo",
+      "team": "Cape Verde"
+    },
+    "CPV:9": {
+      "name": "Yannick Semedo",
+      "team": "Cape Verde"
+    },
+    "CPV:10": {
+      "name": "Kevin Pina",
+      "team": "Cape Verde"
+    },
+    "CPV:11": {
+      "name": "Patrick Andrade",
+      "team": "Cape Verde"
+    },
+    "CPV:12": {
+      "name": "Jamiro Monteiro",
+      "team": "Cape Verde"
+    },
+    "CPV:13": {
+      "name": "Team Photo",
+      "team": "Cape Verde"
+    },
+    "CPV:14": {
+      "name": "Deroy Duarte",
+      "team": "Cape Verde"
+    },
+    "CPV:15": {
+      "name": "Garry Rodrigues",
+      "team": "Cape Verde"
+    },
+    "CPV:16": {
+      "name": "Jovane Cabral",
+      "team": "Cape Verde"
+    },
+    "CPV:17": {
+      "name": "Ryan Mendes",
+      "team": "Cape Verde"
+    },
+    "CPV:18": {
+      "name": "Dailon Livramento",
+      "team": "Cape Verde"
+    },
+    "CPV:19": {
+      "name": "Willy Semedo",
+      "team": "Cape Verde"
+    },
+    "CPV:20": {
+      "name": "Bebe",
+      "team": "Cape Verde"
+    },
+    "KSA:1": {
+      "name": "Emblem",
+      "team": "Saudi Arabia"
+    },
+    "KSA:2": {
+      "name": "Nawaf Alaqidi",
+      "team": "Saudi Arabia"
+    },
+    "KSA:3": {
+      "name": "Abdulrahman Al-Sanbi",
+      "team": "Saudi Arabia"
+    },
+    "KSA:4": {
+      "name": "Saud Abdulhamid",
+      "team": "Saudi Arabia"
+    },
+    "KSA:5": {
+      "name": "Nawaf Bouwashl",
+      "team": "Saudi Arabia"
+    },
+    "KSA:6": {
+      "name": "Jihad Thakri",
+      "team": "Saudi Arabia"
+    },
+    "KSA:7": {
+      "name": "Moteb Al-Harbi",
+      "team": "Saudi Arabia"
+    },
+    "KSA:8": {
+      "name": "Hassan Altambakti",
+      "team": "Saudi Arabia"
+    },
+    "KSA:9": {
+      "name": "Musab Aljuwayr",
+      "team": "Saudi Arabia"
+    },
+    "KSA:10": {
+      "name": "Ziyad Aljohani",
+      "team": "Saudi Arabia"
+    },
+    "KSA:11": {
+      "name": "Abdullah Alkhaibari",
+      "team": "Saudi Arabia"
+    },
+    "KSA:12": {
+      "name": "Nasser Aldawsari",
+      "team": "Saudi Arabia"
+    },
+    "KSA:13": {
+      "name": "Team Photo",
+      "team": "Saudi Arabia"
+    },
+    "KSA:14": {
+      "name": "Saleh Abu Alshamat",
+      "team": "Saudi Arabia"
+    },
+    "KSA:15": {
+      "name": "Marwan Alsahafi",
+      "team": "Saudi Arabia"
+    },
+    "KSA:16": {
+      "name": "Salem Aldawsari",
+      "team": "Saudi Arabia"
+    },
+    "KSA:17": {
+      "name": "Abdulrahman Al-Aboud",
+      "team": "Saudi Arabia"
+    },
+    "KSA:18": {
+      "name": "Feras Akbrikan",
+      "team": "Saudi Arabia"
+    },
+    "KSA:19": {
+      "name": "Saleh Alshehri",
+      "team": "Saudi Arabia"
+    },
+    "KSA:20": {
+      "name": "Abdullah Al-Hamdan",
+      "team": "Saudi Arabia"
+    },
+    "URU:1": {
+      "name": "Emblem",
+      "team": "Uruguay"
+    },
+    "URU:2": {
+      "name": "Sergio Rochet",
+      "team": "Uruguay"
+    },
+    "URU:3": {
+      "name": "Santiago Mele",
+      "team": "Uruguay"
+    },
+    "URU:4": {
+      "name": "Ronald Araujo",
+      "team": "Uruguay"
+    },
+    "URU:5": {
+      "name": "José María Giménez",
+      "team": "Uruguay"
+    },
+    "URU:6": {
+      "name": "Sebastian Caceres",
+      "team": "Uruguay"
+    },
+    "URU:7": {
+      "name": "Mathias Olivera",
+      "team": "Uruguay"
+    },
+    "URU:8": {
+      "name": "Guillermo Varela",
+      "team": "Uruguay"
+    },
+    "URU:9": {
+      "name": "Nahitan Nandez",
+      "team": "Uruguay"
+    },
+    "URU:10": {
+      "name": "Federico Valverde",
+      "team": "Uruguay"
+    },
+    "URU:11": {
+      "name": "Giorgian De Arrascaeta",
+      "team": "Uruguay"
+    },
+    "URU:12": {
+      "name": "Rodrigo Bentancur",
+      "team": "Uruguay"
+    },
+    "URU:13": {
+      "name": "Team Photo",
+      "team": "Uruguay"
+    },
+    "URU:14": {
+      "name": "Manuel Ugarte",
+      "team": "Uruguay"
+    },
+    "URU:15": {
+      "name": "Nicolás de la Cruz",
+      "team": "Uruguay"
+    },
+    "URU:16": {
+      "name": "Maxi Araujo",
+      "team": "Uruguay"
+    },
+    "URU:17": {
+      "name": "Darwin Núñez",
+      "team": "Uruguay"
+    },
+    "URU:18": {
+      "name": "Federico Viñas",
+      "team": "Uruguay"
+    },
+    "URU:19": {
+      "name": "Rodrigo Aguirre",
+      "team": "Uruguay"
+    },
+    "URU:20": {
+      "name": "Facundo Pellistri",
+      "team": "Uruguay"
+    },
+    "FRA:1": {
+      "name": "Emblem",
+      "team": "France"
+    },
+    "FRA:2": {
+      "name": "Mike Maignan",
+      "team": "France"
+    },
+    "FRA:3": {
+      "name": "Theo Hernandez",
+      "team": "France"
+    },
+    "FRA:4": {
+      "name": "William Saliba",
+      "team": "France"
+    },
+    "FRA:5": {
+      "name": "Jules Kounde",
+      "team": "France"
+    },
+    "FRA:6": {
+      "name": "Ibrahima Konate",
+      "team": "France"
+    },
+    "FRA:7": {
+      "name": "Dayot Upamecano",
+      "team": "France"
+    },
+    "FRA:8": {
+      "name": "Lucas Digne",
+      "team": "France"
+    },
+    "FRA:9": {
+      "name": "Aurélien Tchouaméni",
+      "team": "France"
+    },
+    "FRA:10": {
+      "name": "Eduardo Camavinga",
+      "team": "France"
+    },
+    "FRA:11": {
+      "name": "Manu Kone",
+      "team": "France"
+    },
+    "FRA:12": {
+      "name": "Adrien Rabiot",
+      "team": "France"
+    },
+    "FRA:13": {
+      "name": "Team Photo",
+      "team": "France"
+    },
+    "FRA:14": {
+      "name": "Michael Olise",
+      "team": "France"
+    },
+    "FRA:15": {
+      "name": "Ousmane Dembele",
+      "team": "France"
+    },
+    "FRA:16": {
+      "name": "Bradley Barcola",
+      "team": "France"
+    },
+    "FRA:17": {
+      "name": "Désiré Doué",
+      "team": "France"
+    },
+    "FRA:18": {
+      "name": "Kingsley Coman",
+      "team": "France"
+    },
+    "FRA:19": {
+      "name": "Hugo Ekitike",
+      "team": "France"
+    },
+    "FRA:20": {
+      "name": "Kylian Mbappe",
+      "team": "France"
+    },
+    "SEN:1": {
+      "name": "Emblem",
+      "team": "Senegal"
+    },
+    "SEN:2": {
+      "name": "Édouard Mendy",
+      "team": "Senegal"
+    },
+    "SEN:3": {
+      "name": "Yehvann Diouf",
+      "team": "Senegal"
+    },
+    "SEN:4": {
+      "name": "Moussa Niakhaté",
+      "team": "Senegal"
+    },
+    "SEN:5": {
+      "name": "Abdoulaye Seck",
+      "team": "Senegal"
+    },
+    "SEN:6": {
+      "name": "Ismail Jakobs",
+      "team": "Senegal"
+    },
+    "SEN:7": {
+      "name": "El Hadji Malick Diouf",
+      "team": "Senegal"
+    },
+    "SEN:8": {
+      "name": "Kalidou Koulibaly",
+      "team": "Senegal"
+    },
+    "SEN:9": {
+      "name": "Idrissa Gana Gueye",
+      "team": "Senegal"
+    },
+    "SEN:10": {
+      "name": "Pape Matar Sarr",
+      "team": "Senegal"
+    },
+    "SEN:11": {
+      "name": "Pape Gueye",
+      "team": "Senegal"
+    },
+    "SEN:12": {
+      "name": "Habib Diarra",
+      "team": "Senegal"
+    },
+    "SEN:13": {
+      "name": "Team Photo",
+      "team": "Senegal"
+    },
+    "SEN:14": {
+      "name": "Lamine Camara",
+      "team": "Senegal"
+    },
+    "SEN:15": {
+      "name": "Sadio Mane",
+      "team": "Senegal"
+    },
+    "SEN:16": {
+      "name": "Ismaïla Sarr",
+      "team": "Senegal"
+    },
+    "SEN:17": {
+      "name": "Boulaye Dia",
+      "team": "Senegal"
+    },
+    "SEN:18": {
+      "name": "Iliman Ndiaye",
+      "team": "Senegal"
+    },
+    "SEN:19": {
+      "name": "Nicolas Jackson",
+      "team": "Senegal"
+    },
+    "SEN:20": {
+      "name": "Krepin Diatta",
+      "team": "Senegal"
+    },
+    "IRQ:1": {
+      "name": "Emblem",
+      "team": "Iraq"
+    },
+    "IRQ:2": {
+      "name": "Jalal Hassan",
+      "team": "Iraq"
+    },
+    "IRQ:3": {
+      "name": "Rebin Sulaka",
+      "team": "Iraq"
+    },
+    "IRQ:4": {
+      "name": "Hussein Ali",
+      "team": "Iraq"
+    },
+    "IRQ:5": {
+      "name": "Akam Hashem",
+      "team": "Iraq"
+    },
+    "IRQ:6": {
+      "name": "Merchas Doski",
+      "team": "Iraq"
+    },
+    "IRQ:7": {
+      "name": "Zaid Tahseen",
+      "team": "Iraq"
+    },
+    "IRQ:8": {
+      "name": "Manaf Younis",
+      "team": "Iraq"
+    },
+    "IRQ:9": {
+      "name": "Zidane Iqbal",
+      "team": "Iraq"
+    },
+    "IRQ:10": {
+      "name": "Amir Al-Ammari",
+      "team": "Iraq"
+    },
+    "IRQ:11": {
+      "name": "Ibrahim Bavesh",
+      "team": "Iraq"
+    },
+    "IRQ:12": {
+      "name": "Ali Jasim",
+      "team": "Iraq"
+    },
+    "IRQ:13": {
+      "name": "Team Photo",
+      "team": "Iraq"
+    },
+    "IRQ:14": {
+      "name": "Youssef Amyn",
+      "team": "Iraq"
+    },
+    "IRQ:15": {
+      "name": "Aimar Sher",
+      "team": "Iraq"
+    },
+    "IRQ:16": {
+      "name": "Marko Farji",
+      "team": "Iraq"
+    },
+    "IRQ:17": {
+      "name": "Osama Rashid",
+      "team": "Iraq"
+    },
+    "IRQ:18": {
+      "name": "Ali Al-Hamadi",
+      "team": "Iraq"
+    },
+    "IRQ:19": {
+      "name": "Aymen Hussein",
+      "team": "Iraq"
+    },
+    "IRQ:20": {
+      "name": "Mohanad Ali",
+      "team": "Iraq"
+    },
+    "NOR:1": {
+      "name": "Emblem",
+      "team": "Norway"
+    },
+    "NOR:2": {
+      "name": "Orjan Nyland",
+      "team": "Norway"
+    },
+    "NOR:3": {
+      "name": "Julian Ryerson",
+      "team": "Norway"
+    },
+    "NOR:4": {
+      "name": "Leo Ostigård",
+      "team": "Norway"
+    },
+    "NOR:5": {
+      "name": "Kristoffer Vassbakk Ajer",
+      "team": "Norway"
+    },
+    "NOR:6": {
+      "name": "Marcus Holmgren Pedersen",
+      "team": "Norway"
+    },
+    "NOR:7": {
+      "name": "David Møller Wolfe",
+      "team": "Norway"
+    },
+    "NOR:8": {
+      "name": "Torbjørn Heggem",
+      "team": "Norway"
+    },
+    "NOR:9": {
+      "name": "Morten Thorsby",
+      "team": "Norway"
+    },
+    "NOR:10": {
+      "name": "Martin Ødegaard",
+      "team": "Norway"
+    },
+    "NOR:11": {
+      "name": "Sander Berge",
+      "team": "Norway"
+    },
+    "NOR:12": {
+      "name": "Andreas Schjelderup",
+      "team": "Norway"
+    },
+    "NOR:13": {
+      "name": "Team Photo",
+      "team": "Norway"
+    },
+    "NOR:14": {
+      "name": "Patrick Berg",
+      "team": "Norway"
+    },
+    "NOR:15": {
+      "name": "Erling Haaland",
+      "team": "Norway"
+    },
+    "NOR:16": {
+      "name": "Alexander Sørloth",
+      "team": "Norway"
+    },
+    "NOR:17": {
+      "name": "Aron Dønnum",
+      "team": "Norway"
+    },
+    "NOR:18": {
+      "name": "Jorgen Strand Larsen",
+      "team": "Norway"
+    },
+    "NOR:19": {
+      "name": "Antonio Nusa",
+      "team": "Norway"
+    },
+    "NOR:20": {
+      "name": "Oscar Bobb",
+      "team": "Norway"
+    },
+    "ARG:1": {
+      "name": "Emblem",
+      "team": "Argentina"
+    },
+    "ARG:2": {
+      "name": "Emiliano Martinez",
+      "team": "Argentina"
+    },
+    "ARG:3": {
+      "name": "Nahuel Molina",
+      "team": "Argentina"
+    },
+    "ARG:4": {
+      "name": "Cristian Romero",
+      "team": "Argentina"
+    },
+    "ARG:5": {
+      "name": "Nicolas Otamendi",
+      "team": "Argentina"
+    },
+    "ARG:6": {
+      "name": "Nicolas Tagliafico",
+      "team": "Argentina"
+    },
+    "ARG:7": {
+      "name": "Leonardo Balerdi",
+      "team": "Argentina"
+    },
+    "ARG:8": {
+      "name": "Enzo Fernandez",
+      "team": "Argentina"
+    },
+    "ARG:9": {
+      "name": "Alexis Mac Allister",
+      "team": "Argentina"
+    },
+    "ARG:10": {
+      "name": "Rodrigo De Paul",
+      "team": "Argentina"
+    },
+    "ARG:11": {
+      "name": "Exequiel Palacios",
+      "team": "Argentina"
+    },
+    "ARG:12": {
+      "name": "Leandro Paredes",
+      "team": "Argentina"
+    },
+    "ARG:13": {
+      "name": "Team Photo",
+      "team": "Argentina"
+    },
+    "ARG:14": {
+      "name": "Nico Paz",
+      "team": "Argentina"
+    },
+    "ARG:15": {
+      "name": "Franco Mastantuono",
+      "team": "Argentina"
+    },
+    "ARG:16": {
+      "name": "Nico Gonzalez",
+      "team": "Argentina"
+    },
+    "ARG:17": {
+      "name": "Lionel Messi",
+      "team": "Argentina"
+    },
+    "ARG:18": {
+      "name": "Lautaro Martinez",
+      "team": "Argentina"
+    },
+    "ARG:19": {
+      "name": "Julian Alvarez",
+      "team": "Argentina"
+    },
+    "ARG:20": {
+      "name": "Giuliano Simeone",
+      "team": "Argentina"
+    },
+    "ALG:1": {
+      "name": "Emblem",
+      "team": "Algeria"
+    },
+    "ALG:2": {
+      "name": "Alexis Guendouz",
+      "team": "Algeria"
+    },
+    "ALG:3": {
+      "name": "Ramy Bensebaini",
+      "team": "Algeria"
+    },
+    "ALG:4": {
+      "name": "Youcef Atal",
+      "team": "Algeria"
+    },
+    "ALG:5": {
+      "name": "Rayan Aït-Nouri",
+      "team": "Algeria"
+    },
+    "ALG:6": {
+      "name": "Mohamed Amine Tougai",
+      "team": "Algeria"
+    },
+    "ALG:7": {
+      "name": "Aïssa Mandi",
+      "team": "Algeria"
+    },
+    "ALG:8": {
+      "name": "Ismael Bennacer",
+      "team": "Algeria"
+    },
+    "ALG:9": {
+      "name": "Houssem Aouar",
+      "team": "Algeria"
+    },
+    "ALG:10": {
+      "name": "Hicham Boudaoui",
+      "team": "Algeria"
+    },
+    "ALG:11": {
+      "name": "Ramiz Zerrouki",
+      "team": "Algeria"
+    },
+    "ALG:12": {
+      "name": "Nabil Bentaleb",
+      "team": "Algeria"
+    },
+    "ALG:13": {
+      "name": "Team Photo",
+      "team": "Algeria"
+    },
+    "ALG:14": {
+      "name": "Farés Chaibi",
+      "team": "Algeria"
+    },
+    "ALG:15": {
+      "name": "Riyad Mahrez",
+      "team": "Algeria"
+    },
+    "ALG:16": {
+      "name": "Said Benrahma",
+      "team": "Algeria"
+    },
+    "ALG:17": {
+      "name": "Anis Hadj Moussa",
+      "team": "Algeria"
+    },
+    "ALG:18": {
+      "name": "Amine Gouiri",
+      "team": "Algeria"
+    },
+    "ALG:19": {
+      "name": "Baghdad Bounedjah",
+      "team": "Algeria"
+    },
+    "ALG:20": {
+      "name": "Mohammed Amoura",
+      "team": "Algeria"
+    },
+    "AUT:1": {
+      "name": "Emblem",
+      "team": "Austria"
+    },
+    "AUT:2": {
+      "name": "Alexander Schlager",
+      "team": "Austria"
+    },
+    "AUT:3": {
+      "name": "Patrick Pentz",
+      "team": "Austria"
+    },
+    "AUT:4": {
+      "name": "David Alaba",
+      "team": "Austria"
+    },
+    "AUT:5": {
+      "name": "Kevin Danso",
+      "team": "Austria"
+    },
+    "AUT:6": {
+      "name": "Philipp Lienhart",
+      "team": "Austria"
+    },
+    "AUT:7": {
+      "name": "Stefan Posch",
+      "team": "Austria"
+    },
+    "AUT:8": {
+      "name": "Phillipp Mwene",
+      "team": "Austria"
+    },
+    "AUT:9": {
+      "name": "Alexander Prass",
+      "team": "Austria"
+    },
+    "AUT:10": {
+      "name": "Xaver Schlager",
+      "team": "Austria"
+    },
+    "AUT:11": {
+      "name": "Marcel Sabitzer",
+      "team": "Austria"
+    },
+    "AUT:12": {
+      "name": "Konrad Laimer",
+      "team": "Austria"
+    },
+    "AUT:13": {
+      "name": "Team Photo",
+      "team": "Austria"
+    },
+    "AUT:14": {
+      "name": "Florian Grillitsch",
+      "team": "Austria"
+    },
+    "AUT:15": {
+      "name": "Nicolas Seiwald",
+      "team": "Austria"
+    },
+    "AUT:16": {
+      "name": "Romano Schmid",
+      "team": "Austria"
+    },
+    "AUT:17": {
+      "name": "Patrick Wimmer",
+      "team": "Austria"
+    },
+    "AUT:18": {
+      "name": "Christoph Baumgartner",
+      "team": "Austria"
+    },
+    "AUT:19": {
+      "name": "Michael Gregoritsch",
+      "team": "Austria"
+    },
+    "AUT:20": {
+      "name": "Marko Arnautović",
+      "team": "Austria"
+    },
+    "JOR:1": {
+      "name": "Emblem",
+      "team": "Jordan"
+    },
+    "JOR:2": {
+      "name": "Yazeed Abulaila",
+      "team": "Jordan"
+    },
+    "JOR:3": {
+      "name": "Ihsan Haddad",
+      "team": "Jordan"
+    },
+    "JOR:4": {
+      "name": "Mohammad Abu Hashish",
+      "team": "Jordan"
+    },
+    "JOR:5": {
+      "name": "Yazan Al-Arab",
+      "team": "Jordan"
+    },
+    "JOR:6": {
+      "name": "Abdallah Nasib",
+      "team": "Jordan"
+    },
+    "JOR:7": {
+      "name": "Saleem Obaid",
+      "team": "Jordan"
+    },
+    "JOR:8": {
+      "name": "Mohammad Abualnadi",
+      "team": "Jordan"
+    },
+    "JOR:9": {
+      "name": "Ibrahim Saadeh",
+      "team": "Jordan"
+    },
+    "JOR:10": {
+      "name": "Nizar Al-Rashdan",
+      "team": "Jordan"
+    },
+    "JOR:11": {
+      "name": "Noor Al-Rawabdeh",
+      "team": "Jordan"
+    },
+    "JOR:12": {
+      "name": "Mohannad Abu Taha",
+      "team": "Jordan"
+    },
+    "JOR:13": {
+      "name": "Team Photo",
+      "team": "Jordan"
+    },
+    "JOR:14": {
+      "name": "Amer Jamous",
+      "team": "Jordan"
+    },
+    "JOR:15": {
+      "name": "Musa Al-Taamari",
+      "team": "Jordan"
+    },
+    "JOR:16": {
+      "name": "Yazan Al-Naimat",
+      "team": "Jordan"
+    },
+    "JOR:17": {
+      "name": "Mahmoud Al-Mardi",
+      "team": "Jordan"
+    },
+    "JOR:18": {
+      "name": "Ali Olwan",
+      "team": "Jordan"
+    },
+    "JOR:19": {
+      "name": "Mohammad Abu Zrayq",
+      "team": "Jordan"
+    },
+    "JOR:20": {
+      "name": "Ibrahim Sabra",
+      "team": "Jordan"
+    },
+    "POR:1": {
+      "name": "Emblem",
+      "team": "Portugal"
+    },
+    "POR:2": {
+      "name": "Diogo Costa",
+      "team": "Portugal"
+    },
+    "POR:3": {
+      "name": "José Sá",
+      "team": "Portugal"
+    },
+    "POR:4": {
+      "name": "Ruben Dias",
+      "team": "Portugal"
+    },
+    "POR:5": {
+      "name": "João Cancelo",
+      "team": "Portugal"
+    },
+    "POR:6": {
+      "name": "Diogo Dalot",
+      "team": "Portugal"
+    },
+    "POR:7": {
+      "name": "Nuno Mendes",
+      "team": "Portugal"
+    },
+    "POR:8": {
+      "name": "Gonçalo Inácio",
+      "team": "Portugal"
+    },
+    "POR:9": {
+      "name": "Bernardo Silva",
+      "team": "Portugal"
+    },
+    "POR:10": {
+      "name": "Bruno Fernandes",
+      "team": "Portugal"
+    },
+    "POR:11": {
+      "name": "Ruben Neves",
+      "team": "Portugal"
+    },
+    "POR:12": {
+      "name": "Vitinha",
+      "team": "Portugal"
+    },
+    "POR:13": {
+      "name": "Team Photo",
+      "team": "Portugal"
+    },
+    "POR:14": {
+      "name": "João Neves",
+      "team": "Portugal"
+    },
+    "POR:15": {
+      "name": "Cristiano Ronaldo",
+      "team": "Portugal"
+    },
+    "POR:16": {
+      "name": "Francisco Trincao",
+      "team": "Portugal"
+    },
+    "POR:17": {
+      "name": "João Felix",
+      "team": "Portugal"
+    },
+    "POR:18": {
+      "name": "Gonçalo Ramos",
+      "team": "Portugal"
+    },
+    "POR:19": {
+      "name": "Pedro Neto",
+      "team": "Portugal"
+    },
+    "POR:20": {
+      "name": "Rafael Leão",
+      "team": "Portugal"
+    },
+    "COD:1": {
+      "name": "Emblem",
+      "team": "Congo DR"
+    },
+    "COD:2": {
+      "name": "Lionel Mpasi-Nzau",
+      "team": "Congo DR"
+    },
+    "COD:3": {
+      "name": "Aaron Wan-Bissaka",
+      "team": "Congo DR"
+    },
+    "COD:4": {
+      "name": "Axel Tuanzebe",
+      "team": "Congo DR"
+    },
+    "COD:5": {
+      "name": "Arthur Masuaku",
+      "team": "Congo DR"
+    },
+    "COD:6": {
+      "name": "Chancel Mbemba",
+      "team": "Congo DR"
+    },
+    "COD:7": {
+      "name": "Joris Kayembe",
+      "team": "Congo DR"
+    },
+    "COD:8": {
+      "name": "Charles Pickel",
+      "team": "Congo DR"
+    },
+    "COD:9": {
+      "name": "Ngal'ayel Mukau",
+      "team": "Congo DR"
+    },
+    "COD:10": {
+      "name": "Edo Kayembe",
+      "team": "Congo DR"
+    },
+    "COD:11": {
+      "name": "Samuel Moutoussamy",
+      "team": "Congo DR"
+    },
+    "COD:12": {
+      "name": "Noah Sadiki",
+      "team": "Congo DR"
+    },
+    "COD:13": {
+      "name": "Team Photo",
+      "team": "Congo DR"
+    },
+    "COD:14": {
+      "name": "Théo Bongonda",
+      "team": "Congo DR"
+    },
+    "COD:15": {
+      "name": "Meschak Elia",
+      "team": "Congo DR"
+    },
+    "COD:16": {
+      "name": "Yoane Wissa",
+      "team": "Congo DR"
+    },
+    "COD:17": {
+      "name": "Brian Cipenga",
+      "team": "Congo DR"
+    },
+    "COD:18": {
+      "name": "Fiston Mayele",
+      "team": "Congo DR"
+    },
+    "COD:19": {
+      "name": "Cédric Bakambu",
+      "team": "Congo DR"
+    },
+    "COD:20": {
+      "name": "Nathanaël Mbuku",
+      "team": "Congo DR"
+    },
+    "UZB:1": {
+      "name": "Emblem",
+      "team": "Uzbekistan"
+    },
+    "UZB:2": {
+      "name": "Utkir Yusupov",
+      "team": "Uzbekistan"
+    },
+    "UZB:3": {
+      "name": "Farrukh Savfiev",
+      "team": "Uzbekistan"
+    },
+    "UZB:4": {
+      "name": "Sherzod Nasrullaev",
+      "team": "Uzbekistan"
+    },
+    "UZB:5": {
+      "name": "Umar Eshmurodov",
+      "team": "Uzbekistan"
+    },
+    "UZB:6": {
+      "name": "Husniddin Aliqulov",
+      "team": "Uzbekistan"
+    },
+    "UZB:7": {
+      "name": "Rustamjon Ashurmatov",
+      "team": "Uzbekistan"
+    },
+    "UZB:8": {
+      "name": "Khojiakbar Alijonov",
+      "team": "Uzbekistan"
+    },
+    "UZB:9": {
+      "name": "Abdukodir Khusanov",
+      "team": "Uzbekistan"
+    },
+    "UZB:10": {
+      "name": "Odiljon Hamrobekov",
+      "team": "Uzbekistan"
+    },
+    "UZB:11": {
+      "name": "Otabek Shukurov",
+      "team": "Uzbekistan"
+    },
+    "UZB:12": {
+      "name": "Jamshid Iskanderov",
+      "team": "Uzbekistan"
+    },
+    "UZB:13": {
+      "name": "Team Photo",
+      "team": "Uzbekistan"
+    },
+    "UZB:14": {
+      "name": "Azizbek Turgunboev",
+      "team": "Uzbekistan"
+    },
+    "UZB:15": {
+      "name": "Khojimat Erkinov",
+      "team": "Uzbekistan"
+    },
+    "UZB:16": {
+      "name": "Eldor Shomurodov",
+      "team": "Uzbekistan"
+    },
+    "UZB:17": {
+      "name": "Oston Urunov",
+      "team": "Uzbekistan"
+    },
+    "UZB:18": {
+      "name": "Jaloliddin Masharipov",
+      "team": "Uzbekistan"
+    },
+    "UZB:19": {
+      "name": "Igor Sergeev",
+      "team": "Uzbekistan"
+    },
+    "UZB:20": {
+      "name": "Abbosbek Fayzullaev",
+      "team": "Uzbekistan"
+    },
+    "COL:1": {
+      "name": "Emblem",
+      "team": "Colombia"
+    },
+    "COL:2": {
+      "name": "Camilo Vargas",
+      "team": "Colombia"
+    },
+    "COL:3": {
+      "name": "David Ospina",
+      "team": "Colombia"
+    },
+    "COL:4": {
+      "name": "Dávinson Sánchez",
+      "team": "Colombia"
+    },
+    "COL:5": {
+      "name": "Yerry Mina",
+      "team": "Colombia"
+    },
+    "COL:6": {
+      "name": "Daniel Munoz",
+      "team": "Colombia"
+    },
+    "COL:7": {
+      "name": "Johan Mojica",
+      "team": "Colombia"
+    },
+    "COL:8": {
+      "name": "Jhon Lucumí",
+      "team": "Colombia"
+    },
+    "COL:9": {
+      "name": "Santiago Arias",
+      "team": "Colombia"
+    },
+    "COL:10": {
+      "name": "Jefferson Lerma",
+      "team": "Colombia"
+    },
+    "COL:11": {
+      "name": "Kevin Castaño",
+      "team": "Colombia"
+    },
+    "COL:12": {
+      "name": "Richard Rios",
+      "team": "Colombia"
+    },
+    "COL:13": {
+      "name": "Team Photo",
+      "team": "Colombia"
+    },
+    "COL:14": {
+      "name": "James Rodriguez",
+      "team": "Colombia"
+    },
+    "COL:15": {
+      "name": "Juan Fernando Quintero",
+      "team": "Colombia"
+    },
+    "COL:16": {
+      "name": "Jorge Carrascal",
+      "team": "Colombia"
+    },
+    "COL:17": {
+      "name": "Jhon Arias",
+      "team": "Colombia"
+    },
+    "COL:18": {
+      "name": "Jhon Cordova",
+      "team": "Colombia"
+    },
+    "COL:19": {
+      "name": "Luis Suarez",
+      "team": "Colombia"
+    },
+    "COL:20": {
+      "name": "Luis Diaz",
+      "team": "Colombia"
+    },
+    "ENG:1": {
+      "name": "Emblem",
+      "team": "England"
+    },
+    "ENG:2": {
+      "name": "Jordan Pickford",
+      "team": "England"
+    },
+    "ENG:3": {
+      "name": "John Stones",
+      "team": "England"
+    },
+    "ENG:4": {
+      "name": "Marc Guéhi",
+      "team": "England"
+    },
+    "ENG:5": {
+      "name": "Ezri Konsa",
+      "team": "England"
+    },
+    "ENG:6": {
+      "name": "Trent Alexander-Arnold",
+      "team": "England"
+    },
+    "ENG:7": {
+      "name": "Reece James",
+      "team": "England"
+    },
+    "ENG:8": {
+      "name": "Dan Burn",
+      "team": "England"
+    },
+    "ENG:9": {
+      "name": "Jordan Henderson",
+      "team": "England"
+    },
+    "ENG:10": {
+      "name": "Declan Rice",
+      "team": "England"
+    },
+    "ENG:11": {
+      "name": "Jude Bellingham",
+      "team": "England"
+    },
+    "ENG:12": {
+      "name": "Cole Palmer",
+      "team": "England"
+    },
+    "ENG:13": {
+      "name": "Team Photo",
+      "team": "England"
+    },
+    "ENG:14": {
+      "name": "Morgan Rogers",
+      "team": "England"
+    },
+    "ENG:15": {
+      "name": "Anthony Gordon",
+      "team": "England"
+    },
+    "ENG:16": {
+      "name": "Phil Foden",
+      "team": "England"
+    },
+    "ENG:17": {
+      "name": "Bukayo Saka",
+      "team": "England"
+    },
+    "ENG:18": {
+      "name": "Harry Kane",
+      "team": "England"
+    },
+    "ENG:19": {
+      "name": "Marcus Rashford",
+      "team": "England"
+    },
+    "ENG:20": {
+      "name": "Ollie Watkins",
+      "team": "England"
+    },
+    "CRO:1": {
+      "name": "Emblem",
+      "team": "Croatia"
+    },
+    "CRO:2": {
+      "name": "Dominik Livaković",
+      "team": "Croatia"
+    },
+    "CRO:3": {
+      "name": "Duje Caleta-Car",
+      "team": "Croatia"
+    },
+    "CRO:4": {
+      "name": "Josko Gvardiol",
+      "team": "Croatia"
+    },
+    "CRO:5": {
+      "name": "Josip Stanišić",
+      "team": "Croatia"
+    },
+    "CRO:6": {
+      "name": "Luka Vušković",
+      "team": "Croatia"
+    },
+    "CRO:7": {
+      "name": "Josip Sutalo",
+      "team": "Croatia"
+    },
+    "CRO:8": {
+      "name": "Kristijan Jakic",
+      "team": "Croatia"
+    },
+    "CRO:9": {
+      "name": "Luka Modrić",
+      "team": "Croatia"
+    },
+    "CRO:10": {
+      "name": "Mateo Kovacic",
+      "team": "Croatia"
+    },
+    "CRO:11": {
+      "name": "Martin Baturina",
+      "team": "Croatia"
+    },
+    "CRO:12": {
+      "name": "Lovro Majer",
+      "team": "Croatia"
+    },
+    "CRO:13": {
+      "name": "Team Photo",
+      "team": "Croatia"
+    },
+    "CRO:14": {
+      "name": "Mario Pasalic",
+      "team": "Croatia"
+    },
+    "CRO:15": {
+      "name": "Petar Sucic",
+      "team": "Croatia"
+    },
+    "CRO:16": {
+      "name": "Ivan Perišić",
+      "team": "Croatia"
+    },
+    "CRO:17": {
+      "name": "Marco Pasalic",
+      "team": "Croatia"
+    },
+    "CRO:18": {
+      "name": "Ante Budimir",
+      "team": "Croatia"
+    },
+    "CRO:19": {
+      "name": "Andrej Kramarić",
+      "team": "Croatia"
+    },
+    "CRO:20": {
+      "name": "Franjo Ivanovic",
+      "team": "Croatia"
+    },
+    "GHA:1": {
+      "name": "Emblem",
+      "team": "Ghana"
+    },
+    "GHA:2": {
+      "name": "Lawrence Ati Zigi",
+      "team": "Ghana"
+    },
+    "GHA:3": {
+      "name": "Tariq Lamptey",
+      "team": "Ghana"
+    },
+    "GHA:4": {
+      "name": "Mohammed Salisu",
+      "team": "Ghana"
+    },
+    "GHA:5": {
+      "name": "Alidu Seidu",
+      "team": "Ghana"
+    },
+    "GHA:6": {
+      "name": "Alexander Djiku",
+      "team": "Ghana"
+    },
+    "GHA:7": {
+      "name": "Gideon Mensah",
+      "team": "Ghana"
+    },
+    "GHA:8": {
+      "name": "Caleb Yirenkyi",
+      "team": "Ghana"
+    },
+    "GHA:9": {
+      "name": "Abdul Issahaku Fatawu",
+      "team": "Ghana"
+    },
+    "GHA:10": {
+      "name": "Thomas Partey",
+      "team": "Ghana"
+    },
+    "GHA:11": {
+      "name": "Salis Abdul Samed",
+      "team": "Ghana"
+    },
+    "GHA:12": {
+      "name": "Kamaldeen Sulemana",
+      "team": "Ghana"
+    },
+    "GHA:13": {
+      "name": "Team Photo",
+      "team": "Ghana"
+    },
+    "GHA:14": {
+      "name": "Mohammed Kudus",
+      "team": "Ghana"
+    },
+    "GHA:15": {
+      "name": "Inaki Williams",
+      "team": "Ghana"
+    },
+    "GHA:16": {
+      "name": "Jordan Ayew",
+      "team": "Ghana"
+    },
+    "GHA:17": {
+      "name": "André Ayew",
+      "team": "Ghana"
+    },
+    "GHA:18": {
+      "name": "Joseph Paintsil",
+      "team": "Ghana"
+    },
+    "GHA:19": {
+      "name": "Osman Bukari",
+      "team": "Ghana"
+    },
+    "GHA:20": {
+      "name": "Antoine Semenyo",
+      "team": "Ghana"
+    },
+    "PAN:1": {
+      "name": "Emblem",
+      "team": "Panama"
+    },
+    "PAN:2": {
+      "name": "Orlando Mosquera",
+      "team": "Panama"
+    },
+    "PAN:3": {
+      "name": "Luis Mejia",
+      "team": "Panama"
+    },
+    "PAN:4": {
+      "name": "Fidel Escobar",
+      "team": "Panama"
+    },
+    "PAN:5": {
+      "name": "Andres Andrade",
+      "team": "Panama"
+    },
+    "PAN:6": {
+      "name": "Michael Amir Murillo",
+      "team": "Panama"
+    },
+    "PAN:7": {
+      "name": "Eric Davis",
+      "team": "Panama"
+    },
+    "PAN:8": {
+      "name": "Jose Cordoba",
+      "team": "Panama"
+    },
+    "PAN:9": {
+      "name": "Cesar Blackman",
+      "team": "Panama"
+    },
+    "PAN:10": {
+      "name": "Cristian Martinez",
+      "team": "Panama"
+    },
+    "PAN:11": {
+      "name": "Aníbal Godoy",
+      "team": "Panama"
+    },
+    "PAN:12": {
+      "name": "Adalberto Carrasquilla",
+      "team": "Panama"
+    },
+    "PAN:13": {
+      "name": "Team Photo",
+      "team": "Panama"
+    },
+    "PAN:14": {
+      "name": "Édgar Bárcenas",
+      "team": "Panama"
+    },
+    "PAN:15": {
+      "name": "Carlos Harvey",
+      "team": "Panama"
+    },
+    "PAN:16": {
+      "name": "Ismael Díaz",
+      "team": "Panama"
+    },
+    "PAN:17": {
+      "name": "Jose Fajardo",
+      "team": "Panama"
+    },
+    "PAN:18": {
+      "name": "Cecilio Waterman",
+      "team": "Panama"
+    },
+    "PAN:19": {
+      "name": "Jose Luiz Rodriguez",
+      "team": "Panama"
+    },
+    "PAN:20": {
+      "name": "Alberto Quintero",
+      "team": "Panama"
+    },
+    "FWC:9": {
+      "name": "Italy 1934",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:10": {
+      "name": "Uruguay 1950",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:11": {
+      "name": "West Germany 1954",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:12": {
+      "name": "Brazil 1962",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:13": {
+      "name": "West Germany 1974",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:14": {
+      "name": "Argentina 1986",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:15": {
+      "name": "Brazil 1994",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:16": {
+      "name": "Brazil 2002",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:17": {
+      "name": "Italy 2006",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:18": {
+      "name": "Germany 2014",
+      "team": "FIFA World Cup History"
+    },
+    "FWC:19": {
+      "name": "Argentina 2022",
+      "team": "FIFA World Cup History"
+    }
+  }
+}

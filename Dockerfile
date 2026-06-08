@@ -19,6 +19,7 @@ COPY requirements-api.txt .
 RUN pip install --no-cache-dir -r requirements-api.txt
 
 COPY panini_service/ ./panini_service/
+# checklist_context.json ships under panini_service/data/
 COPY api/ ./api/
 COPY scripts/panini_catalog.py scripts/init_db.py scripts/panini_db.py ./scripts/
 COPY --from=web /web/dist ./web/dist

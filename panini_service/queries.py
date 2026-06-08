@@ -28,6 +28,7 @@ from panini_service.album_pages import (  # noqa: E402
 )
 from panini_service.refs import format_sticker_ref  # noqa: E402
 from panini_service.session_store import get_session_stats, session_duplicate_trade_rate  # noqa: E402
+from panini_service.sticker_context import attach_checklist_context  # noqa: E402
 
 
 def _album_field(category_code: str, slot_code: str) -> dict[str, str]:
@@ -103,7 +104,12 @@ def _team_shield_photo_completion(conn: sqlite3.Connection) -> dict[str, Any]:
 
 
 def team_analytics_pages(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    """Per team page (20 slots): completion %, shield (slot 1) and team photo (slot 13) present flags."""
+    """Per album page (20 slots each): completion %, shield/team-photo present flags.
+
+    The FWC "specials" page (``kind`` ``"fwc"``) comes first in album order, followed by
+    the 48 national team pages (``kind`` ``"team"``). FWC has no shield/team-photo roles,
+    so those flags are always ``False`` for it.
+    """
     rows = conn.execute(
         """
         SELECT
@@ -116,32 +122,40 @@ def team_analytics_pages(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         FROM stickers s
         JOIN inventory i ON i.sticker_id = s.id
         JOIN categories c ON c.code = s.category_code
-        WHERE c.kind = 'team'
+        WHERE c.kind IN ('team', 'fwc')
         GROUP BY s.category_code
         """
     ).fetchall()
     by_code = {str(r["code"]): r for r in rows}
-    out: list[dict[str, Any]] = []
-    for code in TEAM_CODES:
+
+    def _page(code: str, kind: str) -> dict[str, Any] | None:
         r = by_code.get(code)
         if r is None:
-            continue
+            return None
         have = int(r["slots_with_copy"] or 0)
         total = int(r["slots_total"] or 0)
         miss = max(0, total - have)
         pct = round(100.0 * have / total, 2) if total else 0.0
-        out.append(
-            {
-                "code": code,
-                "slots_with_copy": have,
-                "slots_missing": miss,
-                "slots_total": total,
-                "total_stickers": int(r["total_stickers"] or 0),
-                "pct_complete": pct,
-                "shield_ok": bool(int(r["shield_ok"] or 0)),
-                "team_photo_ok": bool(int(r["photo_ok"] or 0)),
-            }
-        )
+        return {
+            "code": code,
+            "kind": kind,
+            "slots_with_copy": have,
+            "slots_missing": miss,
+            "slots_total": total,
+            "total_stickers": int(r["total_stickers"] or 0),
+            "pct_complete": pct,
+            "shield_ok": bool(int(r["shield_ok"] or 0)),
+            "team_photo_ok": bool(int(r["photo_ok"] or 0)),
+        }
+
+    out: list[dict[str, Any]] = []
+    fwc_page = _page(FWC_CODE, "fwc")
+    if fwc_page is not None:
+        out.append(fwc_page)
+    for code in TEAM_CODES:
+        page = _page(code, "team")
+        if page is not None:
+            out.append(page)
     return out
 
 
@@ -313,6 +327,7 @@ def list_album_table(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         item.update(_album_field(cat, sc))
         item.update(_album_paste_and_location(cat, sc))
         _attach_list_album_hints(item, cat, sc, r["role"])
+        attach_checklist_context(item, cat, sc)
         out.append(item)
 
     def _album_table_sort_key(item: dict[str, Any]) -> tuple[int, int, int]:
@@ -358,6 +373,7 @@ def get_sticker(conn: sqlite3.Connection, category_code: str, slot_code: str) ->
     }
     item.update(_album_field(row["category_code"], row["slot_code"]))
     item.update(_album_paste_and_location(row["category_code"], row["slot_code"]))
+    attach_checklist_context(item, row["category_code"], row["slot_code"])
     return item
 
 

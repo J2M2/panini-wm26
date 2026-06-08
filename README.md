@@ -227,6 +227,7 @@ Full request/response shapes are in **`/docs`**.
 | Path | Role |
 |------|------|
 | [`scripts/panini_catalog.py`](scripts/panini_catalog.py) | Team codes, FWC slots, roles |
+| [`panini_service/data/checklist_context.json`](panini_service/data/checklist_context.json) | Read-only sticker names/teams for lookup (from checklist scrape; rebuild with [`scripts/build_checklist_context.py`](scripts/build_checklist_context.py)) |
 | [`scripts/init_db.py`](scripts/init_db.py) | Schema + catalog; empty album (`qty=0`) |
 | [`scripts/metrics.py`](scripts/metrics.py) | CLI metrics + validation + MC estimates |
 | [`scripts/freeze_album.py`](scripts/freeze_album.py) | Write `data/frozen/album_*.json` + `album_latest.json` for local backup / restore after tests |

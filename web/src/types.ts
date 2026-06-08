@@ -87,6 +87,10 @@ export interface StickerDetail {
   album_index_group?: string | null;
   /** 1-based team index in album order (same as TEAM_CODES); null for FWC. */
   album_team_ordinal?: number | null;
+  /** Optional checklist metadata (laststicker.com); display only. */
+  checklist_name?: string;
+  checklist_team?: string;
+  checklist_source?: string;
 }
 
 export interface ListStickerRow {
@@ -173,9 +177,11 @@ export interface PackOutlookResponse {
   disclaimer: string;
 }
 
-/** GET /analytics/teams — one row per national team page. */
+/** GET /analytics/teams — one row per album page (FWC specials + national teams). */
 export interface TeamAnalyticsRow {
   code: string;
+  /** "fwc" = specials page (no shield/team photo); "team" = national team page. */
+  kind?: "team" | "fwc";
   slots_with_copy: number;
   slots_missing: number;
   slots_total: number;

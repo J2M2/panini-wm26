@@ -84,6 +84,15 @@ def test_sticker_team_album_hints(client):
     assert d11.get("album_location") == "Group: A\nPage: 9"
 
 
+def test_sticker_checklist_context(client):
+    r = client.get("/stickers/MEX/5")
+    assert r.status_code == 200
+    data = r.json()
+    assert data.get("checklist_name") == "Cesar Montes"
+    assert data.get("checklist_team") == "Mexico"
+    assert "laststicker" in (data.get("checklist_source") or "").lower()
+
+
 def test_lists_json_includes_album_hover(client):
     r = client.get("/lists/missing", params={"format": "json"})
     assert r.status_code == 200
@@ -195,14 +204,20 @@ def test_analytics_teams(client):
     assert r.status_code == 200
     data = r.json()
     teams = data.get("teams", [])
-    assert len(teams) == 48
+    # FWC specials page first, then the 48 national teams.
+    assert len(teams) == 49
     row0 = teams[0]
-    assert "code" in row0
+    assert row0["code"] == "FWC"
+    assert row0["kind"] == "fwc"
+    assert row0["shield_ok"] is False
+    assert row0["team_photo_ok"] is False
     assert "pct_complete" in row0
-    assert "shield_ok" in row0
-    assert "team_photo_ok" in row0
     assert "total_stickers" in row0
     assert isinstance(row0["total_stickers"], int)
+    national = teams[1:]
+    assert len(national) == 48
+    assert all(t["kind"] == "team" for t in national)
+    assert all("shield_ok" in t and "team_photo_ok" in t for t in national)
 
 
 def test_album_sticker_type_label_and_hover():

@@ -1194,6 +1194,31 @@ table.data .ref {
   line-height: 1.35;
 }
 
+.lookup-checklist-context {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius);
+  background: var(--info-bg);
+  border: 1px solid var(--border);
+}
+
+.lookup-checklist-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.lookup-checklist-team {
+  font-size: 0.88rem;
+  margin-top: 0.15rem;
+}
+
+.lookup-checklist-source {
+  margin: -0.15rem 0 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 .lookup-page-row {
   display: flex;
   flex-wrap: wrap;
@@ -1716,6 +1741,130 @@ table.data .ref {
 .team-flag--miss {
   color: var(--danger);
   background: rgba(224, 112, 112, 0.1);
+}
+
+/* Expandable team rows → missing slots */
+.analytics-teams-table .team-row {
+  cursor: pointer;
+}
+
+.analytics-teams-table .team-row:hover {
+  background: rgba(108, 180, 238, 0.08);
+}
+
+.analytics-teams-table .team-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.team-code-cell {
+  white-space: nowrap;
+}
+
+.team-expand-caret {
+  display: inline-block;
+  margin-right: 0.4rem;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.team-row--expanded .team-expand-caret {
+  transform: rotate(90deg);
+}
+
+.analytics-teams-table .team-detail-row > .team-detail-cell {
+  padding: 0.5rem 0.75rem 0.85rem;
+  background: rgba(108, 180, 238, 0.05);
+  border-top: none;
+}
+
+.team-missing-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.team-missing-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.team-missing-complete {
+  font-size: 0.85rem;
+}
+
+.team-missing-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.team-missing-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+}
+
+.team-missing-chip--shield {
+  border-color: rgba(238, 196, 108, 0.6);
+  background: rgba(238, 196, 108, 0.14);
+  color: #d9a441;
+}
+
+.team-missing-chip--photo {
+  border-color: rgba(150, 170, 238, 0.6);
+  background: rgba(150, 170, 238, 0.14);
+  color: #7f93e0;
+}
+
+.team-missing-chip--special {
+  border-color: rgba(196, 150, 238, 0.6);
+  background: rgba(196, 150, 238, 0.16);
+  color: #b178e0;
+}
+
+/* FWC "specials" page row */
+.analytics-teams-table .team-row--special {
+  background: rgba(196, 150, 238, 0.06);
+}
+
+.analytics-teams-table .team-row--special:hover {
+  background: rgba(196, 150, 238, 0.12);
+}
+
+.team-special-tag {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(196, 150, 238, 0.5);
+  background: rgba(196, 150, 238, 0.14);
+  color: #b178e0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.team-flag-na {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  color: var(--muted);
+  opacity: 0.55;
 }
 
 /* Overview analytics widgets */

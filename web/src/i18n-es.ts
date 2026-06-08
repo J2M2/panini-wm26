@@ -22,6 +22,7 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   Batch: "Lote",
   "Batch (optional: REF x3)": "Lote (opcional: REF x3)",
   Cancel: "Cancelar",
+  "Checklist: {source}": "Lista: {source}",
   "Check pack": "Revisar sobre",
   "Closest to complete": "Más cerca de llenarlo",
   Collection: "Colección",
@@ -373,8 +374,15 @@ export const SPANISH_BY_ENGLISH: Record<string, string> = {
   "Tied for most duplicate copies: {codes}": "Empate, más repetidas: {codes}",
 
   /* Team analytics view */
-  "Each row is one national team page (20 stickers). Stickers counts every copy you own on that page (including spares). Shield is slot 1, team photo is slot 13. Click column headers to sort.":
-    "Cada fila es una página de selección (20 láminas). Láminas suma todas las que tienes en esa página (incluidas repetidas). El escudo es el espacio 1, la foto del plantel el 13. Clic en el encabezado para ordenar.",
+  "Each row is one album page (20 stickers): the FWC specials page plus the 48 national teams. Stickers counts every copy you own on that page (including spares). Shield is slot 1, team photo is slot 13 (national teams only). Click a page to see its missing slots; click column headers to sort.":
+    "Cada fila es una página del álbum (20 láminas): la página de specials FWC más las 48 selecciones. Láminas suma todas las que tienes en esa página (incluidas repetidas). El escudo es el espacio 1, la foto del plantel el 13 (solo selecciones). Clic en una página para ver sus espacios faltantes; clic en el encabezado para ordenar.",
+  "Complete — every slot is in the album.": "Completo — todos los espacios están en el álbum.",
+  "Missing slots ({n}):": "Espacios faltantes ({n}):",
+  "{code} slot {slot} — missing": "{code} espacio {slot} — falta",
+  "Shield (slot 1) — missing": "Escudo (espacio 1) — falta",
+  "Team photo (slot 13) — missing": "Foto del plantel (espacio 13) — falta",
+  "Special sticker 00 — missing": "Lámina especial 00 — falta",
+  "The specials page has no shield or team photo": "La página de specials no tiene escudo ni foto del plantel",
   Stickers: "Láminas",
   "Total copies on this team page (including spares) · click to sort":
     "Total en esta página (incluidas repetidas) · clic para ordenar",

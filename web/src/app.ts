@@ -183,6 +183,11 @@ const overviewPage = {
   reload: async (): Promise<void> => {},
 };
 
+/** Lists album table; refetch after trades / pack add / auth / reset so it never shows stale qty. */
+const listsPage = {
+  reload: async (): Promise<void> => {},
+};
+
 async function loadTradePreviewData(): Promise<void> {
   tradePreviewLoadError = null;
   try {
@@ -586,6 +591,7 @@ export function initApp(root: HTMLElement): void {
   sidebar.appendChild(
     buildAccountPanel(async () => {
       await overviewPage.reload();
+      void listsPage.reload();
       void loadTradePreviewData();
     }),
   );
@@ -614,6 +620,9 @@ function showView(id: string): void {
   });
   if (id === "analytics") {
     void analyticsPage.reload();
+  }
+  if (id === "lists") {
+    void listsPage.reload();
   }
   if (id === "trade") {
     void loadTradePreviewData();
@@ -1185,7 +1194,7 @@ function buildAnalytics(): HTMLElement {
       "p",
       { class: "muted", style: "margin:0 0 1rem;font-size:0.95rem;max-width:52rem" },
       tr(
-        "Each row is one national team page (20 stickers). Stickers counts every copy you own on that page (including spares). Shield is slot 1, team photo is slot 13. Click column headers to sort.",
+        "Each row is one album page (20 stickers): the FWC specials page plus the 48 national teams. Stickers counts every copy you own on that page (including spares). Shield is slot 1, team photo is slot 13 (national teams only). Click a page to see its missing slots; click column headers to sort.",
       ),
     ),
   );
@@ -1195,6 +1204,10 @@ function buildAnalytics(): HTMLElement {
   let cachedTeams: TeamAnalyticsRow[] = [];
   let catalogOrder = new Map<string, number>();
   let sortState: { key: TeamSortKey | null; dir: number } = { key: null, dir: 1 };
+  /** Team codes whose missing-slots detail row is currently expanded. */
+  const expandedTeams = new Set<string>();
+  /** Team code → missing (qty 0) stickers on that page, for the expanded detail row. */
+  let missingByTeam = new Map<string, ListStickerRow[]>();
 
   function compareTeams(a: TeamAnalyticsRow, b: TeamAnalyticsRow): number {
     const d = sortState.dir;
@@ -1241,8 +1254,15 @@ function buildAnalytics(): HTMLElement {
   }
 
   function buildTeamRow(t: TeamAnalyticsRow): HTMLTableRowElement {
-    const row = el("tr", {});
-    row.appendChild(el("td", { class: "ref" }, t.code));
+    const isFwc = t.kind === "fwc";
+    const row = el("tr", { class: isFwc ? "team-row team-row--special" : "team-row", tabindex: "0", role: "button" });
+    const codeCell = el("td", { class: "ref team-code-cell" });
+    codeCell.appendChild(el("span", { class: "team-expand-caret", "aria-hidden": "true" }, "\u25B8"));
+    codeCell.appendChild(document.createTextNode(t.code));
+    if (isFwc) {
+      codeCell.appendChild(el("span", { class: "team-special-tag" }, tr("Specials")));
+    }
+    row.appendChild(codeCell);
     const pct = Math.min(100, Math.max(0, t.pct_complete));
     const pctCell = el("td", { class: "team-pct-cell" });
     const track = el("div", { class: "team-pct-track" });
@@ -1270,27 +1290,89 @@ function buildAnalytics(): HTMLElement {
       );
     }
     row.appendChild(stickersCell);
-    row.appendChild(
-      el(
-        "td",
-        { class: "team-flag-cell" },
-        flagCell(t.shield_ok, t.shield_ok ? tr("Shield in album") : tr("Shield missing")),
-      ),
-    );
-    row.appendChild(
-      el(
-        "td",
-        { class: "team-flag-cell" },
-        flagCell(t.team_photo_ok, t.team_photo_ok ? tr("Team photo in album") : tr("Team photo missing")),
-      ),
-    );
+    if (isFwc) {
+      const naTitle = tr("The specials page has no shield or team photo");
+      row.appendChild(el("td", { class: "team-flag-cell" }, el("span", { class: "team-flag-na", title: naTitle }, "—")));
+      row.appendChild(el("td", { class: "team-flag-cell" }, el("span", { class: "team-flag-na", title: naTitle }, "—")));
+    } else {
+      row.appendChild(
+        el(
+          "td",
+          { class: "team-flag-cell" },
+          flagCell(t.shield_ok, t.shield_ok ? tr("Shield in album") : tr("Shield missing")),
+        ),
+      );
+      row.appendChild(
+        el(
+          "td",
+          { class: "team-flag-cell" },
+          flagCell(t.team_photo_ok, t.team_photo_ok ? tr("Team photo in album") : tr("Team photo missing")),
+        ),
+      );
+    }
     return row;
+  }
+
+  function buildTeamDetailRow(t: TeamAnalyticsRow): HTMLTableRowElement {
+    const detail = el("tr", { class: "team-detail-row" });
+    const cell = el("td", { class: "team-detail-cell", colspan: "5" });
+    const wrap = el("div", { class: "team-missing-detail" });
+    const rows = (missingByTeam.get(t.code) ?? [])
+      .slice()
+      .sort((a, b) => (Number(a.slot_code) || 0) - (Number(b.slot_code) || 0));
+    if (rows.length === 0) {
+      wrap.appendChild(
+        el("span", { class: "muted team-missing-complete" }, tr("Complete — every slot is in the album.")),
+      );
+    } else {
+      wrap.appendChild(
+        el("span", { class: "team-missing-label" }, trf("Missing slots ({n}):", { n: String(rows.length) })),
+      );
+      const grid = el("div", { class: "team-missing-grid" });
+      for (const r of rows) {
+        const label = r.album_code ?? r.slot_code;
+        let cls = "team-missing-chip";
+        let title = trf("{code} slot {slot} — missing", { code: t.code, slot: label });
+        if (r.role === "fwc_special" || (r.category_code === "FWC" && r.slot_code === "20")) {
+          cls += " team-missing-chip--special";
+          title = tr("Special sticker 00 — missing");
+        } else if (r.role === "shield" || r.slot_code === "1") {
+          cls += " team-missing-chip--shield";
+          title = tr("Shield (slot 1) — missing");
+        } else if (r.role === "team_photo" || r.slot_code === "13") {
+          cls += " team-missing-chip--photo";
+          title = tr("Team photo (slot 13) — missing");
+        }
+        grid.appendChild(el("span", { class: cls, title }, label));
+      }
+      wrap.appendChild(grid);
+    }
+    cell.appendChild(wrap);
+    detail.appendChild(cell);
+    return detail;
   }
 
   function renderTeamTableBody(tbody: HTMLElement, thead: HTMLElement): void {
     tbody.replaceChildren();
     for (const t of sortedTeams()) {
-      tbody.appendChild(buildTeamRow(t));
+      const row = buildTeamRow(t);
+      const expanded = expandedTeams.has(t.code);
+      row.classList.toggle("team-row--expanded", expanded);
+      row.setAttribute("aria-expanded", expanded ? "true" : "false");
+      const toggle = (): void => {
+        if (expandedTeams.has(t.code)) expandedTeams.delete(t.code);
+        else expandedTeams.add(t.code);
+        renderTeamTableBody(tbody, thead);
+      };
+      row.addEventListener("click", toggle);
+      row.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          toggle();
+        }
+      });
+      tbody.appendChild(row);
+      if (expanded) tbody.appendChild(buildTeamDetailRow(t));
     }
     updateSortHeaderClasses(thead);
   }
@@ -1314,8 +1396,14 @@ function buildAnalytics(): HTMLElement {
     host.innerHTML = "";
     host.appendChild(el("p", { class: "muted" }, tr("Loading…")));
     try {
-      const { teams } = await getAnalyticsTeams();
+      const [{ teams }, missing] = await Promise.all([getAnalyticsTeams(), getMissingList()]);
       cachedTeams = teams;
+      missingByTeam = new Map();
+      for (const r of missing) {
+        const list = missingByTeam.get(r.category_code);
+        if (list) list.push(r);
+        else missingByTeam.set(r.category_code, [r]);
+      }
       catalogOrder = new Map(teams.map((t, i) => [t.code, i]));
       sortState = { key: null, dir: 1 };
       host.innerHTML = "";
@@ -1829,6 +1917,26 @@ function renderLookupResult(r: StickerDetail): HTMLElement {
   const albumKv = renderLookupAlbumKv(r);
   host.appendChild(albumKv);
 
+  if (r.checklist_name || r.checklist_team) {
+    const ctx = el("div", { class: "lookup-checklist-context" });
+    if (r.checklist_name) {
+      ctx.appendChild(el("div", { class: "lookup-checklist-name" }, r.checklist_name));
+    }
+    if (r.checklist_team) {
+      ctx.appendChild(el("div", { class: "lookup-checklist-team muted" }, r.checklist_team));
+    }
+    host.appendChild(ctx);
+    if (r.checklist_source) {
+      host.appendChild(
+        el(
+          "p",
+          { class: "lookup-checklist-source muted" },
+          trf("Checklist: {source}", { source: r.checklist_source }),
+        ),
+      );
+    }
+  }
+
   const top = el("div", { class: "lookup-result-top" });
   top.appendChild(el("span", { class: lookupStatusBadgeClass(r.status) }, formatLookupStatusLabel(r.status)));
   top.appendChild(
@@ -2198,6 +2306,7 @@ function buildLists(): HTMLElement {
   }
 
   loadBtn.addEventListener("click", () => void load());
+  listsPage.reload = load;
   load();
   return section;
 }
@@ -2278,6 +2387,9 @@ function buildDesk(): HTMLElement {
         await removeSticker(ref, count);
       }
       remMsg.appendChild(el("div", { class: "msg-ok" }, `Removed ${totalBatchCount(rows)} sticker instance(s).`));
+      void overviewPage.reload();
+      void listsPage.reload();
+      void loadTradePreviewData();
     } catch (e) {
       remMsg.appendChild(errBox(e));
     }
@@ -2304,6 +2416,9 @@ function buildDesk(): HTMLElement {
     try {
       await addSticker(sRef.value.trim(), parseInt(sCount.value, 10) || 1);
       singleMsg.appendChild(el("div", { class: "msg-ok" }, tr("OK")));
+      void overviewPage.reload();
+      void listsPage.reload();
+      void loadTradePreviewData();
     } catch (e) {
       singleMsg.appendChild(errBox(e));
     }
@@ -2313,6 +2428,9 @@ function buildDesk(): HTMLElement {
     try {
       await removeSticker(sRef.value.trim(), parseInt(sCount.value, 10) || 1);
       singleMsg.appendChild(el("div", { class: "msg-ok" }, tr("OK")));
+      void overviewPage.reload();
+      void listsPage.reload();
+      void loadTradePreviewData();
     } catch (e) {
       singleMsg.appendChild(errBox(e));
     }
@@ -2666,6 +2784,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
               el("p", { class: "muted" }, tr("Inventory and packs_opened were restored. Paste the list again if you still want to add it.")),
             );
             void overviewPage.reload();
+            void listsPage.reload();
             void loadTradePreviewData();
           } catch (e) {
             undoBtn.disabled = false;
@@ -2691,6 +2810,7 @@ function buildAddStickersPanel(): { addRoot: HTMLElement; clearAddDrafts: () => 
         renderPackCheckSummaryGrid(resultCard, appliedCheck, appliedLines);
       }
       void overviewPage.reload();
+      void listsPage.reload();
       void loadTradePreviewData();
     } catch (e) {
       resultCard.style.display = "block";
@@ -3893,6 +4013,7 @@ function buildTrade(): HTMLElement {
         pendingUndo = null;
         renderUndoOutcome(ur);
         void overviewPage.reload();
+        void listsPage.reload();
         await loadTradePreviewData();
         updateTradePreview();
       } catch (e) {
@@ -4095,6 +4216,7 @@ function buildTrade(): HTMLElement {
       takeTa.value = "";
       renderTradeOutcome(r, give, take, hintsSnap);
       void overviewPage.reload();
+      void listsPage.reload();
       await loadTradePreviewData();
       updateTradePreview();
     } catch (e) {
